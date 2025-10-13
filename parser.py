@@ -1,4 +1,3 @@
-
 import json
 import time
 import os
@@ -11,8 +10,8 @@ if not API_KEY:
     raise ValueError("GEMINI_API_KEY environment variable not set. Please set it to your API key.")
 
 genai.configure(api_key=API_KEY)
-# Use the gemini-1.5-flash model for faster translations
-model = genai.GenerativeModel('gemini-1.5-flash')
+# Switch back to gemini-pro, as gemini-1.5-flash is not found in the API version
+model = genai.GenerativeModel('gemini-2.5-flash')
 # --- End Configuration ---
 
 def get_waste_type_from_disposal_info(disposal_info):
@@ -49,7 +48,7 @@ def translate(text, target_language):
         prompt = f"Translate the following Dutch text to {target_language}. Respond with ONLY the translated text, no other formatting, notes, or quotation marks. The Dutch text is: '{text}'"
         response = model.generate_content(prompt)
         # Add a delay to avoid hitting API rate limits
-        time.sleep(1) # Using flash model, so a shorter delay should be fine.
+        time.sleep(1) 
         # .strip() to remove leading/trailing whitespace, and escape any single quotes in the result.
         translated_text = response.text.strip().replace("'", "\\'")
         print(f"  -> Translation: {translated_text}")
@@ -59,7 +58,8 @@ def translate(text, target_language):
         # Fallback to the original text if translation fails, ensuring it's also escaped.
         return text.replace("'", "\\'")
 
-with open('all_wastes.json', 'r') as f:
+# Open files with explicit utf-8 encoding to prevent UnicodeDecodeError
+with open('all_wastes.json', 'r', encoding='utf-8') as f:
     wastes = json.load(f)
 
 new_waste_list = []
@@ -68,7 +68,6 @@ for item in wastes:
     nl_name = item['name']
     
     # Translate the Dutch name to English and Chinese.
-    # The translate function already handles escaping single quotes.
     en_name = translate(nl_name, 'English')
     zh_name = translate(nl_name, 'Chinese')
 
@@ -78,7 +77,6 @@ for item in wastes:
     disposal_info = item['disposal_info']
     if disposal_info:
         # For the disposal_info, we need to escape single quotes and newlines
-        # to create a valid, multi-line TypeScript string.
         disposal_info_escaped = disposal_info.replace("'", "\\'").replace("\n", "\\n")
         disposal_info_str = f"'{disposal_info_escaped}'"
     else:
@@ -89,7 +87,8 @@ for item in wastes:
         f"  {{ type: '{waste_type}', en: '{en_name}', nl: '{nl_name_escaped}', zh: '{zh_name}', disposal_info: {disposal_info_str} }},"
     )
 
-with open('constants.ts', 'r') as f:
+# Open files with explicit utf-8 encoding
+with open('constants.ts', 'r', encoding='utf-8') as f:
     constants_content = f.read()
 
 start_marker = "// Massively expanded list based on afvalscheidingswijzer.nl"
@@ -108,8 +107,8 @@ if start_index != -1 and end_index != -1:
         constants_content[end_index:]
     )
 
-    # Write the updated content back to the file
-    with open('constants.ts', 'w') as f:
+    # Write the updated content back to the file with utf-8 encoding
+    with open('constants.ts', 'w', encoding='utf-8') as f:
         f.write(new_constants_content)
     print("Successfully updated constants.ts with translations and disposal_info")
 else:
