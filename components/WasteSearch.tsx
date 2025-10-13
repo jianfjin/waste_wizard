@@ -2,15 +2,14 @@ import React, { useState, useContext } from 'react';
 import { LanguageContext } from '../App';
 import { SEARCHABLE_WASTE_LIST, WASTE_BINS } from '../constants';
 import { SearchIcon } from './Icons';
+import { fuzzySearch } from '../services/fuzzySearch';
 
 const WasteSearch: React.FC = () => {
     const { language, t } = useContext(LanguageContext);
     const [query, setQuery] = useState('');
 
     const filteredList = query.length > 1 
-        ? SEARCHABLE_WASTE_LIST.filter(item => 
-            item[language].toLowerCase().includes(query.toLowerCase())
-        )
+        ? fuzzySearch(SEARCHABLE_WASTE_LIST, query, language, 0.3).map(result => result.item)
         : [];
     
     return (
