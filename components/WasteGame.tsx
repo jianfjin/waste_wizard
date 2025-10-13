@@ -1,17 +1,13 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { LanguageContext } from '../App';
-import { WASTE_ITEMS, WASTE_BINS, TRANSLATIONS } from '../constants';
+import { SEARCHABLE_WASTE_LIST, WASTE_BINS } from '../constants';
 import { GameItem, ScoreEntry, WasteType } from '../types';
 import { TrophyIcon, CorrectIcon, IncorrectIcon } from './Icons';
-
-// Helper to shuffle array
-const shuffleArray = (array: any[]) => {
-  return [...array].sort(() => Math.random() - 0.5);
-};
+import { selectRandomWasteItems } from '../services/wasteItemMapper';
 
 const WasteGame: React.FC = () => {
-    const { t } = useContext(LanguageContext);
-    const [items, setItems] = useState<GameItem[]>(() => shuffleArray(WASTE_ITEMS));
+    const { language, t } = useContext(LanguageContext);
+    const [items, setItems] = useState<GameItem[]>(() => selectRandomWasteItems(SEARCHABLE_WASTE_LIST, 20, language));
     const [currentItemIndex, setCurrentItemIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [gameState, setGameState] = useState<'playing' | 'finished'>('playing');
@@ -20,6 +16,7 @@ const WasteGame: React.FC = () => {
     const [highScores, setHighScores] = useState<ScoreEntry[]>([]);
     const [nickname, setNickname] = useState('');
     const [draggedItem, setDraggedItem] = useState<GameItem | null>(null);
+    const [imageError, setImageError] = useState<boolean>(false);
 
     const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -34,6 +31,20 @@ const WasteGame: React.FC = () => {
             console.error("Failed to load high scores:", error);
         }
     }, []);
+
+    useEffect(() => {
+        // Regenerate items when language changes
+        if (gameState === 'playing') {
+            setItems(selectRandomWasteItems(SEARCHABLE_WASTE_LIST, 20, language));
+            setCurrentItemIndex(0);
+            setImageError(false); // Reset image error state
+        }
+    }, [language]);
+
+    useEffect(() => {
+        // Reset image error when item changes
+        setImageError(false);
+    }, [currentItemIndex]);
 
     const saveHighScores = (scores: ScoreEntry[]) => {
         try {
@@ -79,13 +90,14 @@ const WasteGame: React.FC = () => {
     };
 
     const handleRestart = () => {
-        setItems(shuffleArray(WASTE_ITEMS));
+        setItems(selectRandomWasteItems(SEARCHABLE_WASTE_LIST, 20, language));
         setCurrentItemIndex(0);
         setScore(0);
         setGameState('playing');
         setFeedback(null);
         setNickname('');
         setIncorrectAnswerInfo(null);
+        setImageError(false);
     };
 
     const handleSaveScore = (e: React.FormEvent) => {
@@ -98,7 +110,7 @@ const WasteGame: React.FC = () => {
     };
     
     const currentItem = items[currentItemIndex];
-    const currentItemName = t(currentItem.nameKey as keyof typeof TRANSLATIONS['en']);
+    const currentItemName = currentItem.nameKey; // Now using actual name instead of translation key
 
     if (gameState === 'finished') {
         const canSaveScore = score > 0 && (highScores.length < 5 || score > (highScores[highScores.length - 1]?.score ?? 0)) && nickname !== 'SAVED';
@@ -166,15 +178,23 @@ const WasteGame: React.FC = () => {
                     <div 
                         draggable={!feedback}
                         onDragStart={() => handleDragStart(currentItem)}
-                        className={`w-28 h-28 flex items-center justify-center ${!feedback ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                        className={`w-32 h-32 flex items-center justify-center ${!feedback ? 'cursor-grab active:cursor-grabbing' : ''}`}
                         title={currentItemName}
                     >
-                       <img 
-                            src={currentItem.image} 
-                            alt={currentItemName}
-                            className="w-full h-full object-contain"
-                        />
+                       {!imageError ? (
+                           <img 
+                               src={currentItem.image} 
+                               alt={currentItemName}
+                               className="w-full h-full object-contain"
+                               onError={() => setImageError(true)}
+                           />
+                       ) : (
+                           <div className="text-7xl">
+                               {currentItem.imageEmoji || '📦'}
+                           </div>
+                       )}
                     </div>
+                    <p className="text-center mt-2 font-semibold text-gray-700">{currentItemName}</p>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 w-full">

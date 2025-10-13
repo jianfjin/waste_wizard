@@ -12,6 +12,7 @@ export type WasteType = 'gft' | 'pmd' | 'rest' | 'papier' | 'glas' | 'kca' | 'te
 export interface GameItem {
     nameKey: string;
     image: string;
+    imageEmoji?: string; // Emoji fallback if image fails to load
     type: WasteType;
 }
 
