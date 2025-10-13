@@ -1,5 +1,19 @@
 
 import json
+import time
+import os
+import google.generativeai as genai
+
+# --- Configuration ---
+# Make sure to set the GEMINI_API_KEY environment variable
+API_KEY = os.environ.get("GEMINI_API_KEY")
+if not API_KEY:
+    raise ValueError("GEMINI_API_KEY environment variable not set. Please set it to your API key.")
+
+genai.configure(api_key=API_KEY)
+# Use the gemini-1.5-flash model for faster translations
+model = genai.GenerativeModel('gemini-1.5-flash')
+# --- End Configuration ---
 
 def get_waste_type_from_disposal_info(disposal_info):
     if not disposal_info:
@@ -25,14 +39,25 @@ def get_waste_type_from_disposal_info(disposal_info):
         return "grofvuil"
     return "rest"
 
-# This is a mock translation function. In a real scenario, this would call a translation API.
 def translate(text, target_language):
-    # Simple mock: return the original text with the language code
-    if target_language == "en":
-        return text + " (en)"
-    if target_language == "zh":
-        return text + " (zh)"
-    return text
+    """Translates text to the target language using the Gemini API."""
+    if not text:
+        return ""
+    print(f"Translating '{text}' to {target_language}...")
+    try:
+        # Construct a prompt that is very specific about the desired output format.
+        prompt = f"Translate the following Dutch text to {target_language}. Respond with ONLY the translated text, no other formatting, notes, or quotation marks. The Dutch text is: '{text}'"
+        response = model.generate_content(prompt)
+        # Add a delay to avoid hitting API rate limits
+        time.sleep(1) # Using flash model, so a shorter delay should be fine.
+        # .strip() to remove leading/trailing whitespace, and escape any single quotes in the result.
+        translated_text = response.text.strip().replace("'", "\\'")
+        print(f"  -> Translation: {translated_text}")
+        return translated_text
+    except Exception as e:
+        print(f"An error occurred during translation: {e}")
+        # Fallback to the original text if translation fails, ensuring it's also escaped.
+        return text.replace("'", "\\'")
 
 with open('all_wastes.json', 'r') as f:
     wastes = json.load(f)
@@ -40,16 +65,28 @@ with open('all_wastes.json', 'r') as f:
 new_waste_list = []
 for item in wastes:
     waste_type = get_waste_type_from_disposal_info(item['disposal_info'])
-    nl_name = item['name'].replace("'", "\\'")
-    en_name = translate(nl_name, 'en')
-    zh_name = translate(nl_name, 'zh')
+    nl_name = item['name']
+    
+    # Translate the Dutch name to English and Chinese.
+    # The translate function already handles escaping single quotes.
+    en_name = translate(nl_name, 'English')
+    zh_name = translate(nl_name, 'Chinese')
+
+    # The Dutch name also needs to be escaped for the TypeScript file.
+    nl_name_escaped = nl_name.replace("'", "\\'")
+
     disposal_info = item['disposal_info']
     if disposal_info:
-        disposal_info = disposal_info.replace("'", "\\'").replace("\n", "\\n")
+        # For the disposal_info, we need to escape single quotes and newlines
+        # to create a valid, multi-line TypeScript string.
+        disposal_info_escaped = disposal_info.replace("'", "\\'").replace("\n", "\\n")
+        disposal_info_str = f"'{disposal_info_escaped}'"
+    else:
+        disposal_info_str = 'null'
 
 
     new_waste_list.append(
-        f"  {{ type: '{waste_type}', en: '{en_name}', nl: '{nl_name}', zh: '{zh_name}', disposal_info: '{disposal_info}' }},"
+        f"  {{ type: '{waste_type}', en: '{en_name}', nl: '{nl_name_escaped}', zh: '{zh_name}', disposal_info: {disposal_info_str} }},"
     )
 
 with open('constants.ts', 'r') as f:
@@ -61,6 +98,7 @@ start_index = constants_content.find(start_marker)
 end_index = constants_content.find(end_marker, start_index)
 
 if start_index != -1 and end_index != -1:
+    # Build the new content for the constants.ts file
     new_constants_content = (
         constants_content[:start_index] +
         start_marker +
@@ -70,8 +108,9 @@ if start_index != -1 and end_index != -1:
         constants_content[end_index:]
     )
 
+    # Write the updated content back to the file
     with open('constants.ts', 'w') as f:
         f.write(new_constants_content)
     print("Successfully updated constants.ts with translations and disposal_info")
 else:
-    print("Could not find the waste list in constants.ts")
+    print("Error: Could not find the target location in constants.ts to insert the waste list.")
