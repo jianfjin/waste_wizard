@@ -1,0 +1,5 @@
+{
+  "name": "Waste Wizards NL",
+  "description": "An interactive and educational app for primary and secondary school students in the Netherlands to learn about waste separation and recycling. Features an AI chat agent, a fun sorting game, and city-specific waste rules.",
+  "requestFramePermissions": []
+}
