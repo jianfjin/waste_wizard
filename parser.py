@@ -25,15 +25,31 @@ def get_waste_type_from_disposal_info(disposal_info):
         return "grofvuil"
     return "rest"
 
+# This is a mock translation function. In a real scenario, this would call a translation API.
+def translate(text, target_language):
+    # Simple mock: return the original text with the language code
+    if target_language == "en":
+        return text + " (en)"
+    if target_language == "zh":
+        return text + " (zh)"
+    return text
+
 with open('all_wastes.json', 'r') as f:
     wastes = json.load(f)
 
 new_waste_list = []
 for item in wastes:
     waste_type = get_waste_type_from_disposal_info(item['disposal_info'])
-    name = item['name'].replace("'", "\\'")
+    nl_name = item['name'].replace("'", "\\'")
+    en_name = translate(nl_name, 'en')
+    zh_name = translate(nl_name, 'zh')
+    disposal_info = item['disposal_info']
+    if disposal_info:
+        disposal_info = disposal_info.replace("'", "\\'").replace("\n", "\\n")
+
+
     new_waste_list.append(
-        f"  {{ type: '{waste_type}', en: '{name}', nl: '{name}', zh: '' }},"
+        f"  {{ type: '{waste_type}', en: '{en_name}', nl: '{nl_name}', zh: '{zh_name}', disposal_info: '{disposal_info}' }},"
     )
 
 with open('constants.ts', 'r') as f:
@@ -56,6 +72,6 @@ if start_index != -1 and end_index != -1:
 
     with open('constants.ts', 'w') as f:
         f.write(new_constants_content)
-    print("Successfully updated constants.ts")
+    print("Successfully updated constants.ts with translations and disposal_info")
 else:
     print("Could not find the waste list in constants.ts")

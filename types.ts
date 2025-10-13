@@ -27,6 +27,7 @@ export interface SearchableWasteItem {
     en: string;
     nl: string;
     zh: string;
+    disposal_info: string | null;
 }
 
 // Chat message structure
