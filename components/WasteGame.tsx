@@ -17,6 +17,7 @@ const WasteGame: React.FC = () => {
     const [nickname, setNickname] = useState('');
     const [draggedItem, setDraggedItem] = useState<GameItem | null>(null);
     const [imageError, setImageError] = useState<boolean>(false);
+    const [usedItemNames, setUsedItemNames] = useState<string[]>([]);
 
     const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -35,7 +36,7 @@ const WasteGame: React.FC = () => {
     useEffect(() => {
         // Regenerate items when language changes
         if (gameState === 'playing') {
-            setItems(selectRandomWasteItems(SEARCHABLE_WASTE_LIST, 20, language));
+            setItems(selectRandomWasteItems(SEARCHABLE_WASTE_LIST, 20, language, usedItemNames));
             setCurrentItemIndex(0);
             setImageError(false); // Reset image error state
         }
@@ -90,7 +91,20 @@ const WasteGame: React.FC = () => {
     };
 
     const handleRestart = () => {
-        setItems(selectRandomWasteItems(SEARCHABLE_WASTE_LIST, 20, language));
+        // Track the item names from current game to exclude them in next game
+        const currentItemNames = items.map(item => {
+            // Find the original waste item by matching the name in the current language
+            const wasteItem = SEARCHABLE_WASTE_LIST.find(w => w[language] === item.nameKey);
+            return wasteItem ? wasteItem.nl : ''; // Use Dutch name for tracking
+        }).filter(name => name !== '');
+        
+        // Combine with previously used items, but limit to reasonable amount
+        const allUsedNames = [...usedItemNames, ...currentItemNames];
+        const maxTrackedItems = Math.min(SEARCHABLE_WASTE_LIST.length - 20, 100); // Keep tracking reasonable
+        const updatedUsedNames = allUsedNames.slice(-maxTrackedItems);
+        
+        setUsedItemNames(updatedUsedNames);
+        setItems(selectRandomWasteItems(SEARCHABLE_WASTE_LIST, 20, language, updatedUsedNames));
         setCurrentItemIndex(0);
         setScore(0);
         setGameState('playing');

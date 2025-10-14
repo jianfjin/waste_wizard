@@ -285,14 +285,24 @@ export function convertToGameItem(wasteItem: SearchableWasteItem, language: 'en'
 
 /**
  * Randomly select N items from SearchableWasteItem list and convert to GameItems
+ * @param excludedNames - Optional array of Dutch names to exclude from selection
  */
 export function selectRandomWasteItems(
     wasteList: SearchableWasteItem[], 
     count: number = 20,
-    language: 'en' | 'nl' | 'zh' = 'en'
+    language: 'en' | 'nl' | 'zh' = 'en',
+    excludedNames: string[] = []
 ): GameItem[] {
+    // Filter out excluded items
+    const availableItems = excludedNames.length > 0 
+        ? wasteList.filter(item => !excludedNames.includes(item.nl))
+        : wasteList;
+    
+    // If we don't have enough items after filtering, use all available
+    const itemsToUse = availableItems.length >= count ? availableItems : wasteList;
+    
     // Shuffle the array
-    const shuffled = [...wasteList].sort(() => Math.random() - 0.5);
+    const shuffled = [...itemsToUse].sort(() => Math.random() - 0.5);
     
     // Take first N items
     const selected = shuffled.slice(0, count);
