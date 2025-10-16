@@ -1,0 +1,750 @@
+[
+  {
+    "type": "grofvuil",
+    "name": "Batteries"
+  },
+  {
+    "type": "e-waste",
+    "name": "Computer"
+  },
+  {
+    "type": "e-waste",
+    "name": "Electrical Appliance"
+  },
+  {
+    "type": "e-waste",
+    "name": "Electrical Cable"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Large Household Appliance"
+  },
+  {
+    "type": "rest",
+    "name": "Watch"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Refrigerator or Freezer"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Coolant Ice machine"
+  },
+  {
+    "type": "e-waste",
+    "name": "Carbon monoxide detector"
+  },
+  {
+    "type": "e-waste",
+    "name": "Mobile Phone"
+  },
+  {
+    "type": "rest",
+    "name": "Modem"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Monoblock Heat Pump Or Air Conditioner"
+  },
+  {
+    "type": "rest",
+    "name": "Split Unit Heat Pump Or Air Conditioner"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Home battery"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Solar collector"
+  },
+  {
+    "type": "rest",
+    "name": "Protective Agent Against Virus"
+  },
+  {
+    "type": "rest",
+    "name": "Big Bag"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Brita Water Filter"
+  },
+  {
+    "type": "rest",
+    "name": "Coldpack"
+  },
+  {
+    "type": "rest",
+    "name": "Door Push Strip"
+  },
+  {
+    "type": "rest",
+    "name": "CD Case Or Cassette Tape Case"
+  },
+  {
+    "type": "rest",
+    "name": "CD or DVD"
+  },
+  {
+    "type": "rest",
+    "name": "Cassette Tape or Video Tape"
+  },
+  {
+    "type": "rest",
+    "name": "Diskette"
+  },
+  {
+    "type": "rest",
+    "name": "Vinyl Record"
+  },
+  {
+    "type": "rest",
+    "name": "Photo And Film Material"
+  },
+  {
+    "type": "kca",
+    "name": "Hypodermic Needle"
+  },
+  {
+    "type": "rest",
+    "name": "Magnet"
+  },
+  {
+    "type": "rest",
+    "name": "Radioactive Products"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Motorized device"
+  },
+  {
+    "type": "grofvuil",
+    "name": "TL Fluorescent Or LED Lamp"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Tools"
+  },
+  {
+    "type": "rest",
+    "name": "Incandescent Or Halogen Bulb"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Wallpaper Wall Covering"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Floor Covering"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Furniture"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Mattress"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Mattress Protector"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Duvet And Pillow"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Mirror"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Pan"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Carpet"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Tent Cotton Or Plastic"
+  },
+  {
+    "type": "rest",
+    "name": "Prosthesis"
+  },
+  {
+    "type": "rest",
+    "name": "Coins"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Asbestos-Containing Waste"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Construction waste"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Rubble"
+  },
+  {
+    "type": "rest",
+    "name": "Plasterboard"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Roofing Bitumen Tar"
+  },
+  {
+    "type": "rest",
+    "name": "Floral foam"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Impregnated Wood"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Wood And Wooden Board Material"
+  },
+  {
+    "type": "rest",
+    "name": "Vinyl Flooring"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Plastic Frame"
+  },
+  {
+    "type": "rest",
+    "name": "Stationery"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Flat Glass"
+  },
+  {
+    "type": "rest",
+    "name": "Glass That Is Not A Package"
+  },
+  {
+    "type": "glas",
+    "name": "Glass Vase"
+  },
+  {
+    "type": "glas",
+    "name": "Glass Bottle Or Jar"
+  },
+  {
+    "type": "papier",
+    "name": "Special Paper"
+  },
+  {
+    "type": "rest",
+    "name": "Paper Not Clean Not Dry"
+  },
+  {
+    "type": "papier",
+    "name": "Binder"
+  },
+  {
+    "type": "papier",
+    "name": "Paper And Cardboard"
+  },
+  {
+    "type": "rest",
+    "name": "Paper With Wax Layer"
+  },
+  {
+    "type": "rest",
+    "name": "Thermal Paper"
+  },
+  {
+    "type": "rest",
+    "name": "Paper With Single-Sided Plastic Layer"
+  },
+  {
+    "type": "rest",
+    "name": "Paper With Double-Sided Plastic Layer"
+  },
+  {
+    "type": "pmd",
+    "name": "Drink Carton"
+  },
+  {
+    "type": "pmd",
+    "name": "Cardboard Cup"
+  },
+  {
+    "type": "rest",
+    "name": "Cake Or Pizza Box"
+  },
+  {
+    "type": "kca",
+    "name": "Chemical Waste"
+  },
+  {
+    "type": "kca",
+    "name": "Paint And Accessories"
+  },
+  {
+    "type": "kca",
+    "name": "Glue And Sealant"
+  },
+  {
+    "type": "kca",
+    "name": "Empty Paint Can"
+  },
+  {
+    "type": "kca",
+    "name": "Fuel And Oil"
+  },
+  {
+    "type": "gft",
+    "name": "Oil And Fat"
+  },
+  {
+    "type": "kca",
+    "name": "Air Dehumidifier Liquid"
+  },
+  {
+    "type": "kca",
+    "name": "Cleaning Product Residue"
+  },
+  {
+    "type": "kca",
+    "name": "Medicine"
+  },
+  {
+    "type": "kca",
+    "name": "Nail Polish"
+  },
+  {
+    "type": "kca",
+    "name": "Product With Small Explosion Risk"
+  },
+  {
+    "type": "kca",
+    "name": "Deodorant Spray Or Other Spray Can"
+  },
+  {
+    "type": "pmd",
+    "name": "Empty Plastic Packaging of Small Chemical Waste"
+  },
+  {
+    "type": "pmd",
+    "name": "Empty Plastic Packaging Of Chemicals"
+  },
+  {
+    "type": "rest",
+    "name": "Hygiene Product"
+  },
+  {
+    "type": "rest",
+    "name": "Wet Toilet Paper"
+  },
+  {
+    "type": "rest",
+    "name": "Care Product"
+  },
+  {
+    "type": "rest",
+    "name": "Greasy Care Product"
+  },
+  {
+    "type": "gft",
+    "name": "Toilet Paper"
+  },
+  {
+    "type": "rest",
+    "name": "Cleaning Wipes"
+  },
+  {
+    "type": "rest",
+    "name": "Bandages"
+  },
+  {
+    "type": "rest",
+    "name": "Home Care Waste"
+  },
+  {
+    "type": "rest",
+    "name": "Urine"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Old Iron And Other Metals"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Iron"
+  },
+  {
+    "type": "pmd",
+    "name": "Metal Packaging"
+  },
+  {
+    "type": "pmd",
+    "name": "Aluminum Foil"
+  },
+  {
+    "type": "pmd",
+    "name": "Deposit Can"
+  },
+  {
+    "type": "rest",
+    "name": "Small Metal Object"
+  },
+  {
+    "type": "pmd",
+    "name": "Hand Pump"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Pressure Container"
+  },
+  {
+    "type": "textiel",
+    "name": "Clothing"
+  },
+  {
+    "type": "rest",
+    "name": "Down"
+  },
+  {
+    "type": "rest",
+    "name": "Moth-Infested Clothing"
+  },
+  {
+    "type": "textiel",
+    "name": "Shoes"
+  },
+  {
+    "type": "textiel",
+    "name": "Textile"
+  },
+  {
+    "type": "rest",
+    "name": "Textile Wet Or Dirty"
+  },
+  {
+    "type": "rest",
+    "name": "Fabric Remnants Smaller Than 30X30 Cm"
+  },
+  {
+    "type": "pmd",
+    "name": "Plastic Bag Trash Bag Or Foil"
+  },
+  {
+    "type": "pmd",
+    "name": "Plastic Bottle"
+  },
+  {
+    "type": "pmd",
+    "name": "Plastic Deposit Bottle"
+  },
+  {
+    "type": "pmd",
+    "name": "Plastic Tray"
+  },
+  {
+    "type": "pmd",
+    "name": "Plastic Bowl Or Tub"
+  },
+  {
+    "type": "pmd",
+    "name": "Plastic Jar"
+  },
+  {
+    "type": "pmd",
+    "name": "Plastic Yogurt Cup"
+  },
+  {
+    "type": "pmd",
+    "name": "Plastic Tube"
+  },
+  {
+    "type": "pmd",
+    "name": "Plastic Packaging"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Large Plastic Packaging"
+  },
+  {
+    "type": "rest",
+    "name": "Plastic Packaging Made Of Natural Material Not Compostable"
+  },
+  {
+    "type": "rest",
+    "name": "Compostable Plastic"
+  },
+  {
+    "type": "rest",
+    "name": "Plastic Card Or Card"
+  },
+  {
+    "type": "pmd",
+    "name": "Plastic Packaging With Recycling Logo"
+  },
+  {
+    "type": "pmd",
+    "name": "Plastic Product Recyclable"
+  },
+  {
+    "type": "rest",
+    "name": "Plastic Packaging With Metal Layer"
+  },
+  {
+    "type": "rest",
+    "name": "Paper Packaging With Plastic And Aluminum Layer, Not A Drink Carton"
+  },
+  {
+    "type": "rest",
+    "name": "Packaging Of Paper With Plastic Bubble Wrap"
+  },
+  {
+    "type": "pmd",
+    "name": "Small Plastic Packaging Component"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Large Plastic Waste"
+  },
+  {
+    "type": "rest",
+    "name": "Styrofoam"
+  },
+  {
+    "type": "rest",
+    "name": "Styrofoam Tray"
+  },
+  {
+    "type": "rest",
+    "name": "Non-Recyclable Utensil"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Large Product That Does Not Fit In The Bin"
+  },
+  {
+    "type": "gft",
+    "name": "Waste From Natural Material"
+  },
+  {
+    "type": "rest",
+    "name": "Natural Cork"
+  },
+  {
+    "type": "gft",
+    "name": "Animal Poop"
+  },
+  {
+    "type": "gft",
+    "name": "Manure From Small Pets"
+  },
+  {
+    "type": "gft",
+    "name": "Deceased Pet"
+  },
+  {
+    "type": "gft",
+    "name": "Dead Wild Animal"
+  },
+  {
+    "type": "rest",
+    "name": "Business Waste"
+  },
+  {
+    "type": "rest",
+    "name": "Residual Waste"
+  },
+  {
+    "type": "rest",
+    "name": "Sharp Object"
+  },
+  {
+    "type": "rest",
+    "name": "Crockery And Earthenware"
+  },
+  {
+    "type": "rest",
+    "name": "Candle Wax"
+  },
+  {
+    "type": "rest",
+    "name": "Tape"
+  },
+  {
+    "type": "rest",
+    "name": "Adhesive Tape"
+  },
+  {
+    "type": "rest",
+    "name": "Cheese Paper"
+  },
+  {
+    "type": "rest",
+    "name": "Litter Box Pellets"
+  },
+  {
+    "type": "gft",
+    "name": "Coffee Filter And Coffee Grounds"
+  },
+  {
+    "type": "gft",
+    "name": "Coffee Cup"
+  },
+  {
+    "type": "gft",
+    "name": "Tea Bag And Coffee Pad"
+  },
+  {
+    "type": "gft",
+    "name": "Kitchen Paper With Food Residue"
+  },
+  {
+    "type": "gft",
+    "name": "Slaughter Waste"
+  },
+  {
+    "type": "rest",
+    "name": "Ash Burnt Material"
+  },
+  {
+    "type": "kca",
+    "name": "Unused Fireworks"
+  },
+  {
+    "type": "rest",
+    "name": "Lit Fireworks"
+  },
+  {
+    "type": "gft",
+    "name": "Fruit Or Vegetable Net"
+  },
+  {
+    "type": "gft",
+    "name": "Coarse Garden Waste"
+  },
+  {
+    "type": "gft",
+    "name": "Ground"
+  },
+  {
+    "type": "rest",
+    "name": "Clay pebbles"
+  },
+  {
+    "type": "rest",
+    "name": "Harmful Garden Waste"
+  },
+  {
+    "type": "gft",
+    "name": "Garden Waste And Plant Remains"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Garden tools"
+  },
+  {
+    "type": "grofvuil",
+    "name": "wasp nest"
+  },
+  {
+    "type": "pmd",
+    "name": "Lids And Caps"
+  },
+  {
+    "type": "rest",
+    "name": "Paper Packaging With Plastic And Aluminium Layer, Not A Drink Carton"
+  },
+  {
+    "type": "pmd",
+    "name": "Plastic Packaging With Metal Layer"
+  },
+  {
+    "type": "rest",
+    "name": "Full Packaging"
+  },
+  {
+    "type": "pmd",
+    "name": "Wine box"
+  },
+  {
+    "type": "gft",
+    "name": "Seizure Remainder"
+  },
+  {
+    "type": "gft",
+    "name": "Kitchen waste"
+  },
+  {
+    "type": "gft",
+    "name": "Meat And Fish Waste"
+  },
+  {
+    "type": "gft",
+    "name": "Liquid Foods"
+  },
+  {
+    "type": "gft",
+    "name": "Food remains"
+  },
+  {
+    "type": "gft",
+    "name": "Dairy Remnant"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Trailer"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Battery For Moped E-Scooter Light Moped"
+  },
+  {
+    "type": "rest",
+    "name": "Car"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Car battery"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Car tire"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Fuel And Oil"
+  },
+  {
+    "type": "rest",
+    "name": "Moped and Light Moped"
+  },
+  {
+    "type": "rest",
+    "name": "Caravan"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Electric Bicycle"
+  },
+  {
+    "type": "grofvuil",
+    "name": "Bicycle"
+  },
+  {
+    "type": "rest",
+    "name": "Bicycle tire"
+  },
+  {
+    "type": "rest",
+    "name": "License plate"
+  }
+]
