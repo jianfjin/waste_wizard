@@ -27,7 +27,6 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy static game files
 COPY shootwaste.html /usr/share/nginx/html/
-COPY spaceshooter.html /usr/share/nginx/html/
 COPY images_selected /usr/share/nginx/html/images_selected
 COPY *.mp3 /usr/share/nginx/html/
 COPY *.json /usr/share/nginx/html/
