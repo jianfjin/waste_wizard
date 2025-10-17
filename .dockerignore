@@ -16,9 +16,7 @@ env/
 *.pyc
 uv.lock
 
-# Build outputs
-dist
-build
+# Build outputs (don't exclude source files!)
 .vite
 .cache
 
@@ -38,8 +36,6 @@ build
 .DS_Store
 
 # Documentation
-*.md
-!README.md
 ANALYZE_IMAGES_README.md
 EMOJI_DOWNLOAD_README.md
 EXPORT_JSON_README.md
@@ -56,9 +52,22 @@ RANKING_RESTORATION.md
 SHOOTWASTE_UPDATES.md
 WASTEGAME_CHANGES.md
 WASTE_TYPE_GUIDE_FIX.md
+DEPLOYMENT.md
 
-# Python scripts
-*.py
+# Python scripts (utility scripts, not needed for app)
+analyze_missing_images.py
+check_image_mapping.py
+create_memes.py
+download_emoji_images.py
+download_emoji_simple.py
+export_wastes_en.py
+find_and_download_images.py
+generate_manual_download_guide.py
+generate_validation_file.py
+parser.py
+process_emoji_data.py
+
+# Python config
 requirements.txt
 requirements.txt.bak
 pyproject.toml
@@ -78,25 +87,27 @@ wastes_without_images.txt
 # Meme images (if not needed for production)
 images_memes
 
-# Video files
-*.mp4
-*.m4a
+# Video files (not needed for web)
+waste_separation.mp4
+waste_separation.m4a
 
 # Validation files
 emoji_validation.md
 emoji_categories.md
 metadata.json
 
-# TypeScript source (built files are in dist)
-*.ts
-!*.d.ts
-tsconfig.json
-
-# JavaScript utilities
+# JavaScript utility scripts (not part of the app)
 check_image_mapping.js
 export_wastes_en.js
 find_and_download_missing_images.js
 process_emoji.js
+find_missing_images.ts
 
 # Backup files
-*.bak
+constants.ts.bak
+all_wastes_en.json.bak
+emoji_selected.md.bak
+emoji_validation.md.bak
+download_emoji_images.py.bak
+find_and_download_images.py.bak
+EMOJI_DOWNLOAD_README.md.bak

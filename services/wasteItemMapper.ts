@@ -76,7 +76,7 @@ const emojiMap: Record<string, string> = {
     
     // Plastic
     'plastic': '🧴',
-    'bag': '🛍️',
+    'plastic bag': '🛍️',
     'cup': '🥤',
     'straw': '🧃',
     'wrap': '📦',
