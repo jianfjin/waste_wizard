@@ -11,6 +11,12 @@ const audioCtx = typeof window !== 'undefined' ? new (window.AudioContext || (wi
 const playSound = (type: 'correct' | 'incorrect') => {
     if (!audioCtx) return;
 
+    // Check if context is running, if not, it can't play sound
+    if (audioCtx.state !== 'running') {
+        console.warn('AudioContext is not running. Sound will not be played.');
+        return;
+    }
+
     try {
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
@@ -18,14 +24,12 @@ const playSound = (type: 'correct' | 'incorrect') => {
         gainNode.connect(audioCtx.destination);
 
         if (type === 'correct') {
-            // A cheerful, rising tone for a correct answer
             oscillator.type = 'sine';
             oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // A4
             oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2);
             gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
         } else {
-            // A dissonant, falling tone for an incorrect answer
             oscillator.type = 'square';
             oscillator.frequency.setValueAtTime(220, audioCtx.currentTime);
             oscillator.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.3);
@@ -58,7 +62,31 @@ const WasteGame: React.FC = () => {
     const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
-        // Load high scores from local storage
+        // A one-time setup to unlock the AudioContext on the first user interaction.
+        const unlockAudio = () => {
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume().then(() => {
+                    // Listener is no longer needed
+                    document.removeEventListener('click', unlockAudio);
+                    document.removeEventListener('touchstart', unlockAudio);
+                    document.removeEventListener('keydown', unlockAudio);
+                });
+            }
+        };
+
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio);
+        document.addEventListener('keydown', unlockAudio);
+
+        // Cleanup on component unmount
+        return () => {
+            document.removeEventListener('click', unlockAudio);
+            document.removeEventListener('touchstart', unlockAudio);
+            document.removeEventListener('keydown', unlockAudio);
+        };
+    }, []);
+
+    useEffect(() => {
         try {
             const savedScores = localStorage.getItem('wasteWizardHighScores');
             if (savedScores) {
@@ -70,16 +98,14 @@ const WasteGame: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        // Regenerate items when language changes
         if (gameState === 'playing') {
             setItems(selectRandomWasteItems(SEARCHABLE_WASTE_LIST, 20, language, usedItemNames));
             setCurrentItemIndex(0);
-            setImageError(false); // Reset image error state
+            setImageError(false);
         }
     }, [language]);
 
     useEffect(() => {
-        // Reset image error when item changes
         setImageError(false);
     }, [currentItemIndex]);
 
@@ -119,26 +145,26 @@ const WasteGame: React.FC = () => {
             } else {
                 setGameState('finished');
             }
-        }, 2000); // Increased timeout to allow reading feedback
+        }, 2000);
         setDraggedItem(null);
     };
 
     const handleDragStart = (item: GameItem) => {
         if (feedback) return;
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
         setDraggedItem(item);
     };
 
     const handleRestart = () => {
-        // Track the item names from current game to exclude them in next game
         const currentItemNames = items.map(item => {
-            // Find the original waste item by matching the name in the current language
             const wasteItem = SEARCHABLE_WASTE_LIST.find(w => w[language] === item.nameKey);
-            return wasteItem ? wasteItem.nl : ''; // Use Dutch name for tracking
+            return wasteItem ? wasteItem.nl : '';
         }).filter(name => name !== '');
         
-        // Combine with previously used items, but limit to reasonable amount
         const allUsedNames = [...usedItemNames, ...currentItemNames];
-        const maxTrackedItems = Math.min(SEARCHABLE_WASTE_LIST.length - 20, 100); // Keep tracking reasonable
+        const maxTrackedItems = Math.min(SEARCHABLE_WASTE_LIST.length - 20, 100);
         const updatedUsedNames = allUsedNames.slice(-maxTrackedItems);
         
         setUsedItemNames(updatedUsedNames);
@@ -162,7 +188,7 @@ const WasteGame: React.FC = () => {
     };
     
     const currentItem = items[currentItemIndex];
-    const currentItemName = currentItem.nameKey; // Now using actual name instead of translation key
+    const currentItemName = currentItem.nameKey;
 
     if (gameState === 'finished') {
         const canSaveScore = score > 0 && (highScores.length < 5 || score > (highScores[highScores.length - 1]?.score ?? 0)) && nickname !== 'SAVED';
