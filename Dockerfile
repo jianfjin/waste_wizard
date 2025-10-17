@@ -27,19 +27,20 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy static game files
 COPY shootwaste.html /usr/share/nginx/html/
+COPY spaceshooter.html /usr/share/nginx/html/
 COPY images_selected /usr/share/nginx/html/images_selected
-COPY *.mp3 /usr/share/nginx/html/
-COPY *.json /usr/share/nginx/html/
+COPY *.mp3 /usr/share/nginx/html/ 2>/dev/null || true
+COPY *.json /usr/share/nginx/html/ 2>/dev/null || true
 
-# Create a non-root user
+# Create a non-root user and set up permissions
 RUN addgroup -g 1001 -S appuser && \
     adduser -S appuser -u 1001 && \
     chown -R appuser:appuser /usr/share/nginx/html && \
     chown -R appuser:appuser /var/cache/nginx && \
     chown -R appuser:appuser /var/log/nginx && \
     chown -R appuser:appuser /etc/nginx/conf.d && \
-    touch /var/run/nginx.pid && \
-    chown -R appuser:appuser /var/run/nginx.pid
+    mkdir -p /tmp && \
+    chmod 777 /tmp
 
 # Switch to non-root user
 USER appuser
