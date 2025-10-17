@@ -5,6 +5,42 @@ import { GameItem, ScoreEntry, WasteType } from '../types';
 import { TrophyIcon, CorrectIcon, IncorrectIcon } from './Icons';
 import { selectRandomWasteItems } from '../services/wasteItemMapper';
 
+// Create a single AudioContext to be reused
+const audioCtx = typeof window !== 'undefined' ? new (window.AudioContext || (window as any).webkitAudioContext)() : null;
+
+const playSound = (type: 'correct' | 'incorrect') => {
+    if (!audioCtx) return;
+
+    try {
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        if (type === 'correct') {
+            // A cheerful, rising tone for a correct answer
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // A4
+            oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2);
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        } else {
+            // A dissonant, falling tone for an incorrect answer
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(220, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.3);
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        }
+
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.4);
+    } catch (error) {
+        console.error("Failed to play sound:", error);
+    }
+};
+
+
 const WasteGame: React.FC = () => {
     const { language, t } = useContext(LanguageContext);
     const [items, setItems] = useState<GameItem[]>(() => selectRandomWasteItems(SEARCHABLE_WASTE_LIST, 20, language));
@@ -63,9 +99,11 @@ const WasteGame: React.FC = () => {
         if (draggedItem.type === binType) {
             setScore(prev => prev + 1);
             setFeedback('correct');
+            playSound('correct');
             setIncorrectAnswerInfo(null);
         } else {
             setFeedback('incorrect');
+            playSound('incorrect');
             setIncorrectAnswerInfo({ correctBin: draggedItem.type });
         }
 
