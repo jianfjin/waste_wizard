@@ -1,0 +1,103 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+.Python
+.venv
+venv/
+ENV/
+env/
+.python-version
+*.pyc
+uv.lock
+
+# Build outputs
+dist
+build
+.vite
+.cache
+
+# Development
+.git
+.gitignore
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation
+*.md
+!README.md
+ANALYZE_IMAGES_README.md
+EMOJI_DOWNLOAD_README.md
+EXPORT_JSON_README.md
+IMAGE_DOWNLOAD_README.md
+QUICK_START.md
+FIREBASE_SETUP.md
+COMPLETE_SUMMARY.md
+FINAL_SCORE_LEADERBOARD_FIX.md
+IMPLEMENTATION_SUMMARY.md
+LATEST_CHANGES.md
+LEADERBOARD_AND_SCORE_FIX.md
+NICKNAME_RESPONSE_FIX.md
+RANKING_RESTORATION.md
+SHOOTWASTE_UPDATES.md
+WASTEGAME_CHANGES.md
+WASTE_TYPE_GUIDE_FIX.md
+
+# Python scripts
+*.py
+requirements.txt
+requirements.txt.bak
+pyproject.toml
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+.pytest_cache
+.coverage
+
+# Failed downloads tracking
+failed_*.json
+missing_images.json
+wastes_without_images.txt
+
+# Meme images (if not needed for production)
+images_memes
+
+# Video files
+*.mp4
+*.m4a
+
+# Validation files
+emoji_validation.md
+emoji_categories.md
+metadata.json
+
+# TypeScript source (built files are in dist)
+*.ts
+!*.d.ts
+tsconfig.json
+
+# JavaScript utilities
+check_image_mapping.js
+export_wastes_en.js
+find_and_download_missing_images.js
+process_emoji.js
+
+# Backup files
+*.bak
