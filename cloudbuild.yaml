@@ -5,9 +5,9 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/waste-separation:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/waste-wizard:$COMMIT_SHA'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/waste-separation:latest'
+      - 'gcr.io/$PROJECT_ID/waste-wizard:latest'
       - '.'
     timeout: 600s
 
@@ -15,12 +15,12 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'gcr.io/$PROJECT_ID/waste-separation:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/waste-wizard:$COMMIT_SHA'
 
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'gcr.io/$PROJECT_ID/waste-separation:latest'
+      - 'gcr.io/$PROJECT_ID/waste-wizard:latest'
 
   # Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -28,11 +28,11 @@ steps:
     args:
       - 'run'
       - 'deploy'
-      - 'waste-separation'
+      - 'waste-wizard'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/waste-separation:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/waste-wizard:$COMMIT_SHA'
       - '--region'
-      - 'us-central1'
+      - 'europe-west4'
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
@@ -51,8 +51,8 @@ steps:
 
 # Store images in Google Container Registry
 images:
-  - 'gcr.io/$PROJECT_ID/waste-separation:$COMMIT_SHA'
-  - 'gcr.io/$PROJECT_ID/waste-separation:latest'
+  - 'gcr.io/$PROJECT_ID/waste-wizard:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/waste-wizard:latest'
 
 # Build timeout
 timeout: 1200s
