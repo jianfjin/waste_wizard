@@ -1,15 +1,15 @@
 
-
 import React, { useState, useCallback } from 'react';
 import ChatAgent from './components/ChatAgent';
 import WasteGame from './components/WasteGame';
+import ShootWaste from './components/ShootWaste';
 import InfoAndGlossary from './components/InfoAndGlossary';
 import Header from './components/Header';
 import { Language } from './types';
 import { TRANSLATIONS } from './constants';
 import { ChatBotIcon, GameIcon, InfoIcon } from './components/Icons';
 
-type Tab = 'chat' | 'game' | 'info';
+type Tab = 'chat' | 'game' | 'shoot' | 'info';
 
 export const LanguageContext = React.createContext({
   language: 'en' as Language,
@@ -33,6 +33,8 @@ const App: React.FC = () => {
         return <ChatAgent />;
       case 'game':
         return <WasteGame />;
+      case 'shoot':
+        return <ShootWaste />;
       case 'info':
         return <InfoAndGlossary />;
       default:
@@ -64,6 +66,7 @@ const App: React.FC = () => {
             <nav className="flex bg-green-600 rounded-t-lg">
               <NavButton tab="chat" icon={<ChatBotIcon />} label={t('chatTab')} />
               <NavButton tab="game" icon={<GameIcon />} label={t('gameTab')} />
+              <NavButton tab="shoot" icon={<span>🎮</span>} label="Shoot Game" />
               <NavButton tab="info" icon={<InfoIcon />} label={t('infoTab')} />
             </nav>
             <div className="p-4 sm:p-6">

@@ -178,6 +178,33 @@
             background: rgba(0, 0, 50, 0.95);
             padding: 40px;
             border: 3px solid #00ffff;
+            border-radius: 15px;
+            text-align: center;
+            color: #00ffff;
+            z-index: 1000;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+        }
+        
+        #wasteTypeGrid::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #wasteTypeGrid::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+        
+        #wasteTypeGrid::-webkit-scrollbar-thumb {
+            background: #00ffff;
+            border-radius: 4px;
+        }
+        
+        #wasteTypeGrid::-webkit-scrollbar-thumb:hover {
+            background: #00cccc;
+        }
             border-radius: 10px;
             text-align: center;
             color: #00ffff;
@@ -306,6 +333,7 @@
         <div id="ui">
             <div>Score: <span id="score">0</span></div>
             <div>Lives: <span id="lives">3</span></div>
+            <div>Accuracy: <span id="accuracy">0%</span></div>
         </div>
         
         <div id="weaponDisplay">
@@ -337,28 +365,40 @@
             <button onclick="selectLanguage('zh')">中文</button>
         </div>
         
+        <div id="wasteTypePreview" class="menu" style="display:none;">
+            <h2 id="previewTitle">Waste Types Guide</h2>
+            <p id="previewSubtitle" style="font-size: 14px; margin-bottom: 20px;">Learn the waste categories before you start!</p>
+            <div id="wasteTypeGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; max-height: 400px; overflow-y: auto; padding: 10px;">
+                <!-- Waste types will be dynamically inserted here -->
+            </div>
+            <div style="margin-top: 20px;">
+                <button id="startGameBtn" onclick="startGameFromPreview()" style="background: #00ff00; color: #000; font-weight: bold; padding: 12px 30px; font-size: 18px; margin-right: 10px; border: none; border-radius: 5px; cursor: pointer;">Start Game</button>
+                <button id="skipBtn" onclick="startGameFromPreview()" style="background: #ffaa00; color: #000; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Skip</button>
+            </div>
+        </div>
+        
         <div id="gameOver" class="menu" style="display:none;">
             <h1 id="gameOverTitle">Game Over</h1>
             <p id="finalScore"></p>
-            <button onclick="restartGame()" style="display:none;" id="gameOverRestartBtn">Play Again</button>
-            <button onclick="location.reload()" style="display:none;" id="gameOverChangeBtn">Change Language</button>
+            <button onclick="restartGame()" id="gameOverRestartBtn">Play Again</button>
+            <button onclick="location.reload()" id="gameOverChangeBtn">Change Language</button>
         </div>
         
         <div id="victory" class="menu" style="display:none;">
             <h1 id="victoryTitle">Victory!</h1>
             <p id="victoryScore"></p>
-            <button onclick="restartGame()" style="display:none;" id="victoryRestartBtn">Play Again</button>
-            <button onclick="location.reload()" style="display:none;" id="victoryChangeBtn">Change Language</button>
+            <button onclick="restartGame()" id="victoryRestartBtn">Play Again</button>
+            <button onclick="location.reload()" id="victoryChangeBtn">Change Language</button>
         </div>
         
-        <div id="nicknamePrompt" class="menu" style="display:none;">
+        <div id="nicknamePrompt" class="menu" style="display:none; z-index: 1100;">
             <h2>Enter Your Nickname</h2>
             <input type="text" id="nicknameInput" maxlength="15" placeholder="Your Name" style="padding: 10px; font-size: 18px; margin: 10px 0; width: 80%;">
             <br>
             <button id="submitNicknameBtn" style="margin-top: 10px;">Submit</button>
         </div>
         
-        <div id="leaderboard" class="menu" style="display:none;">
+        <div id="leaderboard" class="menu" style="display:none; z-index: 1100;">
             <h2>Leaderboard</h2>
             <div id="leaderboardTable" style="margin: 20px 0; max-height: 400px; overflow-y: auto;"></div>
             <div id="playerEntry" style="margin: 10px 0; color: #ffff00; font-weight: bold;"></div>
@@ -387,6 +427,70 @@
             <button id="shootBtn" class="control-btn">🔥</button>
         </div>
     </div>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js';
+        import { getDatabase, ref, push, set, query, orderByChild, limitToLast, get } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js';
+
+        // Firebase configuration
+        // IMPORTANT: Replace with your actual Firebase project credentials
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Make Firebase functions available globally
+        window.firebaseDB = {
+            addScore: async (name, score) => {
+                try {
+                    const scoresRef = ref(database, 'leaderboard/shooting');
+                    const newScoreRef = push(scoresRef);
+                    await set(newScoreRef, {
+                        name: name.trim() || 'Anonymous',
+                        score,
+                        timestamp: Date.now(),
+                        gameType: 'shooting'
+                    });
+                    return true;
+                } catch (error) {
+                    console.error('Error adding score to Firebase:', error);
+                    return false;
+                }
+            },
+            getTopScores: async (limit = 10) => {
+                try {
+                    const scoresRef = ref(database, 'leaderboard/shooting');
+                    const topScoresQuery = query(scoresRef, orderByChild('score'), limitToLast(limit * 2));
+                    const snapshot = await get(topScoresQuery);
+                    
+                    if (!snapshot.exists()) {
+                        return [];
+                    }
+
+                    const scores = [];
+                    snapshot.forEach((childSnapshot) => {
+                        scores.push(childSnapshot.val());
+                    });
+
+                    return scores.sort((a, b) => b.score - a.score).slice(0, limit);
+                } catch (error) {
+                    console.error('Error getting scores from Firebase:', error);
+                    return [];
+                }
+            }
+        };
+    </script>
     
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -420,7 +524,11 @@
                 powerUpMissile: 'Missile Speed↑',
                 powerUpLaser: 'Laser Power↑',
                 powerUpCooling: 'Fast Cooling',
-                overheated: 'OVERHEATED!'
+                overheated: 'OVERHEATED!',
+                previewTitle: 'Waste Types Guide',
+                previewSubtitle: 'Learn the waste categories before you start!',
+                startGame: 'Start Game',
+                skip: 'Skip'
             },
             nl: {
                 gameOver: 'Game Over',
@@ -440,8 +548,12 @@
                 comboMega: 'MEGA KILL!',
                 powerUpMissile: 'Raketsnelheid↑',
                 powerUpLaser: 'Laserkracht↑',
-                powerUpCooling: 'Snelle koeling',
-                overheated: 'OVERVERHIT!'
+                powerUpCooling: 'Snelle Koeling',
+                overheated: 'OVERVERHIT!',
+                previewTitle: 'Afvaltypen Gids',
+                previewSubtitle: 'Leer de afvalcategorieën voordat je begint!',
+                startGame: 'Start Spel',
+                skip: 'Overslaan'
             },
             zh: {
                 gameOver: '游戏结束',
@@ -454,15 +566,19 @@
                 restart: '重新开始',
                 targetWaste: '目标：',
                 sessionTime: '时间：',
-                bossWarning: '最终BOSS！',
+                bossWarning: '最终Boss！',
                 comboDouble: '双杀！',
-                comboTriple: '三连杀！',
-                comboQuad: '四连杀！',
+                comboTriple: '三杀！',
+                comboQuad: '四杀！',
                 comboMega: '超级连杀！',
                 powerUpMissile: '导弹速度↑',
                 powerUpLaser: '激光威力↑',
                 powerUpCooling: '快速冷却',
-                overheated: '过热！'
+                overheated: '过热！',
+                previewTitle: '垃圾类型指南',
+                previewSubtitle: '开始前了解垃圾分类！',
+                startGame: '开始游戏',
+                skip: '跳过'
             }
         };
         
@@ -546,10 +662,6 @@
             { en: 'Meat And Fish Waste', nl: 'Vlees En Visafval', zh: '肉和鱼废料', type: 'gft', emoji: '🥩' },
             { en: 'Food remains', nl: 'Voedselresten', zh: '食物残渣', type: 'gft', emoji: '🍔' },
             { en: 'Dairy Remnant', nl: 'Zuivel Restant', zh: '乳制品残余', type: 'gft', emoji: '🍦' },
-            { en: 'Trailer', nl: 'Aanhangwagen', zh: '拖车', type: 'grofvuil', emoji: '🚚' },
-            { en: 'Car', nl: 'Auto', zh: '汽车', type: 'rest', emoji: '🚗' },
-            { en: 'Moped and Light Moped', nl: 'Brom En Snorfiets', zh: '轻便摩托车和助力车', type: 'rest', emoji: '🛵' },
-            { en: 'Caravan', nl: 'Caravan', zh: '房车', type: 'rest', emoji: '🚐' },
             { en: 'Bicycle', nl: 'Fiets', zh: '自行车', type: 'grofvuil', emoji: '🚲' }
         ];
         
@@ -577,7 +689,10 @@
             laserPowerUpTime: 0,
             coolingPowerUp: false,
             coolingPowerUpTime: 0,
-            lastLifeScore: 0 // Track when last bonus life was awarded
+            lastLifeScore: 0, // Track when last bonus life was awarded
+            correctKills: 0, // Track correct type kills
+            totalKills: 0,    // Track all kills
+            lastTime: 0
         };
         
         // Player
@@ -616,7 +731,91 @@
         function selectLanguage(lang) {
             currentLanguage = lang;
             document.getElementById('languageSelect').style.display = 'none';
+            
+            // Show waste type preview
+            showWasteTypePreview();
+        }
+        
+        // Show waste type preview screen
+        function showWasteTypePreview() {
+            const previewDiv = document.getElementById('wasteTypePreview');
+            const gridDiv = document.getElementById('wasteTypeGrid');
+            
+            // Update preview text with translations
+            document.getElementById('previewTitle').textContent = t('previewTitle');
+            document.getElementById('previewSubtitle').textContent = t('previewSubtitle');
+            document.getElementById('startGameBtn').textContent = t('startGame');
+            document.getElementById('skipBtn').textContent = t('skip');
+            
+            // Group waste by type
+            const wasteByType = {};
+            wasteData.forEach(item => {
+                if (!wasteByType[item.type]) {
+                    wasteByType[item.type] = [];
+                }
+                wasteByType[item.type].push(item);
+            });
+            
+            // Create waste type cards
+            let html = '';
+            const typeNames = {
+                'gft': { en: 'Organic', nl: 'GFT', zh: '有机垃圾' },
+                'papier': { en: 'Paper', nl: 'Papier', zh: '纸类' },
+                'pmd': { en: 'Plastic/Metal', nl: 'PMD', zh: '塑料金属' },
+                'glas': { en: 'Glass', nl: 'Glas', zh: '玻璃' },
+                'textiel': { en: 'Textile', nl: 'Textiel', zh: '纺织品' },
+                'rest': { en: 'Residual', nl: 'Restafval', zh: '其他垃圾' },
+                'e-waste': { en: 'E-waste', nl: 'E-afval', zh: '电子垃圾' },
+                'kca': { en: 'Hazardous', nl: 'KCA', zh: '有害垃圾' },
+                'grofvuil': { en: 'Bulky', nl: 'Grofvuil', zh: '大件垃圾' }
+            };
+            
+            Object.keys(wasteByType).forEach(type => {
+                const typeName = typeNames[type] ? typeNames[type][currentLanguage] : type;
+                const items = wasteByType[type];
+                
+                const colorMap = {
+                    'gft': '#8B4513',
+                    'papier': '#4169E1',
+                    'pmd': '#FFA500',
+                    'glas': '#00CED1',
+                    'textiel': '#9370DB',
+                    'rest': '#696969',
+                    'e-waste': '#DC143C',
+                    'kca': '#FF1493',
+                    'grofvuil': '#556B2F'
+                };
+                
+                const bgColor = colorMap[type] || '#666666';
+                
+                // Create HTML for items with emoji and names (show all items, no limit)
+                let itemsHtml = '';
+                items.forEach(item => {
+                    const itemName = item[currentLanguage] || item.en || item.name;
+                    itemsHtml += `<div style="display: inline-flex; flex-direction: column; align-items: center; margin: 5px; max-width: 70px;">
+                        <span style="font-size: 24px;">${item.emoji}</span>
+                        <span style="font-size: 9px; line-height: 1.2; margin-top: 2px; word-wrap: break-word; text-align: center;">${itemName}</span>
+                    </div>`;
+                });
+                
+                html += `
+                    <div style="background: ${bgColor}; color: white; padding: 10px; border-radius: 8px; text-align: center;">
+                        <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${typeName}</div>
+                        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 3px;">${itemsHtml}</div>
+                        <div style="font-size: 12px; margin-top: 5px; opacity: 0.8;">${items.length} items</div>
+                    </div>
+                `;
+            });
+            
+            gridDiv.innerHTML = html;
+            previewDiv.style.display = 'block';
+        }
+        
+        // Start game from preview
+        function startGameFromPreview() {
+            document.getElementById('wasteTypePreview').style.display = 'none';
             startNewSession();
+            gameState.lastTime = 0; // Reset lastTime
             requestAnimationFrame(gameLoop);
             
             // Start background music
@@ -839,13 +1038,39 @@
                 moveDirection: 1,
                 speed: 2,
                 shootTimer: 0,
-                shootInterval: 60
+                shootInterval: 60,
+                immuneUntil: 0,              // Timestamp when immunity ends
+                isImmune: false,              // Is boss currently immune?
+                halfHealthImmunityUsed: false, // Has 50% health immunity been triggered?
+                stealthUntil: 0,              // Timestamp when stealth ends
+                isInStealth: false,           // Is boss in stealth mode?
+                consecutiveHits: 0,           // Counter for consecutive hits
+                lastHitTime: 0                // Timestamp of last hit
             };
         }
         
         // Update boss
         function updateBoss() {
             if (!boss) return;
+            
+            const now = Date.now();
+            
+            // Check if immunity period has ended
+            if (boss.isImmune && now >= boss.immuneUntil) {
+                boss.isImmune = false;
+                showComboText('Boss vulnerable!');
+            }
+            
+            // Check if stealth period has ended
+            if (boss.isInStealth && now >= boss.stealthUntil) {
+                boss.isInStealth = false;
+                showComboText('Boss visible!');
+            }
+            
+            // Reset consecutive hits if too much time has passed (1 second)
+            if (now - boss.lastHitTime > 1000) {
+                boss.consecutiveHits = 0;
+            }
             
             boss.x += boss.moveDirection * boss.speed;
             if (boss.x <= 0 || boss.x >= canvas.width - boss.width) {
@@ -862,15 +1087,32 @@
             const healthPercent = (boss.health / boss.maxHealth) * 100;
             document.getElementById('bossHealth').style.width = healthPercent + '%';
             
+            // Update boss health bar color based on state
+            const healthBar = document.getElementById('bossHealth');
+            if (boss.isImmune) {
+                healthBar.style.background = 'linear-gradient(to right, #9900ff, #ff00ff)'; // Purple for immune
+            } else if (boss.isInStealth) {
+                healthBar.style.background = 'linear-gradient(to right, #666666, #999999)'; // Gray for stealth
+            } else {
+                healthBar.style.background = 'linear-gradient(to right, #ff0000, #ff6600)'; // Normal red
+            }
+            
             if (boss.health <= 0) {
                 bossDefeated = true;
                 gameState.victory = true;
-                document.getElementById('victory').style.display = 'block';
-                document.getElementById('victoryScore').textContent = `${t('finalScore')} ${gameState.score}`;
+                const accuracy = gameState.totalKills > 0 
+                    ? (gameState.correctKills / gameState.totalKills)
+                    : 0;
+                const finalScore = Math.round(gameState.score * accuracy * accuracy);
+                document.getElementById('victoryScore').innerHTML = `
+                    ${t('finalScore')} ${finalScore}<br>
+                    <small>Base Score: ${gameState.score} | Accuracy: ${(accuracy * 100).toFixed(1)}%</small>
+                `;
                 document.getElementById('bossLabel').style.display = 'none';
                 document.getElementById('bossHealthBar').style.display = 'none';
+                document.getElementById('victory').style.display = 'block';
                 // Prompt for nickname and show leaderboard
-                setTimeout(() => promptNicknameAndSave(gameState.score), 500);
+                setTimeout(() => promptNicknameAndSave(finalScore), 500);
             }
         }
         
@@ -1054,7 +1296,7 @@
         }
         
         // Update game
-        function update() {
+        function update(deltaTime) {
             if (gameState.paused || gameState.gameOver || gameState.victory) return;
             
             // Update player movement (arrow keys only move, don't rotate)
@@ -1169,8 +1411,12 @@
                         }
                         
                         if (enemy.health <= 0) {
+                            // Track total kills
+                            gameState.totalKills++;
+                            
                             // Check if correct type
                             if (enemy.wasteType === gameState.targetType) {
+                                gameState.correctKills++;
                                 gameState.score += 10;
                                 gameState.comboKills.push(Date.now());
                                 
@@ -1225,10 +1471,17 @@
                     
                     if (gameState.lives <= 0) {
                         gameState.gameOver = true;
+                        const accuracy = gameState.totalKills > 0 
+                            ? (gameState.correctKills / gameState.totalKills)
+                            : 0;
+                        const finalScore = Math.round(gameState.score * accuracy * accuracy);
+                        document.getElementById('finalScore').innerHTML = `
+                            ${t('finalScore')} ${finalScore}<br>
+                            <small>Base Score: ${gameState.score} | Accuracy: ${(accuracy * 100).toFixed(1)}%</small>
+                        `;
                         document.getElementById('gameOver').style.display = 'block';
-                        document.getElementById('finalScore').textContent = `${t('finalScore')} ${gameState.score}`;
                         // Prompt for nickname and show leaderboard
-                        setTimeout(() => promptNicknameAndSave(gameState.score), 500);
+                        setTimeout(() => promptNicknameAndSave(finalScore), 500);
                     }
                 }
             }
@@ -1240,6 +1493,11 @@
                 // Check collision with bullets
                 for (let j = player.bullets.length - 1; j >= 0; j--) {
                     const bullet = player.bullets[j];
+                    
+                    // Skip collision check if boss is in stealth mode
+                    if (boss.isInStealth) {
+                        continue;
+                    }
                     
                     let hit = false;
                     if (bullet.type === 'missile') {
@@ -1265,7 +1523,39 @@
                     }
                     
                     if (hit) {
-                        boss.health -= bullet.damage;
+                        const now = Date.now();
+                        
+                        // Only apply damage if boss is not immune
+                        if (!boss.isImmune) {
+                            boss.health -= bullet.damage;
+                            
+                            // Track consecutive hits
+                            boss.consecutiveHits++;
+                            boss.lastHitTime = now;
+                            
+                            // Check for 50% health immunity trigger
+                            if (!boss.halfHealthImmunityUsed && boss.health <= boss.maxHealth * 0.5) {
+                                boss.isImmune = true;
+                                boss.halfHealthImmunityUsed = true;
+                                boss.immuneUntil = now + 10000; // 10 seconds immunity
+                                showComboText('Boss immune for 10s!');
+                                console.log('Boss triggered 50% health immunity');
+                            }
+                            
+                            // Check for stealth mode trigger (5 consecutive hits)
+                            if (boss.consecutiveHits >= 5 && !boss.isInStealth) {
+                                boss.isInStealth = true;
+                                boss.stealthUntil = now + 5000; // 5 seconds stealth
+                                boss.consecutiveHits = 0; // Reset counter
+                                showComboText('Boss entered stealth!');
+                                console.log('Boss triggered stealth mode');
+                            }
+                        } else {
+                            // Show immunity message
+                            if (Math.random() < 0.1) { // Only show occasionally to avoid spam
+                                showComboText('Boss immune!');
+                            }
+                        }
                         
                         if (bullet.type === 'missile') {
                             player.bullets.splice(j, 1);
@@ -1494,6 +1784,22 @@
                 drawRingMeteor(meteor);
             });
         }
+
+        function gameLoop(timestamp) {
+            if (!gameState.lastTime) {
+                gameState.lastTime = timestamp;
+            }
+            const deltaTime = timestamp - gameState.lastTime;
+
+            update(deltaTime);
+            draw();
+            drawSaturnBackground();
+
+            gameState.lastTime = timestamp;
+            if (!gameState.gameOver && !gameState.victory) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
         
         // Draw game
         function draw() {
@@ -1522,16 +1828,33 @@
             if (boss) {
                 ctx.save();
                 
+                // Apply transparency if in stealth mode
+                if (boss.isInStealth) {
+                    ctx.globalAlpha = 0.0; // 30% opacity in stealth
+                }
+                
                 // UFO main disc
-                ctx.fillStyle = '#888888';
-                ctx.shadowColor = '#00ff00';
-                ctx.shadowBlur = 15;
+                let discColor = '#888888';
+                let glowColor = '#00ff00';
+                
+                // Change colors based on boss state
+                if (boss.isImmune) {
+                    discColor = '#9900ff'; // Purple when immune
+                    glowColor = '#ff00ff';
+                } else if (boss.isInStealth) {
+                    discColor = '#444444'; // Darker when in stealth
+                    glowColor = '#666666';
+                }
+                
+                ctx.fillStyle = discColor;
+                ctx.shadowColor = glowColor;
+                ctx.shadowBlur = boss.isImmune ? 25 : 15; // Stronger glow when immune
                 ctx.beginPath();
                 ctx.ellipse(boss.x + boss.width / 2, boss.y + boss.height / 2, boss.width * 0.45, boss.height * 0.25, 0, 0, Math.PI * 2);
                 ctx.fill();
                 
                 // UFO dome
-                ctx.fillStyle = '#aaaaaa';
+                ctx.fillStyle = boss.isImmune ? '#cc66ff' : (boss.isInStealth ? '#666666' : '#aaaaaa');
                 ctx.beginPath();
                 ctx.ellipse(boss.x + boss.width / 2, boss.y + boss.height * 0.35, boss.width * 0.25, boss.height * 0.2, 0, 0, Math.PI);
                 ctx.fill();
@@ -1543,7 +1866,15 @@
                     const lightX = boss.x + boss.width / 2 + Math.cos(angle) * boss.width * 0.35;
                     const lightY = boss.y + boss.height / 2 + Math.sin(angle) * boss.height * 0.15;
                     
-                    const lightColor = (Date.now() / 200 + i) % 2 < 1 ? '#00ff00' : '#ff0000';
+                    let lightColor;
+                    if (boss.isImmune) {
+                        lightColor = (Date.now() / 200 + i) % 2 < 1 ? '#ff00ff' : '#9900ff';
+                    } else if (boss.isInStealth) {
+                        lightColor = (Date.now() / 200 + i) % 2 < 1 ? '#666666' : '#333333';
+                    } else {
+                        lightColor = (Date.now() / 200 + i) % 2 < 1 ? '#00ff00' : '#ff0000';
+                    }
+                    
                     ctx.fillStyle = lightColor;
                     ctx.shadowColor = lightColor;
                     ctx.shadowBlur = 8;
@@ -1552,7 +1883,19 @@
                     ctx.fill();
                 }
                 
+                // Draw immunity shield effect
+                if (boss.isImmune) {
+                    ctx.strokeStyle = '#ff00ff';
+                    ctx.lineWidth = 3;
+                    ctx.shadowColor = '#ff00ff';
+                    ctx.shadowBlur = 20;
+                    ctx.beginPath();
+                    ctx.arc(boss.x + boss.width / 2, boss.y + boss.height / 2, boss.width * 0.6, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                
                 ctx.shadowBlur = 0;
+                ctx.globalAlpha = 1; // Reset alpha
                 ctx.restore();
             }
             
@@ -1716,6 +2059,12 @@
             document.getElementById('score').textContent = gameState.score;
             document.getElementById('lives').textContent = gameState.lives;
             
+            // Calculate and display accuracy
+            const accuracy = gameState.totalKills > 0 
+                ? ((gameState.correctKills / gameState.totalKills) * 100).toFixed(1)
+                : 0;
+            document.getElementById('accuracy').textContent = accuracy + '%';
+            
             // Update weapon display
             const weaponName = player.weaponType === 'missile' ? 'Missile' : 'Laser';
             document.getElementById('currentWeapon').textContent = weaponName;
@@ -1746,48 +2095,63 @@
         }
         
         function restartGame() {
-            gameState.score = 0;
-            gameState.lives = 5; // Reset to 5 lives
-            gameState.gameOver = false;
-            gameState.victory = false;
-            gameState.paused = false;
-            gameState.weaponHeat = 0;
-            gameState.overheated = false;
-            gameState.comboKills = [];
-            gameState.missilePowerUp = false;
-            gameState.laserPowerUp = false;
-            gameState.coolingPowerUp = false;
-            gameState.lastLifeScore = 0; // Reset bonus life counter
-            boss = null;
-            bossSpawned = false;
-            bossDefeated = false;
-            enemies = [];
-            powerUps = [];
-            particles = [];
-            player.bullets = [];
-            player.x = canvas.width / 2 - player.width / 2;
-            player.y = canvas.height - 80;
-            player.rotation = 0;
-            continuousShootStart = 0;
-            
-            document.getElementById('gameOver').style.display = 'none';
-            document.getElementById('victory').style.display = 'none';
-            document.getElementById('pauseMenu').style.display = 'none';
-            document.getElementById('bossLabel').style.display = 'none';
-            document.getElementById('bossHealthBar').style.display = 'none';
-            document.getElementById('leaderboard').style.display = 'none';
-            document.getElementById('nicknamePrompt').style.display = 'none';
-            document.getElementById('gameOverRestartBtn').style.display = 'inline-block';
-            document.getElementById('gameOverChangeBtn').style.display = 'inline-block';
-            document.getElementById('victoryRestartBtn').style.display = 'inline-block';
-            document.getElementById('victoryChangeBtn').style.display = 'inline-block';
-            
-            startNewSession();
-            updateUI();
+            // Reset game state
+    gameState.score = 0;
+    gameState.lives = 5;
+    gameState.gameOver = false;
+    gameState.victory = false;
+    gameState.paused = false;
+    gameState.targetType = '';
+    gameState.sessionTime = 30;
+    gameState.comboKills = [];
+    gameState.weaponHeat = 0;
+    gameState.overheated = false;
+    gameState.missilePowerUp = false;
+    gameState.laserPowerUp = false;
+    gameState.coolingPowerUp = false;
+    gameState.lastLifeScore = 0;
+    gameState.correctKills = 0;
+    gameState.totalKills = 0;
+
+    player.x = canvas.width / 2 - 20;
+    player.y = canvas.height - 80;
+    player.bullets = [];
+    player.rotation = 0;
+
+    enemies = [];
+    boss = null;
+    bossSpawned = false;
+    bossDefeated = false;
+
+    powerUps = [];
+    particles = [];
+
+    // Hide game over and victory screens
+    document.getElementById('gameOver').style.display = 'none';
+    document.getElementById('victory').style.display = 'none';
+    document.getElementById('leaderboard').style.display = 'none';
+
+    // Restart game loop
+    startNewSession();
+    gameState.lastTime = 0; // Reset lastTime
+    requestAnimationFrame(gameLoop);
         }
         
-        // Leaderboard functions
-        function getLeaderboard() {
+        // Leaderboard functions - now with Firebase support
+        async function getLeaderboard() {
+            // Try to get scores from Firebase first
+            if (window.firebaseDB) {
+                try {
+                    const firebaseScores = await window.firebaseDB.getTopScores(20);
+                    if (firebaseScores && firebaseScores.length > 0) {
+                        return firebaseScores;
+                    }
+                } catch (error) {
+                    console.log('Firebase not available, using localStorage');
+                }
+            }
+            
+            // Fallback to localStorage
             try {
                 const scores = JSON.parse(localStorage.getItem('shootwaste_scores') || '[]');
                 return Array.isArray(scores) ? scores : [];
@@ -1797,15 +2161,33 @@
         }
         
         function saveLeaderboard(scores) {
+            // Save to localStorage as backup
             localStorage.setItem('shootwaste_scores', JSON.stringify(scores));
         }
         
         function addScoreToLeaderboard(name, score) {
-            let scores = getLeaderboard();
+            // Try Firebase in background but don't wait
+            if (window.firebaseDB) {
+                window.firebaseDB.addScore(name, score).then(() => {
+                    console.log('Score saved to Firebase successfully');
+                }).catch(error => {
+                    console.error('Failed to save to Firebase:', error);
+                });
+            }
+            
+            // Save to localStorage immediately
+            let scores = [];
+            try {
+                scores = JSON.parse(localStorage.getItem('shootwaste_scores') || '[]');
+            } catch (e) {
+                scores = [];
+            }
             scores.push({ name, score, date: Date.now() });
-            scores.sort((a, b) => b.score - a.score); // Sort by score, high to low
-            if (scores.length > 20) scores = scores.slice(0, 20); // Keep only top 20
+            scores.sort((a, b) => b.score - a.score);
+            if (scores.length > 20) scores = scores.slice(0, 20);
             saveLeaderboard(scores);
+            
+            // Return scores immediately from localStorage
             return scores;
         }
         
@@ -1813,9 +2195,21 @@
             const leaderboardDiv = document.getElementById('leaderboard');
             const leaderboardTable = document.getElementById('leaderboardTable');
             const playerEntry = document.getElementById('playerEntry');
+            
+            // Hide game over and victory screens when showing leaderboard
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('victory').style.display = 'none';
+            
+            // Show leaderboard
             leaderboardDiv.style.display = 'block';
             
-            let scores = getLeaderboard();
+            // Get scores from localStorage immediately
+            let scores = [];
+            try {
+                scores = JSON.parse(localStorage.getItem('shootwaste_scores') || '[]');
+            } catch (e) {
+                scores = [];
+            }
             scores.sort((a, b) => b.score - a.score);
             const top10 = scores.slice(0, 10);
             
@@ -1836,7 +2230,6 @@
             if (playerRank !== -1) {
                 playerEntry.innerHTML = `🏆 You ranked #${playerRank}: ${playerName} - ${playerScore} points!`;
             } else {
-                // Find player's actual rank if not in top 10
                 const idx = scores.findIndex(e => e.name === playerName && e.score === playerScore);
                 if (idx !== -1) {
                     playerEntry.innerHTML = `You ranked #${idx + 1}: ${playerName} - ${playerScore} points`;
@@ -1845,7 +2238,6 @@
                 }
             }
             
-            // Show restart buttons
             document.getElementById('gameOverRestartBtn').style.display = 'inline-block';
             document.getElementById('gameOverChangeBtn').style.display = 'inline-block';
             document.getElementById('victoryRestartBtn').style.display = 'inline-block';
@@ -1856,6 +2248,10 @@
             const promptDiv = document.getElementById('nicknamePrompt');
             const input = document.getElementById('nicknameInput');
             const submitBtn = document.getElementById('submitNicknameBtn');
+            
+            // Don't hide game over/victory screens yet - let them show with the prompt
+            // They will be hidden when showing the leaderboard
+            
             promptDiv.style.display = 'block';
             input.value = '';
             input.focus();
@@ -1864,6 +2260,11 @@
                 let name = input.value.trim();
                 if (!name) name = 'Player';
                 promptDiv.style.display = 'none';
+                // Now hide game over and victory screens before showing leaderboard
+                document.getElementById('gameOver').style.display = 'none';
+                document.getElementById('victory').style.display = 'none';
+                
+                // Call synchronously like in spaceshooter.html
                 addScoreToLeaderboard(name, score);
                 showLeaderboard(name, score);
             }
@@ -1876,6 +2277,12 @@
         
         function closeLeaderboard() {
             document.getElementById('leaderboard').style.display = 'none';
+            if (gameState.gameOver) {
+                document.getElementById('gameOver').style.display = 'block';
+            }
+            if (gameState.victory) {
+                document.getElementById('victory').style.display = 'block';
+            }
         }
     </script>
 </body>
