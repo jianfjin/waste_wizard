@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install --production && npm cache clean --force
+# Install ALL dependencies (including dev dependencies needed for build)
+RUN npm install && npm cache clean --force
 
 # Copy application files
 COPY . .
