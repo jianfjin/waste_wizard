@@ -28,8 +28,14 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy static game files
 COPY shootwaste.html /usr/share/nginx/html/
 COPY images_selected /usr/share/nginx/html/images_selected
-COPY *.mp3 /usr/share/nginx/html/ 2>/dev/null || true
-COPY *.json /usr/share/nginx/html/ 2>/dev/null || true
+
+# Copy JSON data files
+COPY all_wastes.json /usr/share/nginx/html/
+COPY all_wastes_en.json /usr/share/nginx/html/
+
+# Copy audio files (specific files we know exist)
+COPY game-music-loop-3-144252.mp3 /usr/share/nginx/html/
+COPY short-game-music-loop-38898.mp3 /usr/share/nginx/html/
 
 # Create a non-root user and set up permissions
 RUN addgroup -g 1001 -S appuser && \
