@@ -824,6 +824,54 @@
         // Audio Context for sound effects and background music
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
+        // Sound effects function
+        function playSound(type) {
+            try {
+                if (type === 'failed') {
+                    // Use Web Audio API for failed/error sound
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    oscillator.frequency.value = 150;  // Lower frequency for error
+                    oscillator.type = 'square';         // Square wave for harsh sound
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.3);
+                    return;
+                } else if (type === 'explosion') {
+                    // Use Web Audio API for explosion sound
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    oscillator.frequency.value = 100;
+                    oscillator.type = 'sawtooth';
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.2);
+                    return;
+                } else if (type === 'hit') {
+                    // Use Web Audio API for hit sound
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    oscillator.frequency.value = 200;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.1);
+                    return;
+                }
+            } catch (e) {
+                console.log('Sound error:', e);
+            }
+        }
+        
         // Background music system
         let currentMusicIndex = 0;
         let shortMusicPlayCount = 0;
@@ -1057,13 +1105,13 @@
             // Check if immunity period has ended
             if (boss.isImmune && now >= boss.immuneUntil) {
                 boss.isImmune = false;
-                showComboText('Boss vulnerable!');
+                showBossStatusText('Boss vulnerable!');
             }
             
             // Check if stealth period has ended
             if (boss.isInStealth && now >= boss.stealthUntil) {
                 boss.isInStealth = false;
-                showComboText('Boss visible!');
+                showBossStatusText('Boss visible!');
             }
             
             // Reset consecutive hits if too much time has passed (1 second)
@@ -1443,8 +1491,13 @@
                                     gameState.lastLifeScore = gameState.score;
                                     showComboText('BONUS LIFE!');
                                 }
+                                
+                                // Play explosion sound for correct hit
+                                playSound('explosion');
                             } else {
+                                // Wrong waste type - deduct points and play failed sound
                                 gameState.score -= 10;
+                                playSound('failed');
                             }
                             
                             createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
@@ -1455,7 +1508,6 @@
                             }
                             
                             enemies.splice(i, 1);
-                            playSound('explosion');
                         }
                         break;
                     }
@@ -1537,7 +1589,7 @@
                                 boss.isImmune = true;
                                 boss.halfHealthImmunityUsed = true;
                                 boss.immuneUntil = now + 10000; // 10 seconds immunity
-                                showComboText('Boss immune for 10s!');
+                                showBossStatusText('Boss immune for 10s!');
                                 console.log('Boss triggered 50% health immunity');
                             }
                             
@@ -1546,13 +1598,13 @@
                                 boss.isInStealth = true;
                                 boss.stealthUntil = now + 5000; // 5 seconds stealth
                                 boss.consecutiveHits = 0; // Reset counter
-                                showComboText('Boss entered stealth!');
+                                showBossStatusText('Boss entered stealth!');
                                 console.log('Boss triggered stealth mode');
                             }
                         } else {
                             // Show immunity message
                             if (Math.random() < 0.1) { // Only show occasionally to avoid spam
-                                showComboText('Boss immune!');
+                                showBossStatusText('Boss immune!');
                             }
                         }
                         
@@ -2035,7 +2087,7 @@
         }
         
         function showComboText(text) {
-            // Show combo text on screen
+            // Show combo text on screen (centered)
             const comboDiv = document.createElement('div');
             comboDiv.style.position = 'absolute';
             comboDiv.style.top = '50%';
@@ -2051,6 +2103,26 @@
             
             setTimeout(() => {
                 comboDiv.remove();
+            }, 2000);
+        }
+        
+        function showBossStatusText(text) {
+            // Show boss status text (top of screen, different position from combo)
+            const statusDiv = document.createElement('div');
+            statusDiv.style.position = 'absolute';
+            statusDiv.style.top = '30%';  // Higher position
+            statusDiv.style.left = '50%';
+            statusDiv.style.transform = 'translate(-50%, -50%)';
+            statusDiv.style.fontSize = '28px';
+            statusDiv.style.fontWeight = 'bold';
+            statusDiv.style.color = '#ff00ff';  // Different color (magenta)
+            statusDiv.style.textShadow = '0 0 10px #ff00ff';
+            statusDiv.style.zIndex = '200';
+            statusDiv.textContent = text;
+            document.getElementById('gameContainer').appendChild(statusDiv);
+            
+            setTimeout(() => {
+                statusDiv.remove();
             }, 2000);
         }
         
