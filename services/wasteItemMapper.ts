@@ -209,7 +209,6 @@ const emojiMap: Record<string, string> = {
     // Other
     'toy': '🧸',
     'ball': '⚽',
-    'book': '📚',
     'pen': '🖊️',
     'pencil': '✏️',
     'crayon': '🖍️',
