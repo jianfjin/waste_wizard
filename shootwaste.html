@@ -355,6 +355,7 @@
         </div>
         
         <button id="exitBtn">Exit</button>
+        <button id="pauseBtn" style="position: absolute; top: 10px; right: 90px; padding: 10px 20px; background: rgba(255, 255, 0, 0.7); border: 2px solid #ffff00; color: #000; cursor: pointer; font-size: 16px; border-radius: 5px; z-index: 1000;">Pause</button>
         
         <div id="languageSelect" class="menu">
             <h1>ShootWaste</h1>
@@ -822,76 +823,6 @@
             playBackgroundMusic();
         }
 
-        function restartGame() {
-            document.getElementById('gameOver').style.display = 'none';
-            document.getElementById('victory').style.display = 'none';
-            document.getElementById('pauseMenu').style.display = 'none';
-
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
-
-            // Reset game state
-            gameState.score = 0;
-            gameState.lives = 5;
-            gameState.gameOver = false;
-            gameState.victory = false;
-            gameState.paused = false;
-            gameState.targetType = '';
-            gameState.sessionTime = 30;
-            if (gameState.sessionTimer) {
-                clearInterval(gameState.sessionTimer);
-            }
-            gameState.sessionTimer = null;
-            gameState.comboKills = [];
-            gameState.comboTimer = 0;
-            gameState.weaponHeat = 0;
-            gameState.overheated = false;
-            gameState.cooldownTimer = 0;
-            gameState.missilePowerUp = false;
-            gameState.missilePowerUpTime = 0;
-            gameState.laserPowerUp = false;
-            gameState.laserPowerUpTime = 0;
-            gameState.coolingPowerUp = false;
-            gameState.coolingPowerUpTime = 0;
-            gameState.lastLifeScore = 0;
-            gameState.correctKills = 0;
-            gameState.totalKills = 0;
-            gameState.lastTime = 0;
-
-            // Reset player
-            player.x = canvas.width / 2 - 20;
-            player.y = canvas.height - 80;
-            player.bullets = [];
-            player.weaponType = 'missile';
-            player.rotation = 0;
-
-            // Reset enemies and boss
-            enemies = [];
-            boss = null;
-            bossSpawned = false;
-            bossDefeated = false;
-
-            // Reset power-ups
-            powerUps = [];
-            
-            // Reset particles
-            particles = [];
-
-            // Reset UI
-            updateUI();
-            document.getElementById('bossLabel').style.display = 'none';
-            document.getElementById('bossHealthBar').style.display = 'none';
-            document.getElementById('heatBar').style.width = '0%';
-            document.getElementById('powerUps').innerHTML = '';
-
-            // Restart session
-            startNewSession();
-            
-            // Restart game loop
-            animationFrameId = requestAnimationFrame(gameLoop);
-        }
-        
         // Audio Context for sound effects and background music
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
@@ -1063,6 +994,8 @@
                 location.reload();
             }
         });
+
+        document.getElementById('pauseBtn').addEventListener('click', togglePause);
         
         // Mobile controls
         const mobileButtons = document.querySelectorAll('.control-btn[data-dir]');
@@ -1100,6 +1033,7 @@
             if (gameState.gameOver || gameState.victory) return;
             gameState.paused = !gameState.paused;
             document.getElementById('pauseMenu').style.display = gameState.paused ? 'block' : 'none';
+            document.getElementById('pauseBtn').textContent = gameState.paused ? 'Resume' : 'Pause';
         }
         
         // Spawn enemy

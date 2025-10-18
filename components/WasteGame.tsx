@@ -45,6 +45,8 @@ const playSound = (type: 'correct' | 'incorrect') => {
 };
 
 
+const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
 const WasteGame: React.FC = () => {
     const { language, t } = useContext(LanguageContext);
     const [items, setItems] = useState<GameItem[]>(() => selectRandomWasteItems(SEARCHABLE_WASTE_LIST, 20, language));
@@ -58,7 +60,7 @@ const WasteGame: React.FC = () => {
     const [draggedItem, setDraggedItem] = useState<GameItem | null>(null);
     const [imageError, setImageError] = useState<boolean>(false);
     const [usedItemNames, setUsedItemNames] = useState<string[]>([]);
-    const [hoveredBin, setHoveredBin] = useState<WasteType | null>(null);
+    const [selectedItem, setSelectedItem] = useState<GameItem | null>(null);
 
     const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -150,32 +152,16 @@ const WasteGame: React.FC = () => {
         setDraggedItem(null);
     };
 
-    const handleTouchStart = (item: GameItem) => {
-        if (feedback) return;
+    const handleItemTap = (item: GameItem) => {
+        if (!isTouchDevice || feedback) return;
+        setSelectedItem(item);
         setDraggedItem(item);
     };
 
-    const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-        if (!draggedItem) return;
-        const touch = e.touches[0];
-        const element = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (element) {
-            const binType = element.getAttribute('data-bin-type');
-            if (binType) {
-                setHoveredBin(binType as WasteType);
-            } else {
-                setHoveredBin(null);
-            }
-        }
-    };
-
-    const handleTouchEnd = () => {
-        if (!draggedItem) return;
-        if (hoveredBin) {
-            handleDrop(hoveredBin);
-        }
-        setHoveredBin(null);
-        setDraggedItem(null);
+    const handleBinTap = (binType: WasteType) => {
+        if (!isTouchDevice || !selectedItem) return;
+        handleDrop(binType);
+        setSelectedItem(null);
     };
 
     const handleDragStart = (item: GameItem) => {
@@ -285,11 +271,8 @@ const WasteGame: React.FC = () => {
                     <div 
                         draggable={!feedback}
                         onDragStart={() => handleDragStart(currentItem)}
-                        onTouchStart={() => handleTouchStart(currentItem)}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handleTouchEnd}
-                        className={`w-32 h-32 flex items-center justify-center ${!feedback ? 'cursor-grab active:cursor-grabbing' : ''}`}
-                        style={{ touchAction: 'none' }}
+                        onClick={() => handleItemTap(currentItem)}
+                        className={`w-32 h-32 flex items-center justify-center ${!feedback ? 'cursor-pointer cursor-grab' : ''} ${selectedItem === currentItem ? 'ring-4 ring-blue-500' : ''}`}
                         title={currentItemName}
                     >
                        {!imageError ? (
@@ -317,10 +300,9 @@ const WasteGame: React.FC = () => {
                                 key={key}
                                 onDrop={() => handleDrop(key as WasteType)}
                                 onDragOver={(e) => e.preventDefault()}
-                                data-bin-type={key}
+                                onClick={() => handleBinTap(key as WasteType)}
                                 className={`${bin.color} text-white p-2 rounded-lg text-center font-bold flex flex-col justify-center items-center h-28 text-sm sm:text-base transition-all duration-300
                                 ${isIncorrectChoice ? (isCorrectBin ? 'ring-4 ring-offset-2 ring-green-500 animate-pulse' : 'opacity-30') : 'transform hover:scale-105'}
-                                ${hoveredBin === key ? 'ring-4 ring-offset-2 ring-blue-500' : ''}
                                 `}
                             >
                                 {t(bin.nameKey)}
