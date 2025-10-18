@@ -379,14 +379,14 @@
         <div id="gameOver" class="menu" style="display:none;">
             <h1 id="gameOverTitle">Game Over</h1>
             <p id="finalScore"></p>
-            <button onclick="restartGame()" id="gameOverRestartBtn">Play Again</button>
+            <button onclick="location.reload()" id="gameOverRestartBtn">Play Again</button>
             <button onclick="location.reload()" id="gameOverChangeBtn">Change Language</button>
         </div>
         
         <div id="victory" class="menu" style="display:none;">
             <h1 id="victoryTitle">Victory!</h1>
             <p id="victoryScore"></p>
-            <button onclick="restartGame()" id="victoryRestartBtn">Play Again</button>
+            <button onclick="location.reload()" id="victoryRestartBtn">Play Again</button>
             <button onclick="location.reload()" id="victoryChangeBtn">Change Language</button>
         </div>
         
@@ -407,7 +407,7 @@
         <div id="pauseMenu" class="menu" style="display:none;">
             <h1 id="pauseTitle">Paused</h1>
             <button onclick="togglePause()">Resume</button>
-            <button onclick="restartGame()">Restart</button>
+            <button onclick="location.reload()">Restart</button>
             <button onclick="location.reload()">Change Language</button>
         </div>
         
@@ -725,6 +725,7 @@
         let isShooting = false;
         let lastShootTime = 0;
         let continuousShootStart = 0;
+        let animationFrameId;
         
         // Language selection
         function selectLanguage(lang) {
@@ -815,10 +816,80 @@
             document.getElementById('wasteTypePreview').style.display = 'none';
             startNewSession();
             gameState.lastTime = 0; // Reset lastTime
-            requestAnimationFrame(gameLoop);
+            animationFrameId = requestAnimationFrame(gameLoop);
             
             // Start background music
             playBackgroundMusic();
+        }
+
+        function restartGame() {
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('victory').style.display = 'none';
+            document.getElementById('pauseMenu').style.display = 'none';
+
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+
+            // Reset game state
+            gameState.score = 0;
+            gameState.lives = 5;
+            gameState.gameOver = false;
+            gameState.victory = false;
+            gameState.paused = false;
+            gameState.targetType = '';
+            gameState.sessionTime = 30;
+            if (gameState.sessionTimer) {
+                clearInterval(gameState.sessionTimer);
+            }
+            gameState.sessionTimer = null;
+            gameState.comboKills = [];
+            gameState.comboTimer = 0;
+            gameState.weaponHeat = 0;
+            gameState.overheated = false;
+            gameState.cooldownTimer = 0;
+            gameState.missilePowerUp = false;
+            gameState.missilePowerUpTime = 0;
+            gameState.laserPowerUp = false;
+            gameState.laserPowerUpTime = 0;
+            gameState.coolingPowerUp = false;
+            gameState.coolingPowerUpTime = 0;
+            gameState.lastLifeScore = 0;
+            gameState.correctKills = 0;
+            gameState.totalKills = 0;
+            gameState.lastTime = 0;
+
+            // Reset player
+            player.x = canvas.width / 2 - 20;
+            player.y = canvas.height - 80;
+            player.bullets = [];
+            player.weaponType = 'missile';
+            player.rotation = 0;
+
+            // Reset enemies and boss
+            enemies = [];
+            boss = null;
+            bossSpawned = false;
+            bossDefeated = false;
+
+            // Reset power-ups
+            powerUps = [];
+            
+            // Reset particles
+            particles = [];
+
+            // Reset UI
+            updateUI();
+            document.getElementById('bossLabel').style.display = 'none';
+            document.getElementById('bossHealthBar').style.display = 'none';
+            document.getElementById('heatBar').style.width = '0%';
+            document.getElementById('powerUps').innerHTML = '';
+
+            // Restart session
+            startNewSession();
+            
+            // Restart game loop
+            animationFrameId = requestAnimationFrame(gameLoop);
         }
         
         // Audio Context for sound effects and background music
@@ -1848,7 +1919,7 @@
 
             gameState.lastTime = timestamp;
             if (!gameState.gameOver && !gameState.victory) {
-                requestAnimationFrame(gameLoop);
+                animationFrameId = requestAnimationFrame(gameLoop);
             }
         }
         
