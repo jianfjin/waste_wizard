@@ -116,6 +116,21 @@
             background: rgba(255, 255, 0, 0.6);
         }
         
+        #weaponToggleBtn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(0, 255, 0, 0.3);
+            border: 3px solid #00ff00;
+            font-size: 18px;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+            margin-top: 10px; /* Add some space between shoot and toggle */
+        }
+        
+        #weaponToggleBtn:active {
+            background: rgba(0, 255, 0, 0.6);
+        }
+        
         @media (max-width: 768px) {
             #mobileControls {
                 display: flex;
@@ -336,8 +351,8 @@
         </div>
         
         <div id="weaponDisplay">
-            Weapon: <span id="currentWeapon">Missile</span> (Q/E to switch)<br>
-            <small>Controls: Arrow keys=Move, A/D=Rotate, Space/Click=Shoot</small>
+            Weapon: <span id="currentWeapon">Missile</span><br>
+            <small>Controls: Arrow keys=Move, A/D=Rotate, Space/Click=Shoot (Mobile: D-pad=Move, Shoot button=Shoot, Toggle button=Switch Weapon)</small>
         </div>
         
         <div id="powerUps"></div>
@@ -424,6 +439,7 @@
                 <div class="control-btn" data-dir="down">▼</div>
                 <div></div>
             </div>
+            <button id="weaponToggleBtn" class="control-btn"> Missile </button>
             <button id="shootBtn" class="control-btn">🔥</button>
         </div>
     </div>
@@ -821,6 +837,7 @@
             
             // Start background music
             playBackgroundMusic();
+            updateWeaponDisplay(); // Initialize weapon display
         }
 
         // Audio Context for sound effects and background music
@@ -953,11 +970,11 @@
             // Toggle weapon with Q and E keys
             if ((e.key === 'q' || e.key === 'Q') && player.weaponType !== 'missile') {
                 player.weaponType = 'missile';
-                console.log('Weapon switched to: missile');
+                updateWeaponDisplay();
             }
             if ((e.key === 'e' || e.key === 'E') && player.weaponType !== 'laser') {
                 player.weaponType = 'laser';
-                console.log('Weapon switched to: laser');
+                updateWeaponDisplay();
             }
             // Secret: Add life with + key (not shown to players)
             if ((e.key === '+' || e.key === '=') && !gameState.gameOver && !gameState.victory) {
@@ -1028,6 +1045,21 @@
             isShooting = false;
             continuousShootStart = 0;
         });
+
+        document.getElementById('weaponToggleBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (player.weaponType === 'missile') {
+                player.weaponType = 'laser';
+            } else {
+                player.weaponType = 'missile';
+            }
+            updateWeaponDisplay();
+        });
+        
+        function updateWeaponDisplay() {
+            document.getElementById('currentWeapon').textContent = player.weaponType.charAt(0).toUpperCase() + player.weaponType.slice(1);
+            document.getElementById('weaponToggleBtn').textContent = player.weaponType.charAt(0).toUpperCase() + player.weaponType.slice(1);
+        }
         
         function togglePause() {
             if (gameState.gameOver || gameState.victory) return;
@@ -1352,11 +1384,16 @@
             if (gameState.paused || gameState.gameOver || gameState.victory) return;
             
             // Update player movement (arrow keys only move, don't rotate)
+            let movingLeft = false;
+            let movingRight = false;
+
             if (keys['ArrowLeft'] && player.x > 0) {
                 player.x -= player.speed;
+                movingLeft = true;
             }
             if (keys['ArrowRight'] && player.x < canvas.width - player.width) {
                 player.x += player.speed;
+                movingRight = true;
             }
             if (keys['ArrowUp'] && player.y > 0) {
                 player.y -= player.speed;
