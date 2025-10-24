@@ -632,7 +632,7 @@
                     this.isHost = true;
                     this.isMultiplayer = true;
                     
-                    const gameRef = push(ref(database, 'games'));
+                    const gameRef = window.firebasePush(window.firebaseRef(window.firebaseDatabase, 'games'));
                     this.gameId = gameRef.key;
                     
                     const gameData = {
@@ -670,7 +670,7 @@
                         }
                     };
                     
-                    await set(gameRef, gameData);
+                    await window.firebaseSet(gameRef, gameData);
                     this.setupGameListeners();
                     this.showCurrentLobby();
                     
@@ -692,8 +692,8 @@
                     this.isMultiplayer = true;
                     
                     // Check if game exists and has space
-                    const gameRef = ref(database, `games/${gameId}`);
-                    const snapshot = await get(gameRef);
+                    const gameRef = window.firebaseRef(window.firebaseDatabase, `games/${gameId}`);
+                    const snapshot = await window.firebaseGet(gameRef);
                     
                     if (!snapshot.exists()) {
                         throw new Error('Game not found');
@@ -705,8 +705,8 @@
                     }
                     
                     // Add player to game
-                    const playerRef = ref(database, `games/${gameId}/players/${this.playerId}`);
-                    await set(playerRef, {
+                    const playerRef = window.firebaseRef(window.firebaseDatabase, `games/${gameId}/players/${this.playerId}`);
+                    await window.firebaseSet(playerRef, {
                         nickname: this.playerNickname,
                         x: 400,
                         y: 520,
@@ -718,8 +718,8 @@
                     });
                     
                     // Update player count
-                    const currentPlayersRef = ref(database, `games/${gameId}/gameInfo/currentPlayers`);
-                    await set(currentPlayersRef, gameData.gameInfo.currentPlayers + 1);
+                    const currentPlayersRef = window.firebaseRef(window.firebaseDatabase, `games/${gameId}/gameInfo/currentPlayers`);
+                    await window.firebaseSet(currentPlayersRef, gameData.gameInfo.currentPlayers + 1);
                     
                     this.setupGameListeners();
                     this.showCurrentLobby();
@@ -738,8 +738,8 @@
                 if (!this.gameId) return;
                 
                 // Listen to players changes
-                const playersRef = ref(database, `games/${this.gameId}/players`);
-                const playersListener = onValue(playersRef, (snapshot) => {
+                const playersRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/players`);
+                const playersListener = window.firebaseOnValue(playersRef, (snapshot) => {
                     if (snapshot.exists()) {
                         const playersData = snapshot.val();
                         this.players.clear();
@@ -752,8 +752,8 @@
                 this.gameListeners.push(playersListener);
                 
                 // Listen to game state changes
-                const gameStateRef = ref(database, `games/${this.gameId}/gameState`);
-                const gameStateListener = onValue(gameStateRef, (snapshot) => {
+                const gameStateRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/gameState`);
+                const gameStateListener = window.firebaseOnValue(gameStateRef, (snapshot) => {
                     if (snapshot.exists() && this.isMultiplayer) {
                         const gameStateData = snapshot.val();
                         this.syncLocalGameState(gameStateData);
@@ -762,8 +762,8 @@
                 this.gameListeners.push(gameStateListener);
                 
                 // Listen to game info changes
-                const gameInfoRef = ref(database, `games/${this.gameId}/gameInfo`);
-                const gameInfoListener = onValue(gameInfoRef, (snapshot) => {
+                const gameInfoRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/gameInfo`);
+                const gameInfoListener = window.firebaseOnValue(gameInfoRef, (snapshot) => {
                     if (snapshot.exists()) {
                         const gameInfo = snapshot.val();
                         this.updateLobbyInfo(gameInfo);
@@ -781,8 +781,8 @@
                 if (!this.gameId || !this.playerId) return;
                 
                 try {
-                    const playerRef = ref(database, `games/${this.gameId}/players/${this.playerId}`);
-                    await update(playerRef, { 
+                    const playerRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/players/${this.playerId}`);
+                    await window.firebaseUpdate(playerRef, { 
                         x: Math.round(x), 
                         y: Math.round(y), 
                         rotation: rotation, 
@@ -798,8 +798,8 @@
                 if (!this.gameId || !this.playerId) return;
                 
                 try {
-                    const bulletRef = push(ref(database, `games/${this.gameId}/gameState/bullets`));
-                    await set(bulletRef, { 
+                    const bulletRef = window.firebasePush(window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/gameState/bullets`));
+                    await window.firebaseSet(bulletRef, { 
                         ...bulletData, 
                         playerId: this.playerId,
                         timestamp: Date.now()
@@ -843,27 +843,27 @@
                 
                 try {
                     // Remove player from game
-                    const playerRef = ref(database, `games/${this.gameId}/players/${this.playerId}`);
-                    await remove(playerRef);
+                    const playerRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/players/${this.playerId}`);
+                    await window.firebaseRemove(playerRef);
                     
                     // Update player count
-                    const gameRef = ref(database, `games/${this.gameId}`);
-                    const snapshot = await get(gameRef);
+                    const gameRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}`);
+                    const snapshot = await window.firebaseGet(gameRef);
                     if (snapshot.exists()) {
                         const gameData = snapshot.val();
                         const newPlayerCount = Math.max(0, gameData.gameInfo.currentPlayers - 1);
-                        await update(ref(database, `games/${this.gameId}/gameInfo`), {
+                        await window.firebaseUpdate(window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/gameInfo`), {
                             currentPlayers: newPlayerCount
                         });
                         
                         // If no players left, delete the game
                         if (newPlayerCount === 0) {
-                            await remove(gameRef);
+                            await window.firebaseRemove(gameRef);
                         }
                     }
                     
                     // Clean up listeners
-                    this.gameListeners.forEach(listener => off(listener));
+                    this.gameListeners.forEach(listener => window.firebaseOff(listener));
                     this.gameListeners = [];
                     
                     // Reset state
@@ -923,7 +923,7 @@
                 if (!this.isHost) return;
                 
                 try {
-                    await update(ref(database, `games/${this.gameId}/gameInfo`), {
+                    await window.firebaseUpdate(window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/gameInfo`), {
                         status: 'active'
                     });
                     
@@ -1218,6 +1218,12 @@
         window.firebaseQuery = query;
         window.firebaseOrderByChild = orderByChild;
         window.firebaseEqualTo = equalTo;
+        window.firebaseUpdate = update;
+        window.firebaseSet = set;
+        window.firebasePush = push;
+        window.firebaseRemove = remove;
+        window.firebaseOnValue = onValue;
+        window.firebaseOff = off;
         
         // Global multiplayer functions
         function showMultiplayerLobby() {
