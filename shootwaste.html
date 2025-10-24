@@ -396,6 +396,12 @@
             <button onclick="selectLanguage('en')">English</button>
             <button onclick="selectLanguage('nl')">Nederlands</button>
             <button onclick="selectLanguage('zh')">中文</button>
+            <div style="margin-top: 30px; border-top: 1px solid #00ffff; padding-top: 20px;">
+                <h3>Game Mode</h3>
+                <button onclick="showMultiplayerLobby()" style="background: linear-gradient(45deg, #ff6600, #ff9900); margin-bottom: 10px;">🎮 Multiplayer</button>
+                <br>
+                <button onclick="selectLanguage('en', true)" style="background: linear-gradient(45deg, #00ff00, #00cc00);">👤 Single Player</button>
+            </div>
         </div>
         
         <div id="wasteTypePreview" class="menu" style="display:none;">
@@ -444,6 +450,82 @@
             <button onclick="location.reload()">Restart</button>
             <button onclick="location.reload()">Change Language</button>
         </div>
+
+        <!-- Multiplayer Lobby System -->
+        <div id="multiplayerLobby" class="menu" style="display:none;">
+            <h2>Multiplayer Lobby</h2>
+            
+            <div id="playerNicknameSection" style="margin-bottom: 20px;">
+                <label for="playerNickname">Your Nickname:</label>
+                <input type="text" id="playerNickname" placeholder="Enter your nickname" maxlength="20" style="margin-left: 10px; padding: 5px;">
+            </div>
+            
+            <div id="gameCreation" class="lobby-section" style="margin-bottom: 30px; padding: 20px; border: 1px solid #00ffff; border-radius: 10px;">
+                <h3>Create Game</h3>
+                <div class="game-options" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0;">
+                    <div>
+                        <label for="gameMode">Game Mode:</label>
+                        <select id="gameMode" style="width: 100%; padding: 5px;">
+                            <option value="cooperative">Cooperative</option>
+                            <option value="competitive">Competitive</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="maxPlayers">Max Players:</label>
+                        <input type="number" id="maxPlayers" min="2" max="4" value="4" style="width: 100%; padding: 5px;">
+                    </div>
+                    
+                    <div>
+                        <label for="gameDifficulty">Difficulty:</label>
+                        <select id="gameDifficulty" style="width: 100%; padding: 5px;">
+                            <option value="easy">Easy</option>
+                            <option value="normal" selected>Normal</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="createMultiplayerGame()" class="lobby-btn" style="width: 100%; padding: 10px; margin-top: 10px;">Create Game</button>
+            </div>
+            
+            <div id="gameList" class="lobby-section" style="margin-bottom: 30px; padding: 20px; border: 1px solid #00ffff; border-radius: 10px;">
+                <h3>Join Game</h3>
+                <div id="availableGames" class="games-list" style="min-height: 100px; margin: 15px 0;">
+                    <div class="loading">Looking for games...</div>
+                </div>
+                <button onclick="refreshGameList()" class="lobby-btn" style="width: 100%; padding: 10px;">Refresh</button>
+            </div>
+            
+            <div id="currentLobby" class="lobby-section" style="display:none; padding: 20px; border: 1px solid #00ff00; border-radius: 10px;">
+                <h3>Current Lobby</h3>
+                <div id="lobbyInfo" style="margin: 15px 0;">
+                    <div id="lobbyGameMode"></div>
+                    <div id="lobbyDifficulty"></div>
+                </div>
+                <div id="lobbyPlayers" class="players-list" style="margin: 15px 0; min-height: 50px;"></div>
+                <div id="lobbyControls" style="margin-top: 20px;">
+                    <button id="startGameBtn" onclick="startMultiplayerGame()" class="lobby-btn" style="display:none; padding: 10px 20px; margin-right: 10px; background: #00ff00; color: #000;">Start Game</button>
+                    <button onclick="leaveLobby()" class="lobby-btn" style="padding: 10px 20px; background: #ff0000; color: #fff;">Leave Lobby</button>
+                </div>
+                <div id="lobbyStatus" style="margin-top: 15px; font-style: italic;"></div>
+            </div>
+            
+            <button onclick="showMainMenu()" class="lobby-btn" style="width: 100%; padding: 15px; margin-top: 20px; background: #666; color: #fff;">Back to Main Menu</button>
+        </div>
+
+        <!-- Multiplayer Game UI -->
+        <div id="multiplayerGameUI" style="display:none; position: absolute; top: 10px; left: 10px; z-index: 1000; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px;">
+            <div id="multiplayerPlayers" class="multiplayer-info" style="margin-bottom: 10px;">
+                <h4 style="margin: 0 0 5px 0; color: #00ffff;">Players:</h4>
+                <div id="playersList"></div>
+            </div>
+            <div id="multiplayerScore" class="multiplayer-info" style="margin-bottom: 10px;">
+                <h4 style="margin: 0 0 5px 0; color: #ffff00;">Team Score: <span id="teamScore">0</span></h4>
+            </div>
+            <div id="connectionStatus" class="multiplayer-info">
+                <span id="connectionIndicator" style="color: #00ff00;">🟢 Connected</span>
+            </div>
+        </div>
         
         <div id="mobileControls">
             <div id="dpad">
@@ -468,7 +550,7 @@
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js';
-        import { getDatabase, ref, push, set, query, orderByChild, limitToLast, get } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js';
+        import { getDatabase, ref, push, set, query, orderByChild, limitToLast, get, onValue, update, remove, equalTo, off } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js';
 
         // Firebase configuration
         // IMPORTANT: Replace with your actual Firebase project credentials
@@ -523,6 +605,337 @@
                 } catch (error) {
                     console.error('Error getting scores from Firebase:', error);
                     return [];
+                }
+            }
+        };
+
+        // Multiplayer Manager
+        window.multiplayerManager = {
+            gameId: null,
+            playerId: null,
+            playerNickname: '',
+            isHost: false,
+            isMultiplayer: false,
+            players: new Map(),
+            gameListeners: [],
+            
+            // Generate unique player ID
+            generatePlayerId() {
+                return 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            },
+            
+            // Create a new multiplayer game
+            async createGame(settings) {
+                try {
+                    this.playerId = this.generatePlayerId();
+                    this.playerNickname = document.getElementById('playerNickname').value.trim() || 'Player';
+                    this.isHost = true;
+                    this.isMultiplayer = true;
+                    
+                    const gameRef = push(ref(database, 'games'));
+                    this.gameId = gameRef.key;
+                    
+                    const gameData = {
+                        gameInfo: {
+                            mode: settings.mode || 'cooperative',
+                            maxPlayers: parseInt(settings.maxPlayers) || 4,
+                            currentPlayers: 1,
+                            status: 'waiting',
+                            sessionTime: 30,
+                            targetType: '',
+                            createdAt: Date.now(),
+                            language: currentLanguage,
+                            difficulty: settings.difficulty || 'normal',
+                            hostId: this.playerId
+                        },
+                        players: {
+                            [this.playerId]: {
+                                nickname: this.playerNickname,
+                                x: 400,
+                                y: 520,
+                                rotation: 0,
+                                lives: 5,
+                                connected: true,
+                                lastUpdate: Date.now(),
+                                isHost: true
+                            }
+                        },
+                        gameState: {
+                            score: 0,
+                            totalLives: 5,
+                            enemies: {},
+                            bullets: {},
+                            powerUps: {},
+                            boss: null
+                        }
+                    };
+                    
+                    await set(gameRef, gameData);
+                    this.setupGameListeners();
+                    this.showCurrentLobby();
+                    
+                    console.log('Game created with ID:', this.gameId);
+                    return true;
+                } catch (error) {
+                    console.error('Error creating game:', error);
+                    return false;
+                }
+            },
+            
+            // Join an existing game
+            async joinGame(gameId) {
+                try {
+                    this.gameId = gameId;
+                    this.playerId = this.generatePlayerId();
+                    this.playerNickname = document.getElementById('playerNickname').value.trim() || 'Player';
+                    this.isHost = false;
+                    this.isMultiplayer = true;
+                    
+                    // Check if game exists and has space
+                    const gameRef = ref(database, `games/${gameId}`);
+                    const snapshot = await get(gameRef);
+                    
+                    if (!snapshot.exists()) {
+                        throw new Error('Game not found');
+                    }
+                    
+                    const gameData = snapshot.val();
+                    if (gameData.gameInfo.currentPlayers >= gameData.gameInfo.maxPlayers) {
+                        throw new Error('Game is full');
+                    }
+                    
+                    // Add player to game
+                    const playerRef = ref(database, `games/${gameId}/players/${this.playerId}`);
+                    await set(playerRef, {
+                        nickname: this.playerNickname,
+                        x: 400,
+                        y: 520,
+                        rotation: 0,
+                        lives: 5,
+                        connected: true,
+                        lastUpdate: Date.now(),
+                        isHost: false
+                    });
+                    
+                    // Update player count
+                    const currentPlayersRef = ref(database, `games/${gameId}/gameInfo/currentPlayers`);
+                    await set(currentPlayersRef, gameData.gameInfo.currentPlayers + 1);
+                    
+                    this.setupGameListeners();
+                    this.showCurrentLobby();
+                    
+                    console.log('Joined game:', gameId);
+                    return true;
+                } catch (error) {
+                    console.error('Error joining game:', error);
+                    alert('Failed to join game: ' + error.message);
+                    return false;
+                }
+            },
+            
+            // Setup real-time listeners
+            setupGameListeners() {
+                if (!this.gameId) return;
+                
+                // Listen to players changes
+                const playersRef = ref(database, `games/${this.gameId}/players`);
+                const playersListener = onValue(playersRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const playersData = snapshot.val();
+                        this.players.clear();
+                        Object.entries(playersData).forEach(([id, playerData]) => {
+                            this.players.set(id, playerData);
+                        });
+                        this.updateLobbyDisplay();
+                    }
+                });
+                this.gameListeners.push(playersListener);
+                
+                // Listen to game state changes
+                const gameStateRef = ref(database, `games/${this.gameId}/gameState`);
+                const gameStateListener = onValue(gameStateRef, (snapshot) => {
+                    if (snapshot.exists() && this.isMultiplayer) {
+                        const gameStateData = snapshot.val();
+                        this.syncLocalGameState(gameStateData);
+                    }
+                });
+                this.gameListeners.push(gameStateListener);
+                
+                // Listen to game info changes
+                const gameInfoRef = ref(database, `games/${this.gameId}/gameInfo`);
+                const gameInfoListener = onValue(gameInfoRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const gameInfo = snapshot.val();
+                        this.updateLobbyInfo(gameInfo);
+                        
+                        if (gameInfo.status === 'active' && !gameState.gameStarted) {
+                            this.startMultiplayerGameplay();
+                        }
+                    }
+                });
+                this.gameListeners.push(gameInfoListener);
+            },
+            
+            // Update player position
+            async updatePlayerPosition(x, y, rotation) {
+                if (!this.gameId || !this.playerId) return;
+                
+                try {
+                    const playerRef = ref(database, `games/${this.gameId}/players/${this.playerId}`);
+                    await update(playerRef, { 
+                        x: Math.round(x), 
+                        y: Math.round(y), 
+                        rotation: rotation, 
+                        lastUpdate: Date.now() 
+                    });
+                } catch (error) {
+                    console.error('Error updating player position:', error);
+                }
+            },
+            
+            // Sync bullets fired
+            async fireBullet(bulletData) {
+                if (!this.gameId || !this.playerId) return;
+                
+                try {
+                    const bulletRef = push(ref(database, `games/${this.gameId}/gameState/bullets`));
+                    await set(bulletRef, { 
+                        ...bulletData, 
+                        playerId: this.playerId,
+                        timestamp: Date.now()
+                    });
+                } catch (error) {
+                    console.error('Error firing bullet:', error);
+                }
+            },
+            
+            // Sync local game state with server
+            syncLocalGameState(gameStateData) {
+                if (!gameStateData) return;
+                
+                // Update team score
+                if (gameStateData.score !== undefined) {
+                    gameState.score = gameStateData.score;
+                    document.getElementById('teamScore').textContent = gameState.score;
+                }
+                
+                // Sync bullets (other players' bullets)
+                if (gameStateData.bullets) {
+                    Object.entries(gameStateData.bullets).forEach(([bulletId, bulletData]) => {
+                        if (bulletData.playerId !== this.playerId) {
+                            // Add other players' bullets to local game
+                            const existingBullet = player.bullets.find(b => b.multiplayerId === bulletId);
+                            if (!existingBullet) {
+                                player.bullets.push({
+                                    ...bulletData,
+                                    multiplayerId: bulletId,
+                                    isRemote: true
+                                });
+                            }
+                        }
+                    });
+                }
+            },
+            
+            // Leave current game
+            async leaveGame() {
+                if (!this.gameId || !this.playerId) return;
+                
+                try {
+                    // Remove player from game
+                    const playerRef = ref(database, `games/${this.gameId}/players/${this.playerId}`);
+                    await remove(playerRef);
+                    
+                    // Update player count
+                    const gameRef = ref(database, `games/${this.gameId}`);
+                    const snapshot = await get(gameRef);
+                    if (snapshot.exists()) {
+                        const gameData = snapshot.val();
+                        const newPlayerCount = Math.max(0, gameData.gameInfo.currentPlayers - 1);
+                        await update(ref(database, `games/${this.gameId}/gameInfo`), {
+                            currentPlayers: newPlayerCount
+                        });
+                        
+                        // If no players left, delete the game
+                        if (newPlayerCount === 0) {
+                            await remove(gameRef);
+                        }
+                    }
+                    
+                    // Clean up listeners
+                    this.gameListeners.forEach(listener => off(listener));
+                    this.gameListeners = [];
+                    
+                    // Reset state
+                    this.gameId = null;
+                    this.playerId = null;
+                    this.isHost = false;
+                    this.isMultiplayer = false;
+                    this.players.clear();
+                    
+                    console.log('Left game successfully');
+                } catch (error) {
+                    console.error('Error leaving game:', error);
+                }
+            },
+            
+            // Show current lobby
+            showCurrentLobby() {
+                document.getElementById('gameCreation').style.display = 'none';
+                document.getElementById('gameList').style.display = 'none';
+                document.getElementById('currentLobby').style.display = 'block';
+                
+                if (this.isHost) {
+                    document.getElementById('startGameBtn').style.display = 'inline-block';
+                }
+            },
+            
+            // Update lobby display
+            updateLobbyDisplay() {
+                const playersDiv = document.getElementById('lobbyPlayers');
+                let html = '<h4>Players in Lobby:</h4>';
+                
+                this.players.forEach((playerData, playerId) => {
+                    const isCurrentPlayer = playerId === this.playerId;
+                    const hostBadge = playerData.isHost ? ' 👑' : '';
+                    const connectionStatus = playerData.connected ? '🟢' : '🔴';
+                    
+                    html += `<div style="margin: 5px 0; padding: 8px; background: ${isCurrentPlayer ? 'rgba(0,255,255,0.2)' : 'rgba(255,255,255,0.1)'}; border-radius: 5px;">
+                        ${connectionStatus} ${playerData.nickname}${hostBadge}
+                        ${isCurrentPlayer ? ' (You)' : ''}
+                    </div>`;
+                });
+                
+                playersDiv.innerHTML = html;
+            },
+            
+            // Update lobby info
+            updateLobbyInfo(gameInfo) {
+                document.getElementById('lobbyGameMode').textContent = `Mode: ${gameInfo.mode}`;
+                document.getElementById('lobbyDifficulty').textContent = `Difficulty: ${gameInfo.difficulty}`;
+                
+                const statusDiv = document.getElementById('lobbyStatus');
+                statusDiv.textContent = `Players: ${gameInfo.currentPlayers}/${gameInfo.maxPlayers} | Status: ${gameInfo.status}`;
+            },
+            
+            // Start multiplayer gameplay
+            async startMultiplayerGameplay() {
+                if (!this.isHost) return;
+                
+                try {
+                    await update(ref(database, `games/${this.gameId}/gameInfo`), {
+                        status: 'active'
+                    });
+                    
+                    // Hide lobby and start game
+                    document.getElementById('multiplayerLobby').style.display = 'none';
+                    document.getElementById('multiplayerGameUI').style.display = 'block';
+                    
+                    // Start the game
+                    gameState.gameStarted = true;
+                    startGameFromPreview();
+                } catch (error) {
+                    console.error('Error starting multiplayer game:', error);
                 }
             }
         };
@@ -788,12 +1201,124 @@
         let animationFrameId;
         
         // Language selection
-        function selectLanguage(lang) {
+        function selectLanguage(lang, isSinglePlayer = false) {
             currentLanguage = lang;
             document.getElementById('languageSelect').style.display = 'none';
             
-            // Show waste type preview
-            showWasteTypePreview();
+            if (isSinglePlayer) {
+                // Show waste type preview for single player
+                showWasteTypePreview();
+            }
+        }
+        
+        // Global multiplayer functions
+        function showMultiplayerLobby() {
+            document.getElementById('languageSelect').style.display = 'none';
+            document.getElementById('multiplayerLobby').style.display = 'block';
+            refreshGameList();
+        }
+        
+        function showMainMenu() {
+            // Hide all menus
+            document.getElementById('multiplayerLobby').style.display = 'none';
+            document.getElementById('currentLobby').style.display = 'none';
+            document.getElementById('multiplayerGameUI').style.display = 'none';
+            
+            // Show language selection
+            document.getElementById('languageSelect').style.display = 'block';
+            
+            // Leave current game if in one
+            if (multiplayerManager.isMultiplayer) {
+                multiplayerManager.leaveGame();
+            }
+        }
+        
+        async function createMultiplayerGame() {
+            const nickname = document.getElementById('playerNickname').value.trim();
+            if (!nickname) {
+                alert('Please enter a nickname');
+                return;
+            }
+            
+            const settings = {
+                mode: document.getElementById('gameMode').value,
+                maxPlayers: document.getElementById('maxPlayers').value,
+                difficulty: document.getElementById('gameDifficulty').value
+            };
+            
+            const success = await multiplayerManager.createGame(settings);
+            if (!success) {
+                alert('Failed to create game. Please try again.');
+            }
+        }
+        
+        async function refreshGameList() {
+            const gamesListDiv = document.getElementById('availableGames');
+            gamesListDiv.innerHTML = '<div class="loading">Looking for games...</div>';
+            
+            try {
+                const gamesRef = ref(database, 'games');
+                const snapshot = await get(query(gamesRef, orderByChild('gameInfo/status'), equalTo('waiting')));
+                
+                if (!snapshot.exists()) {
+                    gamesListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No games available. Create one!</div>';
+                    return;
+                }
+                
+                let html = '';
+                snapshot.forEach((childSnapshot) => {
+                    const gameId = childSnapshot.key;
+                    const gameData = childSnapshot.val();
+                    const gameInfo = gameData.gameInfo;
+                    
+                    // Filter by language
+                    if (gameInfo.language === currentLanguage) {
+                        html += `
+                            <div style="margin: 10px 0; padding: 15px; border: 1px solid #00ffff; border-radius: 8px; background: rgba(0,255,255,0.1);">
+                                <div style="font-weight: bold; margin-bottom: 5px;">${gameInfo.mode.charAt(0).toUpperCase() + gameInfo.mode.slice(1)} Game</div>
+                                <div style="font-size: 14px; margin-bottom: 8px;">
+                                    Players: ${gameInfo.currentPlayers}/${gameInfo.maxPlayers} | 
+                                    Difficulty: ${gameInfo.difficulty} | 
+                                    Language: ${gameInfo.language}
+                                </div>
+                                <button onclick="joinGame('${gameId}')" style="padding: 8px 16px; background: #00ff00; color: #000; border: none; border-radius: 4px; cursor: pointer;">Join Game</button>
+                            </div>
+                        `;
+                    }
+                });
+                
+                if (html === '') {
+                    gamesListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No games available in your language. Create one!</div>';
+                } else {
+                    gamesListDiv.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error refreshing game list:', error);
+                gamesListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #ff0000;">Error loading games. Please try again.</div>';
+            }
+        }
+        
+        async function joinGame(gameId) {
+            const nickname = document.getElementById('playerNickname').value.trim();
+            if (!nickname) {
+                alert('Please enter a nickname');
+                return;
+            }
+            
+            await multiplayerManager.joinGame(gameId);
+        }
+        
+        async function startMultiplayerGame() {
+            if (multiplayerManager.isHost) {
+                await multiplayerManager.startMultiplayerGameplay();
+            }
+        }
+        
+        function leaveLobby() {
+            if (confirm('Are you sure you want to leave the lobby?')) {
+                multiplayerManager.leaveGame();
+                showMainMenu();
+            }
         }
         
         // Show waste type preview screen
