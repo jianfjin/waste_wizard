@@ -5,13 +5,13 @@ import { getDatabase, ref, push, set, query, orderByChild, limitToLast, get } fr
 // IMPORTANT: Replace these with your actual Firebase project credentials
 // Get these from Firebase Console > Project Settings > General > Your apps > Firebase SDK snippet
 const firebaseConfig = {
-    apiKey: "AIzaSyAB9357TSlzfHy0ZXsJO6v1kJa6DJwbQgA",
-    authDomain: "waste-wizards-nl.firebaseapp.com",
-    databaseURL: "https://waste-wizards-nl-default-rtdb.firebaseio.com",
-    projectId: "waste-wizards-nl",
-    storageBucket: "waste-wizards-nl.firebasestorage.app",
-    messagingSenderId: "600388402623",
-    appId: "G-LQ8RNBP49X"
+    apiKey: "AIzaSyBeOfeGzsT9NzLqbFRajz_dbhJlEqRk82A",
+    authDomain: "game20250601.firebaseapp.com",
+    databaseURL: "https://game20250601-default-rtdb.firebaseio.com",
+    projectId: "game20250601",
+    storageBucket: "game20250601.firebasestorage.app",
+    messagingSenderId: "553578269459",
+    appId: "1:553578269459:web:75017156f8b91d9bc3e8e6"
 };
 
 // Initialize Firebase

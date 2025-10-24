@@ -504,7 +504,7 @@
                 </div>
                 <div id="lobbyPlayers" class="players-list" style="margin: 15px 0; min-height: 50px;"></div>
                 <div id="lobbyControls" style="margin-top: 20px;">
-                    <button id="startGameBtn" onclick="startMultiplayerGame()" class="lobby-btn" style="display:none; padding: 10px 20px; margin-right: 10px; background: #00ff00; color: #000;">Start Game</button>
+                    <button id="multiplayerStartBtn" onclick="startMultiplayerGame()" class="lobby-btn" style="display:none; padding: 10px 20px; margin-right: 10px; background: #00ff00; color: #000;">Start Game</button>
                     <button onclick="leaveLobby()" class="lobby-btn" style="padding: 10px 20px; background: #ff0000; color: #fff;">Leave Lobby</button>
                 </div>
                 <div id="lobbyStatus" style="margin-top: 15px; font-style: italic;"></div>
@@ -551,22 +551,77 @@
         // Import Firebase modules
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js';
         import { getDatabase, ref, push, set, query, orderByChild, limitToLast, get, onValue, update, remove, equalTo, off } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js';
 
         // Firebase configuration
         // IMPORTANT: Replace with your actual Firebase project credentials
         const firebaseConfig = {
-            apiKey: "AIzaSyAB9357TSlzfHy0ZXsJO6v1kJa6DJwbQgA",
-            authDomain: "waste-wizards-nl.firebaseapp.com",
-            databaseURL: "https://waste-wizards-nl-default-rtdb.firebaseio.com",
-            projectId: "waste-wizards-nl",
-            storageBucket: "waste-wizards-nl.firebasestorage.app",
-            messagingSenderId: "600388402623",
-            appId: "G-LQ8RNBP49X"
+            apiKey: "AIzaSyBeOfeGzsT9NzLqbFRajz_dbhJlEqRk82A",
+            authDomain: "game20250601.firebaseapp.com",
+            databaseURL: "https://game20250601-default-rtdb.firebaseio.com",
+            projectId: "game20250601",
+            storageBucket: "game20250601.firebasestorage.app",
+            messagingSenderId: "553578269459",
+            appId: "1:553578269459:web:75017156f8b91d9bc3e8e6"
         };
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
+        const auth = getAuth(app);
+
+        // Sign in anonymously
+        let isAuthenticated = false;
+        
+        const signInUser = async () => {
+            try {
+                await signInAnonymously(auth);
+                console.log('Successfully signed in anonymously');
+                isAuthenticated = true;
+                window.firebaseAuthenticated = true;
+            } catch (error) {
+                console.error('Error signing in anonymously:', error);
+                isAuthenticated = false;
+                window.firebaseAuthenticated = false;
+            }
+        };
+
+        // Listen for authentication state changes
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('User authenticated:', user.uid);
+                isAuthenticated = true;
+                window.firebaseAuthenticated = true;
+            } else {
+                console.log('User not authenticated');
+                isAuthenticated = false;
+                window.firebaseAuthenticated = false;
+                // Try to sign in anonymously
+                signInUser();
+            }
+        });
+
+        // Initial sign in attempt
+        signInUser();
+
+        // Make Firebase database and functions available globally
+        window.firebaseDatabase = database;
+        window.firebaseRef = ref;
+        window.firebaseGet = get;
+        window.firebaseQuery = query;
+        window.firebaseOrderByChild = orderByChild;
+        window.firebaseEqualTo = equalTo;
+        window.firebaseUpdate = update;
+        window.firebaseSet = set;
+        window.firebasePush = push;
+        window.firebaseRemove = remove;
+        window.firebaseOnValue = onValue;
+        window.firebaseOff = off;
+        window.firebaseLimitToLast = limitToLast;
+        
+        // Set Firebase initialization flag
+        window.firebaseInitialized = true;
+        console.log('Firebase functions made globally available successfully');
 
         // Make Firebase functions available globally
         window.firebaseDB = {
@@ -627,6 +682,21 @@
             // Create a new multiplayer game
             async createGame(settings) {
                 try {
+                    // Wait for Firebase to be initialized and authenticated
+                    if (!window.firebaseInitialized || !window.firebaseDatabase || !window.firebaseAuthenticated) {
+                        console.log('Waiting for Firebase initialization and authentication...');
+                        await new Promise(resolve => {
+                            const checkFirebase = () => {
+                                if (window.firebaseInitialized && window.firebaseDatabase && window.firebaseAuthenticated) {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkFirebase, 100);
+                                }
+                            };
+                            checkFirebase();
+                        });
+                    }
+                    
                     console.log('Starting game creation with settings:', settings);
                     console.log('Firebase functions available:', {
                         database: typeof window.firebaseDatabase,
@@ -767,7 +837,7 @@
                 
                 // Listen to players changes
                 const playersRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/players`);
-                const playersListener = window.firebaseOnValue(playersRef, (snapshot) => {
+                const playersUnsubscribe = window.firebaseOnValue(playersRef, (snapshot) => {
                     if (snapshot.exists()) {
                         const playersData = snapshot.val();
                         this.players.clear();
@@ -775,33 +845,45 @@
                             this.players.set(id, playerData);
                         });
                         this.updateLobbyDisplay();
+                        
+                        // Update start button visibility after player data changes
+                        if (this.isHost) {
+                            const startBtn = document.getElementById('multiplayerStartBtn');
+                            if (startBtn) {
+                                startBtn.style.display = 'inline-block';
+                            }
+                        }
                     }
                 });
-                this.gameListeners.push(playersListener);
+                this.gameListeners.push(playersUnsubscribe);
                 
                 // Listen to game state changes
                 const gameStateRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/gameState`);
-                const gameStateListener = window.firebaseOnValue(gameStateRef, (snapshot) => {
+                const gameStateUnsubscribe = window.firebaseOnValue(gameStateRef, (snapshot) => {
                     if (snapshot.exists() && this.isMultiplayer) {
                         const gameStateData = snapshot.val();
                         this.syncLocalGameState(gameStateData);
                     }
                 });
-                this.gameListeners.push(gameStateListener);
+                this.gameListeners.push(gameStateUnsubscribe);
                 
                 // Listen to game info changes
                 const gameInfoRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/gameInfo`);
-                const gameInfoListener = window.firebaseOnValue(gameInfoRef, (snapshot) => {
+                const gameInfoUnsubscribe = window.firebaseOnValue(gameInfoRef, (snapshot) => {
                     if (snapshot.exists()) {
                         const gameInfo = snapshot.val();
                         this.updateLobbyInfo(gameInfo);
                         
                         if (gameInfo.status === 'active' && !gameState.gameStarted) {
-                            this.startMultiplayerGameplay();
+                            // Hide lobby and start game for all players (not just host)
+                            document.getElementById('multiplayerLobby').style.display = 'none';
+                            document.getElementById('multiplayerGameUI').style.display = 'block';
+                            gameState.gameStarted = true;
+                            startGameFromPreview();
                         }
                     }
                 });
-                this.gameListeners.push(gameInfoListener);
+                this.gameListeners.push(gameInfoUnsubscribe);
             },
             
             // Update player position
@@ -890,8 +972,16 @@
                         }
                     }
                     
-                    // Clean up listeners
-                    this.gameListeners.forEach(listener => window.firebaseOff(listener));
+                    // Clean up listeners safely
+                    this.gameListeners.forEach(listener => {
+                        try {
+                            if (listener && typeof listener === 'function') {
+                                listener(); // Call the unsubscribe function
+                            }
+                        } catch (error) {
+                            console.error('Error cleaning up listener:', error);
+                        }
+                    });
                     this.gameListeners = [];
                     
                     // Reset state
@@ -914,7 +1004,7 @@
                 document.getElementById('currentLobby').style.display = 'block';
                 
                 if (this.isHost) {
-                    document.getElementById('startGameBtn').style.display = 'inline-block';
+                    document.getElementById('multiplayerStartBtn').style.display = 'inline-block';
                 }
             },
             
@@ -1244,7 +1334,7 @@
         
         // Initialize Firebase first, then make functions globally available
         console.log('Initializing Firebase...');
-        console.log('Database:', database);
+        console.log('Database:', window.firebaseDatabase);
         console.log('Available Firebase functions:', {
             ref: typeof ref,
             get: typeof get,
@@ -1254,36 +1344,164 @@
             onValue: typeof onValue
         });
         
-        // Ensure all Firebase functions are available
-        if (typeof database === 'undefined' || typeof ref === 'undefined' || typeof get === 'undefined') {
-            console.error('Firebase functions not properly loaded');
-            window.firebaseInitialized = false;
-            return;
+        // Firebase functions are already initialized in the module script above
+        console.log('Game script loaded, Firebase should be available');
+
+        // Global multiplayer functions (moved here to access Firebase variables)
+        function showMultiplayerLobby() {
+            console.log('Opening multiplayer lobby...');
+            
+            // Check if Firebase is ready
+            if (!window.firebaseInitialized) {
+                console.log('Firebase not ready yet, waiting...');
+                setTimeout(() => {
+                    if (window.firebaseInitialized) {
+                        showMultiplayerLobby();
+                    } else {
+                        alert('Firebase is still initializing. Please wait a moment and try again.');
+                    }
+                }, 1000);
+                return;
+            }
+            
+            // Hide main menu
+            document.getElementById('languageSelect').style.display = 'none';
+            
+            // Show multiplayer lobby
+            document.getElementById('multiplayerLobby').style.display = 'block';
+            
+            // Debug info
+            console.log('Current language:', window.currentLanguage);
+            console.log('Firebase database available:', typeof window.firebaseDatabase);
+            
+            // Check Firebase availability
+            if (!window.firebaseInitialized || typeof window.firebaseDatabase === 'undefined') {
+                console.error('Firebase not initialized. Available functions:', {
+                    firebaseInitialized: window.firebaseInitialized,
+                    firebaseDatabase: typeof window.firebaseDatabase,
+                    firebaseRef: typeof window.firebaseRef,
+                    firebaseSet: typeof window.firebaseSet,
+                    firebasePush: typeof window.firebasePush
+                });
+                alert('Firebase is not available. Multiplayer features are disabled.');
+                return;
+            }
+            
+            // Load and display available games
+            refreshGameList();
         }
-        
-        // Make Firebase database and functions available globally
-        window.firebaseDatabase = database;
-        window.firebaseRef = ref;
-        window.firebaseGet = get;
-        window.firebaseQuery = query;
-        window.firebaseOrderByChild = orderByChild;
-        window.firebaseEqualTo = equalTo;
-        window.firebaseUpdate = update;
-        window.firebaseSet = set;
-        window.firebasePush = push;
-        window.firebaseRemove = remove;
-        window.firebaseOnValue = onValue;
-        window.firebaseOff = off;
-        
-        // Set Firebase initialization flag
-        window.firebaseInitialized = true;
-        console.log('Firebase functions made globally available successfully');
-        
-        // Also set a flag when everything is ready
-        window.addEventListener('load', () => {
-            window.pageFullyLoaded = true;
-            console.log('Page fully loaded, multiplayer ready');
-        });
+
+        function showMultiplayerLobby() {
+            // Hide all menus
+            document.getElementById('languageSelect').style.display = 'none';
+            document.getElementById('multiplayerLobby').style.display = 'block';
+            
+            // Initialize lobby sections
+            document.getElementById('gameCreation').style.display = 'block';
+            document.getElementById('gameList').style.display = 'block';
+            document.getElementById('currentLobby').style.display = 'none';
+            
+            // Auto-refresh game list when entering lobby
+            refreshGameList();
+        }
+
+        async function refreshGameList() {
+            try {
+                // Wait for Firebase to be initialized and authenticated
+                if (!window.firebaseInitialized || !window.firebaseDatabase || !window.firebaseAuthenticated) {
+                    console.log('Waiting for Firebase initialization and authentication...');
+                    await new Promise(resolve => {
+                        const checkFirebase = () => {
+                            if (window.firebaseInitialized && window.firebaseDatabase && window.firebaseAuthenticated) {
+                                resolve();
+                            } else {
+                                setTimeout(checkFirebase, 100);
+                            }
+                        };
+                        checkFirebase();
+                    });
+                }
+                
+                console.log('Refreshing game list...');
+                console.log('Current language:', window.currentLanguage);
+                console.log('Firebase database:', window.firebaseDatabase);
+                
+                const gamesRef = window.firebaseRef(window.firebaseDatabase, 'games');
+                const snapshot = await window.firebaseGet(window.firebaseQuery(gamesRef, window.firebaseOrderByChild('gameInfo/status'), window.firebaseEqualTo('waiting')));
+                
+                const gamesList = document.getElementById('gamesList');
+                gamesList.innerHTML = '';
+                
+                if (snapshot.exists()) {
+                    const games = snapshot.val();
+                    Object.entries(games).forEach(([gameId, gameData]) => {
+                        const gameInfo = gameData.gameInfo;
+                        
+                        // Filter by language (optional - currently showing all)
+                        if (gameInfo.language === window.currentLanguage || true) { // Temporarily show all games
+                            const gameElement = document.createElement('div');
+                            gameElement.className = 'game-item';
+                            gameElement.innerHTML = `
+                                <h4>${gameInfo.name}</h4>
+                                <p>Players: ${gameInfo.currentPlayers}/${gameInfo.maxPlayers}</p>
+                                <p>Language: ${gameInfo.language}</p>
+                                <button onclick="joinGame('${gameId}')">Join Game</button>
+                            `;
+                            gamesList.appendChild(gameElement);
+                        }
+                    });
+                }
+                
+                if (gamesList.innerHTML === '') {
+                    gamesList.innerHTML = '<p>No games available. Create a new game!</p>';
+                }
+            } catch (error) {
+                console.error('Error loading games:', error);
+                document.getElementById('gamesList').innerHTML = '<p>Error loading games. Please try again.</p>';
+            }
+        }
+
+        function createMultiplayerGame() {
+            console.log('Creating multiplayer game...');
+            // Implementation will be added
+        }
+
+        function showMainMenu() {
+            document.getElementById('multiplayerLobby').style.display = 'none';
+            document.getElementById('languageSelect').style.display = 'block';
+        }
+
+        function leaveLobby() {
+            if (window.multiplayerManager && window.multiplayerManager.gameId) {
+                window.multiplayerManager.leaveGame();
+            } else {
+                showMainMenu();
+            }
+        }
+
+        function startMultiplayerGame() {
+            // Call the multiplayer manager's start function
+            if (window.multiplayerManager && window.multiplayerManager.isHost) {
+                window.multiplayerManager.startMultiplayerGameplay();
+            } else {
+                console.error('Only the host can start the game');
+                alert('Only the host can start the game');
+            }
+        }
+
+        function leaveLobby() {
+            if (window.multiplayerManager) {
+                window.multiplayerManager.leaveGame();
+            }
+        }
+
+        // Expose multiplayer functions globally (AFTER they are defined)
+        window.showMultiplayerLobby = showMultiplayerLobby;
+        window.createMultiplayerGame = createMultiplayerGame;
+        window.refreshGameList = refreshGameList;
+        window.showMainMenu = showMainMenu;
+        window.leaveLobby = leaveLobby;
+        window.startMultiplayerGame = startMultiplayerGame;
         
         // Global multiplayer functions
         function showMultiplayerLobby() {
@@ -1445,6 +1663,14 @@
                 showMainMenu();
             }
         }
+        
+        // Expose multiplayer functions globally (AFTER they are defined)
+        window.showMultiplayerLobby = showMultiplayerLobby;
+        window.createMultiplayerGame = createMultiplayerGame;
+        window.refreshGameList = refreshGameList;
+        window.showMainMenu = showMainMenu;
+        window.leaveLobby = leaveLobby;
+        window.startMultiplayerGame = startMultiplayerGame;
         
         // Show waste type preview screen
         function showWasteTypePreview() {
