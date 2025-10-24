@@ -731,17 +731,35 @@
             lastTime: 0
         };
         
-        // Player
+        // Mobile scale factor for better visibility on small screens
+        function getMobileScaleFactor() {
+            const isMobile = window.innerWidth <= 768;
+            return isMobile ? 1.4 : 1.0;
+        }
+        
+        // Player with mobile scaling
+        function getPlayerSize() {
+            const baseSize = 40;
+            const scaleFactor = getMobileScaleFactor();
+            return {
+                width: Math.round(baseSize * scaleFactor),
+                height: Math.round(baseSize * scaleFactor)
+            };
+        }
+        
+        const playerSize = getPlayerSize();
         const player = {
-            x: canvas.width / 2 - 20,
+            x: canvas.width / 2 - playerSize.width / 2,
             y: canvas.height - 80,
-            width: 40,
-            height: 40,
+            width: playerSize.width,
+            height: playerSize.height,
             speed: 5,
             bullets: [],
             weaponType: 'missile', // 'missile' or 'laser'
             rotation: 0, // 0 is upright
-            rotationSpeed: 0.05
+            rotationSpeed: 0.05,
+            rollAngle: 0, // For body roll effect
+            horizontalVelocity: 0 // Track horizontal movement for roll effect
         };
         
         // Enemies
@@ -1088,6 +1106,32 @@
             document.getElementById('pauseBtn').textContent = gameState.paused ? 'Resume' : 'Pause';
         }
         
+        // Get dynamic enemy size based on item type for more natural shapes
+        function getEnemySize(wasteItem) {
+            const baseSizeMobile = 40 * getMobileScaleFactor();
+            const baseSizeDesktop = 40;
+            const baseSize = window.innerWidth <= 768 ? baseSizeMobile : baseSizeDesktop;
+            
+            // Different size ratios for different waste types to make them more recognizable
+            const sizeModifiers = {
+                'grofvuil': { width: 1.4, height: 1.2 }, // Bulky items - wider and taller
+                'textiel': { width: 1.1, height: 0.8 },  // Textile - slightly wider, shorter
+                'papier': { width: 0.9, height: 1.1 },   // Paper - narrower, taller
+                'glas': { width: 0.9, height: 1.0 },     // Glass - standard but narrower
+                'pmd': { width: 1.0, height: 1.1 },      // Plastic/Metal - slightly taller
+                'gft': { width: 1.1, height: 0.9 },      // Organic - wider, shorter
+                'e-waste': { width: 1.2, height: 1.0 },  // E-waste - wider
+                'kca': { width: 0.8, height: 1.0 },      // Hazardous - smaller, more compact
+                'rest': { width: 1.0, height: 1.0 }      // Residual - standard
+            };
+            
+            const modifier = sizeModifiers[wasteItem.type] || sizeModifiers['rest'];
+            return {
+                width: Math.round(baseSize * modifier.width),
+                height: Math.round(baseSize * modifier.height)
+            };
+        }
+        
         // Spawn enemy
         function spawnEnemy() {
             if (bossSpawned || enemies.length > 15) return;
@@ -1308,11 +1352,12 @@
                 const leftX = tipX + Math.cos(player.rotation) * offsetLeft;
                 const leftY = tipY + Math.sin(player.rotation) * offsetLeft;
                 
+                const bulletScale = getMobileScaleFactor();
                 player.bullets.push({
                     x: leftX,
                     y: leftY,
-                    width: 4,
-                    height: 15,
+                    width: Math.round(4 * bulletScale),
+                    height: Math.round(15 * bulletScale),
                     dx: Math.sin(player.rotation) * 8,
                     dy: -Math.cos(player.rotation) * 8,
                     damage: 5,
@@ -1327,8 +1372,8 @@
                 player.bullets.push({
                     x: rightX,
                     y: rightY,
-                    width: 4,
-                    height: 15,
+                    width: Math.round(4 * bulletScale),
+                    height: Math.round(15 * bulletScale),
                     dx: Math.sin(player.rotation) * 8,
                     dy: -Math.cos(player.rotation) * 8,
                     damage: 5,
@@ -1338,7 +1383,9 @@
             } else {
                 // Fire laser from the tip
                 const damage = gameState.laserPowerUp ? 10 : 5;
-                const thickness = gameState.laserPowerUp ? 8 : 4;
+                const baseLaserThickness = gameState.laserPowerUp ? 8 : 4;
+                const laserScale = getMobileScaleFactor();
+                const thickness = Math.round(baseLaserThickness * laserScale);
                 player.bullets.push({
                     x: tipX,
                     y: tipY,
@@ -1406,6 +1453,9 @@
             // Update player movement (arrow keys only move, don't rotate)
             let movingLeft = false;
             let movingRight = false;
+            
+            // Track horizontal movement for body roll effect
+            let previousX = player.x;
 
             if (keys['ArrowLeft'] && player.x > 0) {
                 player.x -= player.speed;
@@ -1421,6 +1471,17 @@
             if (keys['ArrowDown'] && player.y < canvas.height - player.height) {
                 player.y += player.speed;
             }
+            
+            // Calculate horizontal velocity for body roll effect
+            player.horizontalVelocity = player.x - previousX;
+            
+            // Update roll angle based on horizontal movement
+            const maxRoll = 0.3; // Maximum roll angle in radians
+            const rollSpeed = 0.15; // How fast the roll responds to movement
+            const targetRoll = -player.horizontalVelocity * maxRoll / player.speed; // Negative for correct roll direction
+            
+            // Smoothly interpolate to target roll angle
+            player.rollAngle += (targetRoll - player.rollAngle) * rollSpeed;
             
             // Rotation controlled by A and D keys (like spaceshooter.html)
             if ((keys['a'] || keys['A']) && !(keys['d'] || keys['D'])) {
@@ -1750,22 +1811,27 @@
             updateUI();
         }
         
-        // Saturn and Ring properties (resized to make rings visible)
-        let saturn = {
-            x: 0,
-            y: 0,
-            radius: 120, // Reduced from 200 to make room for rings
-            ringInnerRadius: 150, // Adjusted to be outside saturn
-            ringOuterRadius: 250, // Adjusted proportionally
-            rotation: 0,
-            speed: 0.1
-        };
+        // Saturn and Ring properties with mobile scaling
+        function getSaturnProperties() {
+            const scaleFactor = getMobileScaleFactor();
+            return {
+                x: 0,
+                y: 0,
+                radius: Math.round(120 * scaleFactor),
+                ringInnerRadius: Math.round(150 * scaleFactor),
+                ringOuterRadius: Math.round(250 * scaleFactor),
+                rotation: 0,
+                speed: 0.1
+            };
+        }
         
-        // Satellites orbiting Saturn
+        let saturn = getSaturnProperties();
+        
+        // Satellites orbiting Saturn with mobile scaling
         let satellites = [];
         const numSatellites = 3;
-        const satelliteOrbitRadius = saturn.radius + 50; // Adjusted for new saturn size
-        const satelliteSize = 10;
+        const satelliteOrbitRadius = saturn.radius + Math.round(50 * getMobileScaleFactor());
+        const satelliteSize = Math.round(10 * getMobileScaleFactor());
         for (let i = 0; i < numSatellites; i++) {
             satellites.push({
                 angle: (Math.PI * 2 / numSatellites) * i,
@@ -1775,10 +1841,10 @@
             });
         }
         
-        // Meteors in Saturn's ring
+        // Meteors in Saturn's ring with mobile scaling
         let ringMeteors = [];
         const numRingMeteors = 50;
-        const ringMeteorSize = 2;
+        const ringMeteorSize = Math.round(2 * getMobileScaleFactor());
         for (let i = 0; i < numRingMeteors; i++) {
             ringMeteors.push({
                 angle: Math.random() * Math.PI * 2,
@@ -2017,21 +2083,42 @@
             ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
             ctx.rotate(player.rotation);
             
+            // Calculate wing scale factors based on roll angle for body roll effect
+            const baseWingScale = 1.0;
+            const rollEffectStrength = 0.4; // How much the wings scale
+            const leftWingScale = baseWingScale + (player.rollAngle * rollEffectStrength);
+            const rightWingScale = baseWingScale - (player.rollAngle * rollEffectStrength);
+            
             ctx.fillStyle = '#00ffff';
             ctx.shadowColor = '#00ffff';
             ctx.shadowBlur = 10;
             ctx.beginPath();
-            ctx.moveTo(0, -player.height / 2); // Top point
-            ctx.lineTo(-player.width / 2, player.height / 2); // Bottom-left
-            ctx.lineTo(-player.width / 4, player.height / 2 * 0.6); // Inner-left
-            ctx.lineTo(player.width / 4, player.height / 2 * 0.6); // Inner-right
-            ctx.lineTo(player.width / 2, player.height / 2); // Bottom-right
+            ctx.moveTo(0, -player.height / 2); // Top point (nose)
+            
+            // Left wing (scaled based on roll)
+            ctx.lineTo(-player.width / 2 * leftWingScale, player.height / 2); // Bottom-left wing tip
+            ctx.lineTo(-player.width / 4, player.height / 2 * 0.6); // Inner-left wing root
+            
+            // Right wing (scaled based on roll)  
+            ctx.lineTo(player.width / 4, player.height / 2 * 0.6); // Inner-right wing root
+            ctx.lineTo(player.width / 2 * rightWingScale, player.height / 2); // Bottom-right wing tip
+            
             ctx.closePath();
             ctx.fill();
             
-            // Engine glow
+            // Engine glow (scaled based on roll angle)
             ctx.fillStyle = '#ff4400';
-            ctx.fillRect(-player.width / 4, player.height / 2 * 0.6, player.width / 2, player.height * 0.2);
+            const engineWidth = player.width / 2;
+            const engineLeftScale = baseWingScale + (player.rollAngle * rollEffectStrength * 0.5); // Less effect than wings
+            const engineRightScale = baseWingScale - (player.rollAngle * rollEffectStrength * 0.5);
+            
+            // Left side of engine
+            const leftEngineWidth = engineWidth / 2 * engineLeftScale;
+            ctx.fillRect(-player.width / 4, player.height / 2 * 0.6, leftEngineWidth, player.height * 0.2);
+            
+            // Right side of engine
+            const rightEngineWidth = engineWidth / 2 * engineRightScale;
+            ctx.fillRect(0, player.height / 2 * 0.6, rightEngineWidth, player.height * 0.2);
             
             ctx.shadowBlur = 0;
             ctx.restore();
@@ -2135,13 +2222,14 @@
         }
         
         function createExplosion(x, y) {
+            const particleScale = getMobileScaleFactor();
             for (let i = 0; i < 20; i++) {
                 particles.push({
                     x: x,
                     y: y,
                     vx: (Math.random() - 0.5) * 10,
                     vy: (Math.random() - 0.5) * 10,
-                    size: Math.random() * 4 + 2,
+                    size: Math.round((Math.random() * 4 + 2) * particleScale),
                     life: 30,
                     color: `hsl(${Math.random() * 60 + 10}, 100%, 50%)`
                 });
@@ -2220,192 +2308,87 @@
             powerUpDiv.innerHTML = powerUpText;
         }
         
-        function gameLoop() {
-            drawSaturnBackground();
-            update();
-            draw();
-            requestAnimationFrame(gameLoop);
-        }
-        
-        function restartGame() {
-            // Reset game state
-    gameState.score = 0;
-    gameState.lives = 5;
-    gameState.gameOver = false;
-    gameState.victory = false;
-    gameState.paused = false;
-    gameState.targetType = '';
-    gameState.sessionTime = 30;
-    gameState.comboKills = [];
-    gameState.weaponHeat = 0;
-    gameState.overheated = false;
-    gameState.missilePowerUp = false;
-    gameState.laserPowerUp = false;
-    gameState.coolingPowerUp = false;
-    gameState.lastLifeScore = 0;
-    gameState.correctKills = 0;
-    gameState.totalKills = 0;
-
-    player.x = canvas.width / 2 - 20;
-    player.y = canvas.height - 80;
-    player.bullets = [];
-    player.rotation = 0;
-
-    enemies = [];
-    boss = null;
-    bossSpawned = false;
-    bossDefeated = false;
-
-    powerUps = [];
-    particles = [];
-
-    // Hide game over and victory screens
-    document.getElementById('gameOver').style.display = 'none';
-    document.getElementById('victory').style.display = 'none';
-    document.getElementById('leaderboard').style.display = 'none';
-
-    // Restart game loop
-    startNewSession();
-    gameState.lastTime = 0; // Reset lastTime
-    requestAnimationFrame(gameLoop);
-        }
-        
-        // Leaderboard functions - now with Firebase support
-        async function getLeaderboard() {
-            // Try to get scores from Firebase first
-            if (window.firebaseDB) {
-                try {
-                    const firebaseScores = await window.firebaseDB.getTopScores(20);
-                    if (firebaseScores && firebaseScores.length > 0) {
-                        return firebaseScores;
-                    }
-                } catch (error) {
-                    console.log('Firebase not available, using localStorage');
-                }
-            }
-            
-            // Fallback to localStorage
-            try {
-                const scores = JSON.parse(localStorage.getItem('shootwaste_scores') || '[]');
-                return Array.isArray(scores) ? scores : [];
-            } catch (e) {
-                return [];
+        // Handle URL parameters for language selection
+        function handleUrlParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const langParam = urlParams.get('lang');
+            if (langParam && ['en', 'nl', 'zh'].includes(langParam)) {
+                // Set the language but don't auto-select - show language screen first
+                currentLanguage = langParam;
+                // Show language selection screen anyway
+                document.getElementById('languageSelect').style.display = 'block';
             }
         }
         
-        function saveLeaderboard(scores) {
-            // Save to localStorage as backup
-            localStorage.setItem('shootwaste_scores', JSON.stringify(scores));
-        }
+        // Initialize URL parameter handling when page loads
+        document.addEventListener('DOMContentLoaded', handleUrlParameters);
         
-        function addScoreToLeaderboard(name, score) {
-            // Try Firebase in background but don't wait
-            if (window.firebaseDB) {
-                window.firebaseDB.addScore(name, score).then(() => {
-                    console.log('Score saved to Firebase successfully');
-                }).catch(error => {
-                    console.error('Failed to save to Firebase:', error);
-                });
-            }
-            
-            // Save to localStorage immediately
-            let scores = [];
-            try {
-                scores = JSON.parse(localStorage.getItem('shootwaste_scores') || '[]');
-            } catch (e) {
-                scores = [];
-            }
-            scores.push({ name, score, date: Date.now() });
-            scores.sort((a, b) => b.score - a.score);
-            if (scores.length > 20) scores = scores.slice(0, 20);
-            saveLeaderboard(scores);
-            
-            // Return scores immediately from localStorage
-            return scores;
-        }
-        
-        function showLeaderboard(playerName, playerScore) {
-            const leaderboardDiv = document.getElementById('leaderboard');
-            const leaderboardTable = document.getElementById('leaderboardTable');
-            const playerEntry = document.getElementById('playerEntry');
-            
-            // Hide game over and victory screens when showing leaderboard
-            document.getElementById('gameOver').style.display = 'none';
-            document.getElementById('victory').style.display = 'none';
-            
-            // Show leaderboard
-            leaderboardDiv.style.display = 'block';
-            
-            // Get scores from localStorage immediately
-            let scores = [];
-            try {
-                scores = JSON.parse(localStorage.getItem('shootwaste_scores') || '[]');
-            } catch (e) {
-                scores = [];
-            }
-            scores.sort((a, b) => b.score - a.score);
-            const top10 = scores.slice(0, 10);
-            
-            let html = '<table style="width:100%; color:#00ffff; border-collapse:collapse;">';
-            html += '<tr style="font-weight:bold; border-bottom: 2px solid #00ffff;"><td>#</td><td>Name</td><td>Score</td></tr>';
-            let playerRank = -1;
-            top10.forEach((entry, i) => {
-                const isPlayer = entry.name === playerName && entry.score === playerScore && playerRank === -1;
-                if (isPlayer) playerRank = i + 1;
-                html += `<tr style="${isPlayer ? 'color:#ffff00;font-weight:bold;' : ''} padding: 5px 0;">
-                         <td style="padding: 5px;">${i + 1}</td>
-                         <td style="padding: 5px;">${entry.name}</td>
-                         <td style="padding: 5px;">${entry.score}</td></tr>`;
-            });
-            html += '</table>';
-            leaderboardTable.innerHTML = html;
-            
-            if (playerRank !== -1) {
-                playerEntry.innerHTML = `🏆 You ranked #${playerRank}: ${playerName} - ${playerScore} points!`;
-            } else {
-                const idx = scores.findIndex(e => e.name === playerName && e.score === playerScore);
-                if (idx !== -1) {
-                    playerEntry.innerHTML = `You ranked #${idx + 1}: ${playerName} - ${playerScore} points`;
-                } else {
-                    playerEntry.innerHTML = '';
-                }
-            }
-            
-            document.getElementById('gameOverRestartBtn').style.display = 'inline-block';
-            document.getElementById('gameOverChangeBtn').style.display = 'inline-block';
-            document.getElementById('victoryRestartBtn').style.display = 'inline-block';
-            document.getElementById('victoryChangeBtn').style.display = 'inline-block';
-        }
-        
-        function promptNicknameAndSave(score) {
-            const promptDiv = document.getElementById('nicknamePrompt');
+        // Nickname and leaderboard functions
+        function promptNicknameAndSave(finalScore) {
+            const nicknamePrompt = document.getElementById('nicknamePrompt');
             const input = document.getElementById('nicknameInput');
             const submitBtn = document.getElementById('submitNicknameBtn');
             
-            // Don't hide game over/victory screens yet - let them show with the prompt
-            // They will be hidden when showing the leaderboard
-            
-            promptDiv.style.display = 'block';
-            input.value = '';
+            nicknamePrompt.style.display = 'block';
             input.focus();
             
             function submit() {
-                let name = input.value.trim();
-                if (!name) name = 'Player';
-                promptDiv.style.display = 'none';
-                // Now hide game over and victory screens before showing leaderboard
-                document.getElementById('gameOver').style.display = 'none';
-                document.getElementById('victory').style.display = 'none';
-                
-                // Call synchronously like in spaceshooter.html
-                addScoreToLeaderboard(name, score);
-                showLeaderboard(name, score);
+                const nickname = input.value.trim();
+                if (nickname) {
+                    saveScoreAndShowLeaderboard(nickname, finalScore);
+                    nicknamePrompt.style.display = 'none';
+                } else {
+                    alert('Please enter a nickname!');
+                }
             }
             
             submitBtn.onclick = submit;
             input.onkeydown = function(e) {
                 if (e.key === 'Enter') submit();
             };
+        }
+        
+        async function saveScoreAndShowLeaderboard(nickname, score) {
+            try {
+                // Save score to Firebase
+                await window.firebaseDB.addScore(nickname, score);
+                
+                // Get top scores and show leaderboard
+                const topScores = await window.firebaseDB.getTopScores(10);
+                showLeaderboard(topScores, nickname, score);
+            } catch (error) {
+                console.error('Error saving score:', error);
+                // Still show local leaderboard even if Firebase fails
+                showLeaderboard([], nickname, score);
+            }
+        }
+        
+        function showLeaderboard(scores, playerName, playerScore) {
+            const leaderboard = document.getElementById('leaderboard');
+            const table = document.getElementById('leaderboardTable');
+            const playerEntry = document.getElementById('playerEntry');
+            
+            let html = '<table style="width: 100%; border-collapse: collapse;">';
+            html += '<tr style="background: rgba(0,255,255,0.2);"><th style="padding: 8px; border: 1px solid #00ffff;">Rank</th><th style="padding: 8px; border: 1px solid #00ffff;">Name</th><th style="padding: 8px; border: 1px solid #00ffff;">Score</th></tr>';
+            
+            scores.forEach((score, index) => {
+                const isPlayer = score.name === playerName && score.score === playerScore;
+                const rowStyle = isPlayer ? 'background: rgba(255,255,0,0.3);' : '';
+                html += `<tr style="${rowStyle}"><td style="padding: 8px; border: 1px solid #00ffff;">${index + 1}</td><td style="padding: 8px; border: 1px solid #00ffff;">${score.name}</td><td style="padding: 8px; border: 1px solid #00ffff;">${score.score}</td></tr>`;
+            });
+            
+            html += '</table>';
+            table.innerHTML = html;
+            
+            // Show player's entry if not in top 10
+            const playerInTop10 = scores.some(score => score.name === playerName && score.score === playerScore);
+            if (!playerInTop10) {
+                playerEntry.textContent = `Your Score: ${playerName} - ${playerScore}`;
+            } else {
+                playerEntry.textContent = '';
+            }
+            
+            leaderboard.style.display = 'block';
         }
         
         function closeLeaderboard() {
