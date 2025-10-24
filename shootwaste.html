@@ -1211,6 +1211,14 @@
             }
         }
         
+        // Make Firebase database and functions available globally
+        window.firebaseDatabase = database;
+        window.firebaseRef = ref;
+        window.firebaseGet = get;
+        window.firebaseQuery = query;
+        window.firebaseOrderByChild = orderByChild;
+        window.firebaseEqualTo = equalTo;
+        
         // Global multiplayer functions
         function showMultiplayerLobby() {
             document.getElementById('languageSelect').style.display = 'none';
@@ -1257,8 +1265,14 @@
             gamesListDiv.innerHTML = '<div class="loading">Looking for games...</div>';
             
             try {
-                const gamesRef = ref(database, 'games');
-                const snapshot = await get(query(gamesRef, orderByChild('gameInfo/status'), equalTo('waiting')));
+                console.log('Refreshing game list...');
+                console.log('Current language:', currentLanguage);
+                console.log('Firebase database:', window.firebaseDatabase);
+                
+                const gamesRef = window.firebaseRef(window.firebaseDatabase, 'games');
+                const snapshot = await window.firebaseGet(window.firebaseQuery(gamesRef, window.firebaseOrderByChild('gameInfo/status'), window.firebaseEqualTo('waiting')));
+                
+                console.log('Snapshot exists:', snapshot.exists());
                 
                 if (!snapshot.exists()) {
                     gamesListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No games available. Create one!</div>';
@@ -1266,13 +1280,17 @@
                 }
                 
                 let html = '';
+                let gamesFound = 0;
                 snapshot.forEach((childSnapshot) => {
                     const gameId = childSnapshot.key;
                     const gameData = childSnapshot.val();
                     const gameInfo = gameData.gameInfo;
                     
-                    // Filter by language
-                    if (gameInfo.language === currentLanguage) {
+                    console.log('Found game:', gameId, gameInfo);
+                    gamesFound++;
+                    
+                    // Filter by language (show all languages for now to debug)
+                    if (gameInfo.language === currentLanguage || true) { // Temporarily show all games
                         html += `
                             <div style="margin: 10px 0; padding: 15px; border: 1px solid #00ffff; border-radius: 8px; background: rgba(0,255,255,0.1);">
                                 <div style="font-weight: bold; margin-bottom: 5px;">${gameInfo.mode.charAt(0).toUpperCase() + gameInfo.mode.slice(1)} Game</div>
@@ -1287,14 +1305,16 @@
                     }
                 });
                 
+                console.log('Games found:', gamesFound, 'HTML length:', html.length);
+                
                 if (html === '') {
-                    gamesListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No games available in your language. Create one!</div>';
+                    gamesListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No games available. Create one!</div>';
                 } else {
                     gamesListDiv.innerHTML = html;
                 }
             } catch (error) {
                 console.error('Error refreshing game list:', error);
-                gamesListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #ff0000;">Error loading games. Please try again.</div>';
+                gamesListDiv.innerHTML = `<div style="padding: 20px; text-align: center; color: #ff0000;">Error loading games: ${error.message}<br>Please check console for details.</div>`;
             }
         }
         
