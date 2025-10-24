@@ -1242,6 +1242,25 @@
             }
         }
         
+        // Initialize Firebase first, then make functions globally available
+        console.log('Initializing Firebase...');
+        console.log('Database:', database);
+        console.log('Available Firebase functions:', {
+            ref: typeof ref,
+            get: typeof get,
+            set: typeof set,
+            push: typeof push,
+            update: typeof update,
+            onValue: typeof onValue
+        });
+        
+        // Ensure all Firebase functions are available
+        if (typeof database === 'undefined' || typeof ref === 'undefined' || typeof get === 'undefined') {
+            console.error('Firebase functions not properly loaded');
+            window.firebaseInitialized = false;
+            return;
+        }
+        
         // Make Firebase database and functions available globally
         window.firebaseDatabase = database;
         window.firebaseRef = ref;
@@ -1256,8 +1275,33 @@
         window.firebaseOnValue = onValue;
         window.firebaseOff = off;
         
+        // Set Firebase initialization flag
+        window.firebaseInitialized = true;
+        console.log('Firebase functions made globally available successfully');
+        
+        // Also set a flag when everything is ready
+        window.addEventListener('load', () => {
+            window.pageFullyLoaded = true;
+            console.log('Page fully loaded, multiplayer ready');
+        });
+        
         // Global multiplayer functions
         function showMultiplayerLobby() {
+            console.log('Opening multiplayer lobby...');
+            
+            // Check if Firebase is ready
+            if (!window.firebaseInitialized) {
+                console.log('Firebase not ready yet, waiting...');
+                setTimeout(() => {
+                    if (window.firebaseInitialized) {
+                        showMultiplayerLobby();
+                    } else {
+                        alert('Firebase is still initializing. Please wait a moment and try again.');
+                    }
+                }, 1000);
+                return;
+            }
+            
             document.getElementById('languageSelect').style.display = 'none';
             document.getElementById('multiplayerLobby').style.display = 'block';
             refreshGameList();
@@ -1290,8 +1334,15 @@
             console.log('Firebase database available:', typeof window.firebaseDatabase);
             
             // Check if Firebase is properly initialized
-            if (typeof window.firebaseDatabase === 'undefined') {
-                alert('Firebase is not properly initialized. Please refresh the page.');
+            if (!window.firebaseInitialized || typeof window.firebaseDatabase === 'undefined') {
+                console.error('Firebase not initialized. Available functions:', {
+                    firebaseInitialized: window.firebaseInitialized,
+                    firebaseDatabase: typeof window.firebaseDatabase,
+                    firebaseRef: typeof window.firebaseRef,
+                    firebaseSet: typeof window.firebaseSet,
+                    firebasePush: typeof window.firebasePush
+                });
+                alert('Firebase is not properly initialized. Please refresh the page and try again.');
                 return;
             }
             
