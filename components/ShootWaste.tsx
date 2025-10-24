@@ -16,7 +16,7 @@ const ShootWaste: React.FC = () => {
     }, [language]);
 
     return (
-        <div className="w-full h-[calc(100vh-200px)] min-h-[600px]">
+        <div className="w-full h-[calc((100vh-200px)*3/4)] min-h-[450px] md:h-[calc(100vh-200px)] md:min-h-[600px] max-md:w-[110%] max-md:h-[calc((100vh-200px)*3/4*1.1)] max-md:-ml-[5%]">
             <iframe
                 ref={iframeRef}
                 src={`/shootwaste.html?lang=${language}`}

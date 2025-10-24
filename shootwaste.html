@@ -63,23 +63,41 @@
             }
         }
         
+        @media (max-width: 768px) {
+            #gameContainer {
+                height: 82.5vh; /* 75vh * 1.1 = 82.5vh (10% increase from the 1/4 reduced height) */
+                width: 110%; /* Increase width by 10% */
+                margin-left: -5%; /* Center the wider container */
+            }
+        }
+        
         #mobileControls {
             position: absolute;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             display: none;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
+            flex-direction: row;
+            align-items: flex-end;
+            gap: 30px;
             z-index: 10;
+            width: 100%;
+            max-width: 400px;
+            justify-content: space-between;
         }
         
         #dpad {
             display: grid;
-            grid-template-columns: 60px 60px 60px;
-            grid-template-rows: 60px 60px 60px;
-            gap: 5px;
+            grid-template-columns: 55px 55px 55px;
+            grid-template-rows: 55px 55px 55px;
+            gap: 8px;
+        }
+        
+        #actionButtons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
         }
         
         .control-btn {
@@ -103,12 +121,12 @@
         }
         
         #shootBtn {
-            width: 80px;
-            height: 80px;
+            width: 75px;
+            height: 75px;
             border-radius: 50%;
             background: rgba(255, 255, 0, 0.3);
             border: 3px solid #ffff00;
-            font-size: 24px;
+            font-size: 22px;
             box-shadow: 0 0 15px rgba(255, 255, 0, 0.5);
         }
         
@@ -117,14 +135,14 @@
         }
         
         #weaponToggleBtn {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
             background: rgba(0, 255, 0, 0.3);
             border: 3px solid #00ff00;
-            font-size: 18px;
+            font-size: 12px;
             box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
-            margin-top: 10px; /* Add some space between shoot and toggle */
+            text-align: center;
         }
         
         #weaponToggleBtn:active {
@@ -370,7 +388,7 @@
         </div>
         
         <button id="exitBtn">Exit</button>
-        <button id="pauseBtn" style="position: absolute; top: 10px; right: 90px; padding: 10px 20px; background: rgba(255, 255, 0, 0.7); border: 2px solid #ffff00; color: #000; cursor: pointer; font-size: 16px; border-radius: 5px; z-index: 1000;">Pause</button>
+        <button id="pauseBtn" style="position: absolute; top: 10px; left: 120px; padding: 10px 20px; background: rgba(255, 255, 0, 0.7); border: 2px solid #ffff00; color: #000; cursor: pointer; font-size: 16px; border-radius: 5px; z-index: 1000;">Pause</button>
         
         <div id="languageSelect" class="menu">
             <h1>ShootWaste</h1>
@@ -439,8 +457,10 @@
                 <div class="control-btn" data-dir="down">▼</div>
                 <div></div>
             </div>
-            <button id="weaponToggleBtn" class="control-btn"> Missile </button>
-            <button id="shootBtn" class="control-btn">🔥</button>
+            <div id="actionButtons">
+                <button id="weaponToggleBtn" class="control-btn">Missile</button>
+                <button id="shootBtn" class="control-btn">🔥</button>
+            </div>
         </div>
     </div>
     
