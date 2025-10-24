@@ -736,6 +736,12 @@
             return isMobile ? 1.4 : 1.0;
         }
         
+        // Mobile speed modifier for falling waste items (0.75x speed on mobile)
+        function getMobileSpeedModifier() {
+            const isMobile = window.innerWidth <= 768;
+            return isMobile ? 0.75 : 1.0;
+        }
+        
         // Player with mobile scaling
         function getPlayerSize() {
             const baseSize = 40;
@@ -1155,7 +1161,7 @@
                 y: -40,
                 width: 40,
                 height: 40,
-                speed: 1 + Math.random() * 2,
+                speed: (1 + Math.random() * 2) * getMobileSpeedModifier(),
                 health: 10,
                 maxHealth: 10,
                 rotation: 0,
@@ -1183,7 +1189,7 @@
                 maxHealth: 500,
                 phase: 1,
                 moveDirection: 1,
-                speed: 2,
+                speed: 2 * getMobileSpeedModifier(),
                 shootTimer: 0,
                 shootInterval: 60,
                 immuneUntil: 0,              // Timestamp when immunity ends
@@ -1283,7 +1289,7 @@
                 y: boss.y + boss.height,
                 width: 40,
                 height: 40,
-                speed: 3,
+                speed: 3 * getMobileSpeedModifier(),
                 health: 10,
                 maxHealth: 10,
                 rotation: 0,
@@ -1305,7 +1311,7 @@
                 width: 30,
                 height: 30,
                 type: type,
-                speed: 2
+                speed: 2 * getMobileSpeedModifier()
             });
         }
         
