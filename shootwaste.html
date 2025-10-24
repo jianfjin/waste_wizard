@@ -627,13 +627,32 @@
             // Create a new multiplayer game
             async createGame(settings) {
                 try {
+                    console.log('Starting game creation with settings:', settings);
+                    console.log('Firebase functions available:', {
+                        database: typeof window.firebaseDatabase,
+                        ref: typeof window.firebaseRef,
+                        push: typeof window.firebasePush,
+                        set: typeof window.firebaseSet
+                    });
+                    
                     this.playerId = this.generatePlayerId();
                     this.playerNickname = document.getElementById('playerNickname').value.trim() || 'Player';
                     this.isHost = true;
                     this.isMultiplayer = true;
                     
-                    const gameRef = window.firebasePush(window.firebaseRef(window.firebaseDatabase, 'games'));
+                    console.log('Player details:', {
+                        playerId: this.playerId,
+                        nickname: this.playerNickname,
+                        language: currentLanguage
+                    });
+                    
+                    console.log('Creating Firebase reference...');
+                    const gamesRef = window.firebaseRef(window.firebaseDatabase, 'games');
+                    console.log('Games reference created:', gamesRef);
+                    
+                    const gameRef = window.firebasePush(gamesRef);
                     this.gameId = gameRef.key;
+                    console.log('Game reference created with ID:', this.gameId);
                     
                     const gameData = {
                         gameInfo: {
@@ -644,7 +663,7 @@
                             sessionTime: 30,
                             targetType: '',
                             createdAt: Date.now(),
-                            language: currentLanguage,
+                            language: window.currentLanguage,
                             difficulty: settings.difficulty || 'normal',
                             hostId: this.playerId
                         },
@@ -670,14 +689,23 @@
                         }
                     };
                     
+                    console.log('Game data prepared:', gameData);
+                    console.log('Setting game data to Firebase...');
+                    
                     await window.firebaseSet(gameRef, gameData);
+                    console.log('Game data set successfully');
+                    
                     this.setupGameListeners();
                     this.showCurrentLobby();
                     
-                    console.log('Game created with ID:', this.gameId);
+                    console.log('Game created successfully with ID:', this.gameId);
                     return true;
                 } catch (error) {
-                    console.error('Error creating game:', error);
+                    console.error('Detailed error creating game:', error);
+                    console.error('Error name:', error.name);
+                    console.error('Error message:', error.message);
+                    console.error('Error stack:', error.stack);
+                    alert('Error creating game: ' + error.message);
                     return false;
                 }
             },
@@ -1032,6 +1060,8 @@
         };
         
         let currentLanguage = 'en';
+        // Make currentLanguage globally accessible
+        window.currentLanguage = currentLanguage;
         
         function t(key) {
             return translations[currentLanguage][key] || key;
@@ -1203,6 +1233,7 @@
         // Language selection
         function selectLanguage(lang, isSinglePlayer = false) {
             currentLanguage = lang;
+            window.currentLanguage = lang; // Keep global variable in sync
             document.getElementById('languageSelect').style.display = 'none';
             
             if (isSinglePlayer) {
@@ -1254,15 +1285,32 @@
                 return;
             }
             
+            console.log('Creating multiplayer game...');
+            console.log('Current language:', window.currentLanguage);
+            console.log('Firebase database available:', typeof window.firebaseDatabase);
+            
+            // Check if Firebase is properly initialized
+            if (typeof window.firebaseDatabase === 'undefined') {
+                alert('Firebase is not properly initialized. Please refresh the page.');
+                return;
+            }
+            
             const settings = {
                 mode: document.getElementById('gameMode').value,
                 maxPlayers: document.getElementById('maxPlayers').value,
                 difficulty: document.getElementById('gameDifficulty').value
             };
             
-            const success = await multiplayerManager.createGame(settings);
-            if (!success) {
-                alert('Failed to create game. Please try again.');
+            console.log('Game settings:', settings);
+            
+            try {
+                const success = await multiplayerManager.createGame(settings);
+                if (!success) {
+                    alert('Failed to create game. Please check the console for details.');
+                }
+            } catch (error) {
+                console.error('Error in createMultiplayerGame:', error);
+                alert('Failed to create game: ' + error.message);
             }
         }
         
@@ -1272,7 +1320,7 @@
             
             try {
                 console.log('Refreshing game list...');
-                console.log('Current language:', currentLanguage);
+                console.log('Current language:', window.currentLanguage);
                 console.log('Firebase database:', window.firebaseDatabase);
                 
                 const gamesRef = window.firebaseRef(window.firebaseDatabase, 'games');
@@ -1296,7 +1344,7 @@
                     gamesFound++;
                     
                     // Filter by language (show all languages for now to debug)
-                    if (gameInfo.language === currentLanguage || true) { // Temporarily show all games
+                    if (gameInfo.language === window.currentLanguage || true) { // Temporarily show all games
                         html += `
                             <div style="margin: 10px 0; padding: 15px; border: 1px solid #00ffff; border-radius: 8px; background: rgba(0,255,255,0.1);">
                                 <div style="font-weight: bold; margin-bottom: 5px;">${gameInfo.mode.charAt(0).toUpperCase() + gameInfo.mode.slice(1)} Game</div>
