@@ -27,12 +27,12 @@ const InfoAndGlossary: React.FC = () => {
                     <InfoCard 
                         title={t('gemeenteContact')} 
                         description={t('gemeenteDesc')} 
-                        link="https://www.overheid.nl/contact/gemeenten"
+                        link="https://organisaties.overheid.nl/gemeenten/"
                     />
                     <InfoCard 
                         title={t('milieuCentraal')} 
                         description={t('milieuCentraalDesc')} 
-                        link="https://www.milieucentral.nl/"
+                        link="https://www.milieucentraal.nl/"
                     />
                      <InfoCard 
                         title={t('afvalscheidingswijzer')} 
