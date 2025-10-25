@@ -1,0 +1,14 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "games": {
+      ".indexOn": ["gameInfo/status"]
+    },
+    "leaderboard": {
+      "shooting": {
+        ".indexOn": ["score"]
+      }
+    }
+  }
+}

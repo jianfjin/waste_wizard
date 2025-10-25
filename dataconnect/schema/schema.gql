@@ -1,0 +1,40 @@
+type User @table {
+  firebaseUid: String!
+  createdAt: Timestamp!
+  displayName: String
+  email: String
+  location: String
+}
+
+type WasteItem @table {
+  name: String!
+  disposalInstructions: String!
+  createdAt: Timestamp!
+  imageUrl: String
+  commonAliases: [String]
+}
+
+type Category @table {
+  name: String!
+  description: String!
+  imageUrl: String
+}
+
+type WasteItemCategory @table(key: ["wasteItem", "category"]) {
+  wasteItem: WasteItem!
+  category: Category!
+}
+
+type UserFavoriteItem @table(key: ["user", "wasteItem"]) {
+  user: User!
+  wasteItem: WasteItem!
+  favoritedAt: Timestamp!
+}
+
+type LocalGuideline @table {
+  locationName: String!
+  generalRules: String!
+  lastUpdatedAt: Timestamp!
+  specificItemExceptions: String
+  contactInfo: String
+}

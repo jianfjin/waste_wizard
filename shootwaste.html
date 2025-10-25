@@ -396,12 +396,16 @@
             <button onclick="selectLanguage('en')">English</button>
             <button onclick="selectLanguage('nl')">Nederlands</button>
             <button onclick="selectLanguage('zh')">中文</button>
-            <div style="margin-top: 30px; border-top: 1px solid #00ffff; padding-top: 20px;">
-                <h3>Game Mode</h3>
-                <button onclick="showMultiplayerLobby()" style="background: linear-gradient(45deg, #ff6600, #ff9900); margin-bottom: 10px;">🎮 Multiplayer</button>
-                <br>
-                <button onclick="selectLanguage('en', true)" style="background: linear-gradient(45deg, #00ff00, #00cc00);">👤 Single Player</button>
-            </div>
+        </div>
+        
+        <div id="gameModeSelect" class="menu" style="display:none;">
+            <h1>ShootWaste</h1>
+            <h3>Choose Game Mode</h3>
+            <button onclick="showMultiplayerLobby()" style="background: linear-gradient(45deg, #ff6600, #ff9900); margin-bottom: 10px; padding: 15px 30px; font-size: 18px;">🎮 Multiplayer</button>
+            <br>
+            <button onclick="startSinglePlayer()" style="background: linear-gradient(45deg, #00ff00, #00cc00); padding: 15px 30px; font-size: 18px;">👤 Single Player</button>
+            <br><br>
+            <button onclick="showLanguageSelect()" style="background: #666; padding: 10px 20px;">← Back to Language</button>
         </div>
         
         <div id="wasteTypePreview" class="menu" style="display:none;">
@@ -926,13 +930,35 @@
                 // Update team score
                 if (gameStateData.score !== undefined) {
                     gameState.score = gameStateData.score;
-                    document.getElementById('teamScore').textContent = gameState.score;
+                    document.getElementById('score').textContent = gameState.score;
+                    const teamScoreEl = document.getElementById('teamScore');
+                    if (teamScoreEl) teamScoreEl.textContent = gameState.score;
+                }
+                
+                // Sync team lives
+                if (gameStateData.totalLives !== undefined) {
+                    gameState.lives = gameStateData.totalLives;
+                    document.getElementById('lives').textContent = gameState.lives;
+                }
+                
+                // Sync enemies (shared enemy state)
+                if (gameStateData.enemies && typeof enemies !== 'undefined') {
+                    // Clear local enemies and sync with server
+                    enemies.length = 0;
+                    Object.entries(gameStateData.enemies).forEach(([enemyId, enemyData]) => {
+                        if (enemyData && enemyData.active !== false) {
+                            enemies.push({
+                                ...enemyData,
+                                multiplayerId: enemyId
+                            });
+                        }
+                    });
                 }
                 
                 // Sync bullets (other players' bullets)
-                if (gameStateData.bullets) {
+                if (gameStateData.bullets && typeof player !== 'undefined' && player.bullets) {
                     Object.entries(gameStateData.bullets).forEach(([bulletId, bulletData]) => {
-                        if (bulletData.playerId !== this.playerId) {
+                        if (bulletData.playerId !== this.playerId && bulletData.active !== false) {
                             // Add other players' bullets to local game
                             const existingBullet = player.bullets.find(b => b.multiplayerId === bulletId);
                             if (!existingBullet) {
@@ -942,6 +968,19 @@
                                     isRemote: true
                                 });
                             }
+                        }
+                    });
+                }
+                
+                // Sync power-ups
+                if (gameStateData.powerUps && typeof powerUps !== 'undefined') {
+                    powerUps.length = 0;
+                    Object.entries(gameStateData.powerUps).forEach(([powerUpId, powerUpData]) => {
+                        if (powerUpData && powerUpData.active !== false) {
+                            powerUps.push({
+                                ...powerUpData,
+                                multiplayerId: powerUpId
+                            });
                         }
                     });
                 }
@@ -1321,15 +1360,48 @@
         let animationFrameId;
         
         // Language selection
-        function selectLanguage(lang, isSinglePlayer = false) {
+        function selectLanguage(lang) {
             currentLanguage = lang;
-            window.currentLanguage = lang; // Keep global variable in sync
-            document.getElementById('languageSelect').style.display = 'none';
+            window.currentLanguage = lang;
             
-            if (isSinglePlayer) {
-                // Show waste type preview for single player
-                showWasteTypePreview();
-            }
+            // Update UI text
+            updateUIText();
+            
+            // Show game mode selection instead of starting game immediately
+            document.getElementById('languageSelect').style.display = 'none';
+            document.getElementById('gameModeSelect').style.display = 'block';
+        }
+        
+        function showLanguageSelect() {
+            document.getElementById('gameModeSelect').style.display = 'none';
+            document.getElementById('languageSelect').style.display = 'block';
+        }
+        
+        function startSinglePlayer() {
+            // Start single player game - show waste type preview
+            document.getElementById('gameModeSelect').style.display = 'none';
+            showWasteTypePreview();
+        }
+        
+        function updateUIText() {
+            // Update UI elements with current language
+            document.getElementById('previewTitle').textContent = t('previewTitle');
+            document.getElementById('previewSubtitle').textContent = t('previewSubtitle');
+            document.getElementById('startGameBtn').textContent = t('startGame');
+            document.getElementById('skipBtn').textContent = t('skip');
+            document.getElementById('gameOverTitle').textContent = t('gameOver');
+            document.getElementById('victoryTitle').textContent = t('victory');
+            document.getElementById('pauseTitle').textContent = t('paused');
+            document.getElementById('gameOverRestartBtn').textContent = t('playAgain');
+            document.getElementById('gameOverChangeBtn').textContent = t('changeLanguage');
+            document.getElementById('victoryRestartBtn').textContent = t('playAgain');
+            document.getElementById('victoryChangeBtn').textContent = t('changeLanguage');
+        }
+        
+        function showMainMenu() {
+            // Reset to main menu
+            document.getElementById('multiplayerLobby').style.display = 'none';
+            document.getElementById('gameModeSelect').style.display = 'block';
         }
         
         // Initialize Firebase first, then make functions globally available
@@ -1494,6 +1566,203 @@
                 window.multiplayerManager.leaveGame();
             }
         }
+
+        // Clean up old/stale games from Firebase
+        async function cleanupOldGames() {
+            try {
+                const gamesRef = window.firebaseRef(window.firebaseDatabase, 'games');
+                const snapshot = await window.firebaseGet(gamesRef);
+                
+                if (snapshot.exists()) {
+                    const games = snapshot.val();
+                    const now = Date.now();
+                    const oneHourAgo = now - (60 * 60 * 1000); // 1 hour ago
+                    
+                    for (const [gameId, gameData] of Object.entries(games)) {
+                        // Remove games older than 1 hour or with 0 players
+                        if (gameData.gameInfo.createdAt < oneHourAgo || 
+                            gameData.gameInfo.currentPlayers === 0) {
+                            console.log('Cleaning up old game:', gameId);
+                            await window.firebaseRemove(window.firebaseRef(window.firebaseDatabase, `games/${gameId}`));
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error cleaning up old games:', error);
+            }
+        }
+
+        // Draw other multiplayer players' spaceships
+        function drawMultiplayerSpaceships() {
+            if (!window.multiplayerManager || !window.multiplayerManager.isMultiplayer) return;
+            
+            window.multiplayerManager.players.forEach((playerData, playerId) => {
+                // Don't draw our own spaceship again
+                if (playerId === window.multiplayerManager.playerId) return;
+                
+                ctx.save();
+                ctx.translate(playerData.x + player.width / 2, playerData.y + player.height / 2);
+                ctx.rotate(playerData.rotation || 0);
+                
+                // Different colors for different players
+                const playerColors = ['#ff6600', '#00ff66', '#6600ff', '#ffff00'];
+                const colorIndex = Array.from(window.multiplayerManager.players.keys()).indexOf(playerId) % playerColors.length;
+                
+                // Spaceship body
+                ctx.fillStyle = playerColors[colorIndex];
+                ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
+                
+                // Engine effects (if moving)
+                const timeSinceUpdate = Date.now() - (playerData.lastUpdate || 0);
+                if (timeSinceUpdate < 200) { // Recently updated = likely moving
+                    ctx.fillStyle = `hsl(${Math.random() * 60}, 100%, 50%)`;
+                    ctx.fillRect(-player.width / 4, player.height / 2 * 0.6, player.width / 8, player.height * 0.2);
+                    ctx.fillRect(0, player.height / 2 * 0.6, player.width / 8, player.height * 0.2);
+                }
+                
+                ctx.restore();
+                
+                // Player nickname above spaceship
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(playerData.nickname || 'Player', playerData.x + player.width / 2, playerData.y - 5);
+            });
+        }
+
+        // Update multiplayer UI with all players
+        function updateMultiplayerUI() {
+            if (!window.multiplayerManager || !window.multiplayerManager.isMultiplayer) return;
+            
+            const playersListDiv = document.getElementById('playersList');
+            if (!playersListDiv) return;
+            
+            let html = '';
+            window.multiplayerManager.players.forEach((playerData, playerId) => {
+                const isCurrentPlayer = playerId === window.multiplayerManager.playerId;
+                const hostBadge = playerData.isHost ? ' 👑' : '';
+                const connectionStatus = playerData.connected ? '🟢' : '🔴';
+                
+                html += `<div style="margin: 2px 0; font-size: 11px;">
+                    ${connectionStatus} ${playerData.nickname}${hostBadge}
+                    ${isCurrentPlayer ? ' (You)' : ''}
+                    <br><small>Lives: ${playerData.lives || 0}</small>
+                </div>`;
+            });
+            
+            playersListDiv.innerHTML = html;
+        }
+
+        // Clean up old/stale games from Firebase
+        async function cleanupOldGames() {
+            try {
+                const gamesRef = window.firebaseRef(window.firebaseDatabase, 'games');
+                const snapshot = await window.firebaseGet(gamesRef);
+                
+                if (snapshot.exists()) {
+                    const games = snapshot.val();
+                    const now = Date.now();
+                    const oneHourAgo = now - (60 * 60 * 1000); // 1 hour ago
+                    
+                    for (const [gameId, gameData] of Object.entries(games)) {
+                        // Remove games older than 1 hour or with 0 players
+                        if (gameData.gameInfo.createdAt < oneHourAgo || 
+                            gameData.gameInfo.currentPlayers === 0) {
+                            console.log('Cleaning up old game:', gameId);
+                            await window.firebaseRemove(window.firebaseRef(window.firebaseDatabase, `games/${gameId}`));
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error cleaning up old games:', error);
+            }
+        }
+
+        // Fix showMultiplayerLobby to hide gameModeSelect
+        function showMultiplayerLobby() {
+            console.log('Opening multiplayer lobby');
+            // Hide game mode selection and show multiplayer lobby
+            document.getElementById('gameModeSelect').style.display = 'none';
+            document.getElementById('gameCreation').style.display = 'block';
+            document.getElementById('gameList').style.display = 'block';
+            document.getElementById('currentLobby').style.display = 'none';
+            document.getElementById('multiplayerLobby').style.display = 'block';
+            
+            // Clean up old games and refresh
+            cleanupOldGames().then(() => {
+                refreshGameList();
+            });
+        }
+
+        // Update server with local game state changes (for host)
+        async function updateServerGameState() {
+            if (!window.multiplayerManager || !window.multiplayerManager.isHost || !window.multiplayerManager.gameId) return;
+            
+            try {
+                const gameStateRef = window.firebaseRef(window.firebaseDatabase, `games/${window.multiplayerManager.gameId}/gameState`);
+                
+                // Prepare game state data
+                const gameStateData = {
+                    score: gameState.score,
+                    totalLives: gameState.lives,
+                    enemies: {},
+                    bullets: {},
+                    powerUps: {}
+                };
+                
+                // Add enemies to sync
+                if (typeof enemies !== 'undefined') {
+                    enemies.forEach((enemy, index) => {
+                        gameStateData.enemies[`enemy_${index}`] = {
+                            ...enemy,
+                            active: true
+                        };
+                    });
+                }
+                
+                // Add bullets to sync
+                if (typeof player !== 'undefined' && player.bullets) {
+                    player.bullets.forEach((bullet, index) => {
+                        if (!bullet.isRemote) { // Only sync our own bullets
+                            gameStateData.bullets[`bullet_${window.multiplayerManager.playerId}_${index}`] = {
+                                ...bullet,
+                                playerId: window.multiplayerManager.playerId,
+                                active: true
+                            };
+                        }
+                    });
+                }
+                
+                // Add power-ups to sync
+                if (typeof powerUps !== 'undefined') {
+                    powerUps.forEach((powerUp, index) => {
+                        gameStateData.powerUps[`powerup_${index}`] = {
+                            ...powerUp,
+                            active: true
+                        };
+                    });
+                }
+                
+                await window.firebaseUpdate(gameStateRef, gameStateData);
+            } catch (error) {
+                console.error('Error updating server game state:', error);
+            }
+        }
+
+        // Override startGameFromPreview to hide gameModeSelect
+        const originalStartGameFromPreview = window.startGameFromPreview;
+        window.startGameFromPreview = function() {
+            // Hide all menu screens
+            document.getElementById('languageSelect').style.display = 'none';
+            document.getElementById('gameModeSelect').style.display = 'none';
+            document.getElementById('wasteTypePreview').style.display = 'none';
+            document.getElementById('multiplayerLobby').style.display = 'none';
+            
+            // Call original function if it exists
+            if (originalStartGameFromPreview) {
+                originalStartGameFromPreview();
+            }
+        };
 
         // Expose multiplayer functions globally (AFTER they are defined)
         window.showMultiplayerLobby = showMultiplayerLobby;
