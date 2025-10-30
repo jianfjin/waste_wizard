@@ -562,9 +562,8 @@
         import { getDatabase, ref, push, set, query, orderByChild, limitToLast, get, onValue, update, remove, equalTo, off } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js';
         import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js';
 
-        // Firebase configuration
-        // These values are injected at build time from .env file
-        // Never commit .env to version control!
+        // Firebase configuration using environment variables
+        // Placeholders will be replaced at build time by build.cjs script
         const firebaseConfig = {
             apiKey: "AIzaSyBeOfeGzsT9NzLqbFRajz_dbhJlEqRk82A",
             authDomain: "game20250601.firebaseapp.com",
