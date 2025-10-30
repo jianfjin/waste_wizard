@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "firebase deploy --only hosting",
+    "deploy:functions": "firebase deploy --only functions",
+    "node-check": "node --version && echo 'Firebase CLI:' && firebase --version",
+    "nvm-deploy": "nvm use 20 && firebase deploy --only hosting"
   },
   "dependencies": {
     "@google/genai": "^1.24.0",
