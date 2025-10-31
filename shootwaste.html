@@ -1070,6 +1070,20 @@
                         }
                     });
                 }
+
+                // Sync boss (shared boss state in both modes)
+                if (gameStateData.boss) {
+                    // Update local boss data
+                    if (boss) {
+                        boss.x = gameStateData.boss.x;
+                        boss.y = gameStateData.boss.y;
+                        boss.health = gameStateData.boss.health;
+                        boss.maxHealth = gameStateData.boss.maxHealth;
+                        boss.isImmune = gameStateData.boss.isImmune;
+                        boss.isInStealth = gameStateData.boss.isInStealth;
+                    }
+                    bossSpawned = true;
+                }
             },
             
             // Leave current game
@@ -1896,7 +1910,15 @@
                     totalLives: gameState.lives,
                     enemies: {},
                     bullets: {},
-                    powerUps: {}
+                    powerUps: {},
+                    boss: boss ? {
+                        x: boss.x,
+                        y: boss.y,
+                        health: boss.health,
+                        maxHealth: boss.maxHealth,
+                        isImmune: boss.isImmune,
+                        isInStealth: boss.isInStealth
+                    } : null
                 };
                 
                 // Add enemies to sync
@@ -2889,7 +2911,12 @@
             // Keep rotation within -PI to PI range for consistency
             if (player.rotation > Math.PI) player.rotation -= Math.PI * 2;
             if (player.rotation < -Math.PI) player.rotation += Math.PI * 2;
-            
+
+            // Sync player position to Firebase for multiplayer
+            if (window.multiplayerManager && window.multiplayerManager.isMultiplayer) {
+                window.multiplayerManager.updatePlayerPosition(player.x, player.y, player.rotation);
+            }
+
             // Shooting
             if (isShooting) {
                 shoot();
@@ -3235,15 +3262,33 @@
             }
             
             // Spawn enemies
-            if (Math.random() < 0.02 && !bossSpawned) {
-                spawnEnemy();
+            // Only host spawns enemies in multiplayer to avoid desync
+            if (window.multiplayerManager && window.multiplayerManager.isMultiplayer) {
+                if (window.multiplayerManager.isHost && Math.random() < 0.02 && !bossSpawned) {
+                    spawnEnemy();
+                }
+            } else {
+                // Single player - local enemy spawning
+                if (Math.random() < 0.02 && !bossSpawned) {
+                    spawnEnemy();
+                }
             }
-            
+
             // Check for boss spawn
-            if (gameState.score >= 1000 && !bossSpawned && !bossDefeated) {
-                spawnBoss();
+            // Only host should spawn the boss to avoid desync
+            if (window.multiplayerManager && window.multiplayerManager.isMultiplayer) {
+                // In multiplayer, only host spawns boss
+                if (window.multiplayerManager.isHost && gameState.score >= 1000 && !bossSpawned && !bossDefeated) {
+                    spawnBoss();
+                    // Sync boss to Firebase (boss data will be synced through gameState)
+                }
+            } else {
+                // Single player - local boss spawn
+                if (gameState.score >= 1000 && !bossSpawned && !bossDefeated) {
+                    spawnBoss();
+                }
             }
-            
+
             updateUI();
         }
         
@@ -3558,7 +3603,10 @@
             
             ctx.shadowBlur = 0;
             ctx.restore();
-            
+
+            // Draw other multiplayer players' spaceships
+            drawMultiplayerSpaceships();
+
             // Draw bullets
             player.bullets.forEach(bullet => {
                 if (bullet.type === 'missile') {
