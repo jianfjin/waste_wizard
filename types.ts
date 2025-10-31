@@ -36,6 +36,7 @@ export interface Message {
     sender: 'user' | 'bot';
     text: string;
     sources?: { uri: string; title: string }[];
+    image?: string; // base64 encoded image data
 }
 
 // High score entry for the game

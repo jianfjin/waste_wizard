@@ -1,4 +1,4 @@
-import { GoogleGenAI, Chat } from "@google/genai";
+import { GoogleGenAI, Chat, Part } from "@google/genai";
 import { Language } from '../types';
 
 const getSystemInstruction = (language: Language): string => {
@@ -36,4 +36,35 @@ export const createChatSession = (language: Language): Chat => {
             tools: [{ googleSearch: {} }],
         },
     });
+};
+
+export const sendMessageStreamWithImage = async (
+    chat: Chat,
+    text: string,
+    imageData?: string
+) => {
+    const messageParts: Part[] = [];
+
+    if (imageData) {
+        // Extract MIME type and base64 data
+        const [mimeType, base64Data] = imageData.split(',');
+        messageParts.push({
+            inlineData: {
+                mimeType: mimeType.split(':')[1].split(';')[0],
+                data: base64Data,
+            },
+        } as Part);
+    }
+
+    if (text) {
+        messageParts.push({ text } as Part);
+    }
+
+    // If only text and no image, send text directly
+    if (messageParts.length === 1 && text && !imageData) {
+        return await chat.sendMessageStream({ message: text });
+    }
+
+    // If image is present (with or without text), send parts array
+    return await chat.sendMessageStream({ message: messageParts as any });
 };
