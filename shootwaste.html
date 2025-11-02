@@ -588,6 +588,9 @@
         console.log('User authenticated: anonymous-public-access');
         window.firebaseAuthenticated = true;
 
+        // Damage event tracking for multiplayer cooperative mode
+        window.damageEventListeners = [];
+
         // Make Firebase database and functions available globally
         window.firebaseDatabase = database;
         window.firebaseRef = ref;
@@ -919,6 +922,11 @@
                 });
                 this.gameListeners.push(gameInfoUnsubscribe);
 
+                // Setup damage event listeners for cooperative mode (host only)
+                if (this.gameMode === 'cooperative' && this.isHost) {
+                    setupDamageEventListeners();
+                }
+
                 // Listen for winner in competitive mode
                 if (this.gameMode === 'competitive') {
                     const gameStateRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/gameState`);
@@ -1028,16 +1036,74 @@
                 }
 
                 // Sync enemies (shared enemy state in both modes)
-                if (gameStateData.enemies && typeof enemies !== 'undefined') {
-                    // Clear local enemies and sync with server
-                    enemies.length = 0;
+                // Skip enemy syncing in competitive mode - each player has independent enemies
+                const isCompetitive = window.multiplayerManager &&
+                    window.multiplayerManager.isMultiplayer &&
+                    window.multiplayerManager.gameMode === 'competitive';
+
+                if (gameStateData.enemies && typeof enemies !== 'undefined' && !isCompetitive) {
+                    // Create a map of server enemies by ID for efficient lookup
+                    const serverEnemiesMap = new Map();
                     Object.entries(gameStateData.enemies).forEach(([enemyId, enemyData]) => {
                         if (enemyData && enemyData.active !== false) {
-                            enemies.push({
+                            serverEnemiesMap.set(enemyId, {
                                 ...enemyData,
                                 multiplayerId: enemyId
                             });
                         }
+                    });
+
+                    // Update local enemies with server state
+                    for (let i = enemies.length - 1; i >= 0; i--) {
+                        const localEnemy = enemies[i];
+                        let matchedServerEnemy = null;
+                        let matchedServerId = null;
+
+                        // First, try to match by localId (for persistent ID across syncs)
+                        if (localEnemy.localId && serverEnemiesMap.has(localEnemy.localId)) {
+                            matchedServerEnemy = serverEnemiesMap.get(localEnemy.localId);
+                            matchedServerId = localEnemy.localId;
+                        }
+
+                        // If no match by localId, try to match by multiplayerId
+                        if (!matchedServerEnemy && localEnemy.multiplayerId && serverEnemiesMap.has(localEnemy.multiplayerId)) {
+                            matchedServerEnemy = serverEnemiesMap.get(localEnemy.multiplayerId);
+                            matchedServerId = localEnemy.multiplayerId;
+                        }
+
+                        // If still no match, try to match by position and properties (fallback)
+                        if (!matchedServerEnemy) {
+                            for (const [serverId, serverEnemy] of serverEnemiesMap.entries()) {
+                                // Match by approximate position and waste type
+                                const posThreshold = 50; // pixels
+                                if (Math.abs(serverEnemy.x - localEnemy.x) < posThreshold &&
+                                    Math.abs(serverEnemy.y - localEnemy.y) < posThreshold &&
+                                    serverEnemy.wasteType === localEnemy.wasteType &&
+                                    Math.abs(serverEnemy.width - localEnemy.width) < 5 &&
+                                    Math.abs(serverEnemy.height - localEnemy.height) < 5) {
+                                    matchedServerEnemy = serverEnemy;
+                                    matchedServerId = serverId;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (matchedServerEnemy) {
+                            // In cooperative multiplayer, clients use authoritative server state
+                            enemies[i] = {
+                                ...matchedServerEnemy,
+                                multiplayerId: matchedServerId
+                            };
+                            serverEnemiesMap.delete(matchedServerId);
+                        } else {
+                            // Enemy was removed on server, remove it locally
+                            enemies.splice(i, 1);
+                        }
+                    }
+
+                    // Add new enemies from server that don't exist locally
+                    serverEnemiesMap.forEach(serverEnemy => {
+                        enemies.push(serverEnemy);
                     });
                 }
 
@@ -1071,8 +1137,13 @@
                     });
                 }
 
-                // Sync boss (shared boss state in both modes)
-                if (gameStateData.boss) {
+                // Sync boss (shared boss state only in cooperative mode)
+                // Skip boss syncing in competitive mode - each player has independent boss
+                const isCompetitive = window.multiplayerManager &&
+                    window.multiplayerManager.isMultiplayer &&
+                    window.multiplayerManager.gameMode === 'competitive';
+
+                if (gameStateData.boss && !isCompetitive) {
                     // Update local boss data
                     if (boss) {
                         boss.x = gameStateData.boss.x;
@@ -1122,7 +1193,10 @@
                         }
                     });
                     this.gameListeners = [];
-                    
+
+                    // Cleanup damage event listeners
+                    cleanupDamageEventListeners();
+
                     // Reset state
                     this.gameId = null;
                     this.playerId = null;
@@ -1250,6 +1324,70 @@
                 return null;
             }
         };
+
+        // Damage event system for cooperative multiplayer
+        function sendDamageEvent(enemyId, damage, weaponType) {
+            if (!window.multiplayerManager || !window.multiplayerManager.gameId) return;
+
+            try {
+                const damageRef = window.firebaseRef(window.firebaseDatabase, `games/${window.multiplayerManager.gameId}/damageEvents`);
+                window.firebasePush(damageRef, {
+                    enemyId: enemyId,
+                    damage: damage,
+                    weaponType: weaponType,
+                    playerId: window.multiplayerManager.playerId,
+                    timestamp: Date.now()
+                });
+            } catch (error) {
+                console.error('Error sending damage event:', error);
+            }
+        }
+
+        // Listen for damage events (host only)
+        function setupDamageEventListeners() {
+            if (!window.multiplayerManager || !window.multiplayerManager.isHost || !window.multiplayerManager.gameId) return;
+
+            try {
+                const damageEventsRef = window.firebaseRef(window.firebaseDatabase, `games/${window.multiplayerManager.gameId}/damageEvents`);
+                const unsubscribe = window.firebaseOnValue(damageEventsRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const damageEvents = snapshot.val();
+                        // Process damage events and apply to local enemies
+                        Object.values(damageEvents).forEach((event) => {
+                            // Find the enemy with the matching ID
+                            const enemyIndex = enemies.findIndex(e =>
+                                e.localId === event.enemyId || e.multiplayerId === event.enemyId
+                            );
+                            if (enemyIndex !== -1) {
+                                enemies[enemyIndex].health -= event.damage;
+                                console.log(`Applied ${event.damage} damage to enemy ${event.enemyId}, health now: ${enemies[enemyIndex].health}`);
+                            }
+                        });
+
+                        // Clear damage events after processing
+                        window.firebaseRemove(damageEventsRef);
+                    }
+                });
+                window.damageEventListeners.push(unsubscribe);
+            } catch (error) {
+                console.error('Error setting up damage event listeners:', error);
+            }
+        }
+
+        // Cleanup damage event listeners
+        function cleanupDamageEventListeners() {
+            window.damageEventListeners.forEach(unsubscribe => {
+                try {
+                    unsubscribe();
+                } catch (error) {
+                    console.error('Error cleaning up damage event listener:', error);
+                }
+            });
+            window.damageEventListeners = [];
+        }
+
+        // Make functions globally available
+        window.sendDamageEvent = sendDamageEvent;
     </script>
     
     <script>
@@ -1749,23 +1887,37 @@
         // Draw other multiplayer players' spaceships
         function drawMultiplayerSpaceships() {
             if (!window.multiplayerManager || !window.multiplayerManager.isMultiplayer) return;
-            
+
             window.multiplayerManager.players.forEach((playerData, playerId) => {
                 // Don't draw our own spaceship again
                 if (playerId === window.multiplayerManager.playerId) return;
-                
+
                 ctx.save();
                 ctx.translate(playerData.x + player.width / 2, playerData.y + player.height / 2);
                 ctx.rotate(playerData.rotation || 0);
-                
+
                 // Different colors for different players
                 const playerColors = ['#ff6600', '#00ff66', '#6600ff', '#ffff00'];
                 const colorIndex = Array.from(window.multiplayerManager.players.keys()).indexOf(playerId) % playerColors.length;
-                
-                // Spaceship body
+
+                // Spaceship body - use same triangular shape as main player
                 ctx.fillStyle = playerColors[colorIndex];
-                ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
-                
+                ctx.shadowColor = playerColors[colorIndex];
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.moveTo(0, -player.height / 2); // Top point (nose)
+
+                // Left wing
+                ctx.lineTo(-player.width / 2, player.height / 2); // Bottom-left wing tip
+                ctx.lineTo(-player.width / 4, player.height / 2 * 0.6); // Inner-left wing root
+
+                // Right wing
+                ctx.lineTo(player.width / 4, player.height / 2 * 0.6); // Inner-right wing root
+                ctx.lineTo(player.width / 2, player.height / 2); // Bottom-right wing tip
+
+                ctx.closePath();
+                ctx.fill();
+
                 // Engine effects (if moving)
                 const timeSinceUpdate = Date.now() - (playerData.lastUpdate || 0);
                 if (timeSinceUpdate < 200) { // Recently updated = likely moving
@@ -1773,9 +1925,10 @@
                     ctx.fillRect(-player.width / 4, player.height / 2 * 0.6, player.width / 8, player.height * 0.2);
                     ctx.fillRect(0, player.height / 2 * 0.6, player.width / 8, player.height * 0.2);
                 }
-                
+
+                ctx.shadowBlur = 0;
                 ctx.restore();
-                
+
                 // Player nickname above spaceship
                 ctx.fillStyle = '#ffffff';
                 ctx.font = '12px Arial';
@@ -1911,7 +2064,8 @@
                     enemies: {},
                     bullets: {},
                     powerUps: {},
-                    boss: boss ? {
+                    // Only sync boss in cooperative mode, not competitive
+                    boss: !isCompetitive && boss ? {
                         x: boss.x,
                         y: boss.y,
                         health: boss.health,
@@ -1921,10 +2075,16 @@
                     } : null
                 };
                 
-                // Add enemies to sync
-                if (typeof enemies !== 'undefined') {
+                // Add enemies to sync (only in cooperative mode, not competitive)
+                // In competitive mode, each player has their own independent enemies
+                const isCompetitive = window.multiplayerManager &&
+                    window.multiplayerManager.gameMode === 'competitive';
+
+                if (typeof enemies !== 'undefined' && !isCompetitive) {
                     enemies.forEach((enemy, index) => {
-                        gameStateData.enemies[`enemy_${index}`] = {
+                        // Use localId if available (multiplayer), otherwise use index
+                        const enemyId = enemy.localId || `enemy_${index}`;
+                        gameStateData.enemies[enemyId] = {
                             ...enemy,
                             active: true
                         };
@@ -2404,7 +2564,18 @@
         function updateTargetInfo() {
             const targetInfo = document.getElementById('targetInfo');
             const sessionTimer = document.getElementById('sessionTimer');
-            targetInfo.textContent = `${t('targetWaste')} ${gameState.targetType}`;
+
+            // In competitive mode, use the player's individual target
+            const isCompetitive = window.multiplayerManager &&
+                window.multiplayerManager.isMultiplayer &&
+                window.multiplayerManager.gameMode === 'competitive';
+
+            let currentTarget = gameState.targetType;
+            if (isCompetitive && window.multiplayerManager && window.multiplayerManager.targetType) {
+                currentTarget = window.multiplayerManager.targetType;
+            }
+
+            targetInfo.textContent = `${t('targetWaste')} ${currentTarget}`;
             sessionTimer.textContent = `${t('sessionTime')} ${gameState.sessionTime}s`;
         }
         
@@ -2546,12 +2717,23 @@
         // Spawn enemy
         function spawnEnemy() {
             if (bossSpawned || enemies.length > 15) return;
-            
+
             let wasteItem;
+            let currentTargetType = gameState.targetType;
+
+            // Check if this is competitive mode - use individual player target
+            const isCompetitive = window.multiplayerManager &&
+                window.multiplayerManager.isMultiplayer &&
+                window.multiplayerManager.gameMode === 'competitive';
+
+            if (isCompetitive && window.multiplayerManager && window.multiplayerManager.targetType) {
+                currentTargetType = window.multiplayerManager.targetType;
+            }
+
             // 80% chance to spawn target waste type
             if (Math.random() < 0.8) {
                 // Filter waste items by target type
-                const targetWastes = wasteData.filter(w => w.type === gameState.targetType);
+                const targetWastes = wasteData.filter(w => w.type === currentTargetType);
                 if (targetWastes.length > 0) {
                     wasteItem = targetWastes[Math.floor(Math.random() * targetWastes.length)];
                 } else {
@@ -2561,7 +2743,7 @@
                 // 20% chance for random waste
                 wasteItem = wasteData[Math.floor(Math.random() * wasteData.length)];
             }
-            
+
             const enemy = {
                 x: Math.random() * (canvas.width - 40),
                 y: -40,
@@ -2575,6 +2757,12 @@
                 wasteType: wasteItem.type,
                 emoji: wasteItem.emoji
             };
+
+            // Assign unique ID for multiplayer synchronization
+            // In single player, this will be undefined
+            // In multiplayer, the host will sync with Firebase using this ID
+            enemy.localId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
             enemies.push(enemy);
         }
         
@@ -2990,43 +3178,45 @@
                     }
                     
                     if (hit) {
-                        enemy.health -= bullet.damage;
-                        
+                        // Check if this is multiplayer cooperative mode
+                        const isMultiplayerCooperative = window.multiplayerManager &&
+                            window.multiplayerManager.isMultiplayer &&
+                            window.multiplayerManager.gameMode === 'cooperative';
+
+                        // Check if this is multiplayer competitive mode
+                        const isMultiplayerCompetitive = window.multiplayerManager &&
+                            window.multiplayerManager.isMultiplayer &&
+                            window.multiplayerManager.gameMode === 'competitive';
+
+                        // In cooperative multiplayer, send damage event instead of applying locally
+                        if (isMultiplayerCooperative && !window.multiplayerManager.isHost) {
+                            // Send damage event to host via Firebase
+                            if (enemy.localId || enemy.multiplayerId) {
+                                const enemyId = enemy.localId || enemy.multiplayerId;
+                                sendDamageEvent(enemyId, bullet.damage, player.weaponType);
+                            }
+                            // Also apply local damage for immediate visual feedback
+                            enemy.health -= bullet.damage;
+                        } else {
+                            // Host or single player: apply damage directly
+                            enemy.health -= bullet.damage;
+                        }
+
                         if (bullet.type === 'missile') {
                             player.bullets.splice(j, 1);
                         }
-                        
+
                         if (enemy.health <= 0) {
                             // Track total kills
                             gameState.totalKills++;
-
-                            // Check if this is multiplayer competitive mode
-                            const isMultiplayerCompetitive = window.multiplayerManager &&
-                                window.multiplayerManager.isMultiplayer &&
-                                window.multiplayerManager.gameMode === 'competitive';
 
                             if (isMultiplayerCompetitive) {
                                 // Competitive mode scoring logic
                                 const isCorrectTarget = enemy.wasteType === window.multiplayerManager.targetType;
 
-                                // Check if this is someone else's target (stealing opportunity)
-                                // In a real implementation, you'd get this from the server state
-                                // For now, we'll simplify: if it's not your target, it might be stealable
-                                const isStealing = !isCorrectTarget && Math.random() > 0.3; // 70% chance it's someone's target
-
                                 if (isCorrectTarget) {
                                     // Correct target - award points
                                     window.multiplayerManager.updateCompetitiveScore(10, enemy.wasteType, false)
-                                        .then(result => {
-                                            if (result) {
-                                                showComboText(result.message);
-                                                updateCompetitiveUI();
-                                            }
-                                        });
-                                    playSound('explosion');
-                                } else if (isStealing) {
-                                    // Stealing another player's target
-                                    window.multiplayerManager.updateCompetitiveScore(15, enemy.wasteType, true)
                                         .then(result => {
                                             if (result) {
                                                 showComboText(result.message);
@@ -3085,14 +3275,18 @@
                                     playSound('failed');
                                 }
                             }
-                            
+
                             createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
-                            
-                            // Spawn power-up occasionally
-                            if (Math.random() < 0.1) {
-                                spawnPowerUp(enemy.x, enemy.y);
+
+                            // Spawn power-up only on host in multiplayer modes
+                            const isMultiplayer = window.multiplayerManager &&
+                                window.multiplayerManager.isMultiplayer;
+                            if (!isMultiplayer || window.multiplayerManager.isHost) {
+                                if (Math.random() < 0.1) {
+                                    spawnPowerUp(enemy.x, enemy.y);
+                                }
                             }
-                            
+
                             enemies.splice(i, 1);
                         }
                         break;
@@ -3262,10 +3456,23 @@
             }
             
             // Spawn enemies
-            // Only host spawns enemies in multiplayer to avoid desync
+            // Check if this is competitive mode
+            const isCompetitive = window.multiplayerManager &&
+                window.multiplayerManager.isMultiplayer &&
+                window.multiplayerManager.gameMode === 'competitive';
+
             if (window.multiplayerManager && window.multiplayerManager.isMultiplayer) {
-                if (window.multiplayerManager.isHost && Math.random() < 0.02 && !bossSpawned) {
-                    spawnEnemy();
+                if (isCompetitive) {
+                    // In competitive mode, both players spawn their own enemies (50/50 split)
+                    if (Math.random() < 0.02 && !bossSpawned) {
+                        // 50% chance to spawn an enemy (reduced to balance both players)
+                        spawnEnemy();
+                    }
+                } else {
+                    // In cooperative mode, only host spawns enemies to avoid desync
+                    if (window.multiplayerManager.isHost && Math.random() < 0.02 && !bossSpawned) {
+                        spawnEnemy();
+                    }
                 }
             } else {
                 // Single player - local enemy spawning
@@ -3275,17 +3482,32 @@
             }
 
             // Check for boss spawn
-            // Only host should spawn the boss to avoid desync
+            // In competitive mode, each player spawns their own boss
+            // In cooperative mode, only host spawns boss
             if (window.multiplayerManager && window.multiplayerManager.isMultiplayer) {
-                // In multiplayer, only host spawns boss
-                if (window.multiplayerManager.isHost && gameState.score >= 1000 && !bossSpawned && !bossDefeated) {
-                    spawnBoss();
-                    // Sync boss to Firebase (boss data will be synced through gameState)
+                if (isCompetitive) {
+                    // In competitive mode, both players spawn their own boss independently
+                    if (gameState.score >= 1000 && !bossSpawned && !bossDefeated) {
+                        spawnBoss();
+                    }
+                } else {
+                    // In cooperative mode, only host spawns boss
+                    if (window.multiplayerManager.isHost && gameState.score >= 1000 && !bossSpawned && !bossDefeated) {
+                        spawnBoss();
+                        // Sync boss to Firebase (boss data will be synced through gameState)
+                    }
                 }
             } else {
                 // Single player - local boss spawn
                 if (gameState.score >= 1000 && !bossSpawned && !bossDefeated) {
                     spawnBoss();
+                }
+            }
+
+            // Sync game state to Firebase in multiplayer (host only)
+            if (window.multiplayerManager && window.multiplayerManager.isMultiplayer) {
+                if (window.multiplayerManager.isHost) {
+                    updateServerGameState();
                 }
             }
 
