@@ -1,0 +1,1898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>MatchWaste - Match 3 Puzzle Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 500px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #fff;
+            font-size: 36px;
+            margin: 0 0 20px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        #gameInfo {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            color: #fff;
+            font-size: 18px;
+            flex-wrap: wrap;
+        }
+
+        #score, #moves, #matchCount {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 5px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 15px;
+        }
+
+        .gem {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .gem:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .gem.selected {
+            background: rgba(255, 255, 0, 0.5);
+            border: 3px solid #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+
+        .gem.matched {
+            animation: blast 0.5s ease;
+        }
+
+        .gem.empty {
+            background: transparent;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes blast {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3) rotate(180deg); background: rgba(255, 255, 255, 0.8); }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .falling {
+            animation: fall 0.5s ease;
+        }
+
+        @keyframes fall {
+            from { transform: translateY(-100px); }
+            to { transform: translateY(0); }
+        }
+
+        #controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #gameOver, #victory {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            color: white;
+            max-width: 400px;
+        }
+
+        .modal h2 {
+            font-size: 48px;
+            margin: 0 0 20px 0;
+        }
+
+        .modal p {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+
+        #hint {
+            margin-top: 15px;
+            color: #fff;
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .waste-type-0 { background: rgba(139, 69, 19, 0.3); }
+        .waste-type-1 { background: rgba(65, 105, 225, 0.3); }
+        .waste-type-2 { background: rgba(255, 165, 0, 0.3); }
+        .waste-type-3 { background: rgba(0, 206, 209, 0.3); }
+        .waste-type-4 { background: rgba(147, 112, 219, 0.3); }
+        .waste-type-5 { background: rgba(105, 105, 105, 0.3); }
+        .waste-type-6 { background: rgba(220, 20, 60, 0.3); }
+        .waste-type-7 { background: rgba(255, 20, 147, 0.3); }
+        .waste-type-8 { background: rgba(85, 107, 47, 0.3); }
+
+        @media (max-width: 600px) {
+            #gameContainer {
+                padding: 15px;
+            }
+            .gem {
+                width: 40px;
+                height: 40px;
+                font-size: 24px;
+            }
+            h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <h1>♢ MatchWaste ♢</h1>
+        <div id="gameInfo">
+            <div id="score">Score: <span id="scoreValue">0</span></div>
+            <div id="moves">Moves: <span id="movesValue">0</span></div>
+            <div id="matchCount">Matches: <span id="matchCountValue">0</span></div>
+        </div>
+        <div id="gameBoard"></div>
+        <div id="controls">
+            <button onclick="newGame()">New Game</button>
+            <button onclick="showHint()" id="hintBtn" disabled>Hint</button>
+        </div>
+        <div id="hint">Click two adjacent emojis to swap them. Match 3+ of the same type to clear them! Clear all waste to win!</div>
+    </div>
+
+    <div id="gameOver">
+        <div class="modal">
+            <h2>💥 Game Over!</h2>
+            <p>The waste has reached the top!</p>
+            <p>Your Score: <span id="finalScore"></span></p>
+            <button onclick="newGame()">Play Again</button>
+            <button onclick="location.reload()">Main Menu</button>
+        </div>
+    </div>
+
+    <div id="victory">
+        <div class="modal">
+            <h2>🎉 Victory!</h2>
+            <p>You've cleared all the waste!</p>
+            <p>Your Score: <span id="victoryScore"></span></p>
+            <button onclick="newGame()">Play Again</button>
+            <button onclick="location.reload()">Main Menu</button>
+        </div>
+    </div>
+
+    <div id="wasteTypePreview" class="menu" style="display:none;">
+        <h2>Waste Types Guide</h2>
+        <p style="font-size: 14px; margin-bottom: 20px;">Learn the waste categories before you start!</p>
+        <div id="wasteTypeGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; max-height: 400px; overflow-y: auto; padding: 10px;">
+            <!-- Waste types will be dynamically inserted here -->
+        </div>
+        <div style="margin-top: 20px;">
+            <button id="startGameBtn" onclick="startGameFromPreview()" style="background: #00ff00; color: #000; font-weight: bold; padding: 12px 30px; font-size: 18px; margin-right: 10px; border: none; border-radius: 5px; cursor: pointer;">Start Game</button>
+            <button id="skipBtn" onclick="startGameFromPreview()" style="background: #ffaa00; color: #000; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Skip</button>
+        </div>
+    </div>
+
+    <div id="nicknamePrompt" class="menu" style="display:none;">
+        <h2>Enter Your Nickname</h2>
+        <input type="text" id="nicknameInput" maxlength="15" placeholder="Your Name" style="padding: 10px; font-size: 18px; margin: 10px 0; width: 80%;">
+        <br>
+        <button id="submitNicknameBtn" onclick="saveScore()" style="margin-top: 10px;">Submit</button>
+    </div>
+
+    <div id="leaderboard" class="menu" style="display:none;">
+        <h2>Leaderboard</h2>
+        <div id="leaderboardTable" style="margin: 20px 0; max-height: 400px; overflow-y: auto;"></div>
+        <div id="playerEntry" style="margin: 10px 0; color: #ffff00; font-weight: bold;"></div>
+        <button onclick="closeLeaderboard()">Continue</button>
+    </div>
+
+    <script>
+        // Waste emojis from shootwaste.html
+        const wasteEmojis = [
+            { emoji: '🔋', name: 'Batteries', type: 4 },
+            { emoji: '💻', name: 'Computer', type: 1 },
+            { emoji: '🔌', name: 'Electrical', type: 1 },
+            { emoji: '⌚', name: 'Watch', type: 2 },
+            { emoji: '🗄️', name: 'Refrigerator', type: 3 },
+            { emoji: '📱', name: 'Mobile Phone', type: 1 },
+            { emoji: '📡', name: 'Modem', type: 1 },
+            { emoji: '🦠', name: 'Virus Protection', type: 2 },
+            { emoji: '🛍️', name: 'Big Bag', type: 2 },
+            { emoji: '💿', name: 'CD/DVD', type: 2 },
+            { emoji: '📼', name: 'Cassette', type: 2 },
+            { emoji: '💾', name: 'Diskette', type: 1 },
+            { emoji: '🎞️', name: 'Photo Film', type: 2 },
+            { emoji: '💉', name: 'Needle', type: 4 },
+            { emoji: '🧲', name: 'Magnet', type: 2 },
+            { emoji: '☢️', name: 'Radioactive', type: 4 },
+            { emoji: '💡', name: 'Light Bulb', type: 2 },
+            { emoji: '🖼️', name: 'Wallpaper', type: 3 },
+            { emoji: '🪑', name: 'Furniture', type: 3 },
+            { emoji: '🛏️', name: 'Mattress', type: 3 },
+            { emoji: '🍳', name: 'Pan', type: 3 },
+            { emoji: '🏽', name: 'Carpet', type: 3 },
+            { emoji: '🎪', name: 'Tent', type: 3 },
+            { emoji: '🦾', name: 'Prosthesis', type: 2 },
+            { emoji: '🧱', name: 'Construction', type: 3 },
+            { emoji: '💐', name: 'Floral Foam', type: 2 },
+            { emoji: '🌲', name: 'Treated Wood', type: 3 },
+            { emoji: '🖼️', name: 'Plastic Frame', type: 2 },
+            { emoji: '✏️', name: 'Stationery', type: 2 },
+            { emoji: '🏺', name: 'Glass Vase', type: 5 },
+            { emoji: '🍾', name: 'Glass Bottle', type: 5 },
+            { emoji: '📜', name: 'Special Paper', type: 6 },
+            { emoji: '📁', name: 'Binder', type: 2 },
+            { emoji: '📦', name: 'Cardboard', type: 6 },
+            { emoji: '🧃', name: 'Drink Carton', type: 7 },
+            { emoji: '🥤', name: 'Cardboard Cup', type: 2 },
+            { emoji: '🧪', name: 'Chemical', type: 4 },
+            { emoji: '🎨', name: 'Paint', type: 4 },
+            { emoji: '🛢️', name: 'Fuel/Oil', type: 4 },
+            { emoji: '💊', name: 'Medicine', type: 4 },
+            { emoji: '💅', name: 'Nail Polish', type: 2 },
+            { emoji: '🧴', name: 'Aerosol Can', type: 7 },
+            { emoji: '🥫', name: 'Metal Can', type: 7 },
+            { emoji: '👑', name: 'Crown Cap', type: 7 },
+            { emoji: '💼', name: 'Pouch', type: 2 },
+            { emoji: '👕', name: 'Clothing', type: 8 },
+            { emoji: '👟', name: 'Shoes', type: 8 },
+            { emoji: '🧵', name: 'Textile', type: 8 },
+            { emoji: '🛍️', name: 'Plastic Bag', type: 7 },
+            { emoji: '🍽️', name: 'Plastic Tray', type: 7 },
+            { emoji: '🥣', name: 'Plastic Bowl', type: 7 },
+            { emoji: '💳', name: 'Plastic Card', type: 2 },
+            { emoji: '🍴', name: 'Utensils', type: 2 },
+            { emoji: '💩', name: 'Animal Waste', type: 2 },
+            { emoji: '🔪', name: 'Sharp Object', type: 2 },
+            { emoji: '🏺', name: 'Crockery', type: 2 },
+            { emoji: '🕯️', name: 'Candle Wax', type: 2 },
+            { emoji: '🩹', name: 'Adhesive Tape', type: 2 },
+            { emoji: '🧀', name: 'Cheese Paper', type: 2 },
+            { emoji: '☕', name: 'Coffee Cup', type: 2 },
+            { emoji: '🎉', name: 'Fireworks', type: 2 },
+            { emoji: '🕸️', name: 'Fruit Net', type: 2 },
+            { emoji: '🌳', name: 'Garden Waste', type: 9 },
+            { emoji: '🌱', name: 'Ground', type: 9 },
+            { emoji: '🌿', name: 'Plant Remains', type: 9 },
+            { emoji: '🛠️', name: 'Garden Tools', type: 3 },
+            { emoji: '🥩', name: 'Meat/Fish', type: 9 },
+            { emoji: '🍔', name: 'Food Remains', type: 9 },
+            { emoji: '🍦', name: 'Dairy', type: 9 },
+            { emoji: '🚲', name: 'Bicycle', type: 3 }
+        ];
+
+        const BOARD_SIZE = 8;
+        const TYPES_COUNT = 10;
+
+        let board = [];
+        let selectedGem = null;
+        let score = 0;
+        let moves = 0;
+        let gameActive = true;
+        let matchCount = 0;
+        let hintsAvailable = 1; // Start with 1 hint available
+        let suggestedMatch = null;
+
+        // SQLite database
+        let db = null;
+
+        function initBoard() {
+            board = [];
+            let attempts = 0;
+            const maxAttempts = 100;
+
+            do {
+                board = [];
+                for (let row = 0; row < BOARD_SIZE; row++) {
+                    board[row] = [];
+                    for (let col = 0; col < BOARD_SIZE; col++) {
+                        board[row][col] = createRandomGem();
+                    }
+                }
+                attempts++;
+            } while ((findMatches().length > 0 || !hasValidMoves()) && attempts < maxAttempts);
+
+            // If we couldn't generate a valid board in max attempts, create a guaranteed valid board
+            if (attempts >= maxAttempts) {
+                console.warn('Could not generate board with valid moves after', maxAttempts, 'attempts. Creating guaranteed valid board.');
+                createGuaranteedValidBoard();
+            }
+        }
+
+        function createRandomGem() {
+            const randomIndex = Math.floor(Math.random() * wasteEmojis.length);
+            return {
+                emoji: wasteEmojis[randomIndex].emoji,
+                type: wasteEmojis[randomIndex].type,
+                name: wasteEmojis[randomIndex].name
+            };
+        }
+
+        function renderBoard() {
+            const gameBoard = document.getElementById('gameBoard');
+            gameBoard.innerHTML = '';
+
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    const gemDiv = document.createElement('div');
+                    gemDiv.id = `gem-${row}-${col}`;
+                    gemDiv.dataset.row = row;
+                    gemDiv.dataset.col = col;
+
+                    if (board[row][col]) {
+                        gemDiv.className = `gem waste-type-${board[row][col].type % 10}`;
+                        gemDiv.textContent = board[row][col].emoji;
+                        gemDiv.title = board[row][col].name;
+                    } else {
+                        gemDiv.className = 'gem empty';
+                    }
+
+                    if (selectedGem && selectedGem.row === row && selectedGem.col === col) {
+                        gemDiv.classList.add('selected');
+                    }
+
+                    gemDiv.onclick = () => selectGem(row, col);
+                    gameBoard.appendChild(gemDiv);
+                }
+            }
+        }
+
+        function selectGem(row, col) {
+            if (!gameActive) return;
+
+            const gem = board[row][col];
+            if (!gem) return;
+
+            console.log('selectGem called:', {
+                row, col,
+                gem: `${gem.emoji} (type ${gem.type})`,
+                selectedGem: selectedGem,
+                gameActive: gameActive
+            });
+
+            if (!selectedGem) {
+                console.log('No gem selected, selecting this gem');
+                selectedGem = { row, col };
+                renderBoard();
+            } else {
+                if (selectedGem.row === row && selectedGem.col === col) {
+                    console.log('Same gem clicked, deselecting');
+                    selectedGem = null;
+                    renderBoard();
+                    return;
+                }
+
+                const dx = Math.abs(selectedGem.row - row);
+                const dy = Math.abs(selectedGem.col - col);
+                const isAdjacent = (dx + dy === 1);
+
+                console.log('Second gem clicked:', {
+                    selectedPos: `${selectedGem.row},${selectedGem.col}`,
+                    currentPos: `${row},${col}`,
+                    dx: dx,
+                    dy: dy,
+                    distance: dx + dy,
+                    isAdjacent: isAdjacent,
+                    gem1: gem ? `${gem.emoji} (type ${gem.type})` : 'null'
+                });
+
+                if (isAdjacent) {
+                    console.log('✓ Gems are adjacent - performing swap');
+                    const gem1 = board[selectedGem.row][selectedGem.col];
+                    const gem2 = board[row][col];
+                    console.log('Swapping:', `${gem1.emoji} (type ${gem1.type})`, 'with', `${gem2.emoji} (type ${gem2.type})`);
+                    swapGems(selectedGem, { row, col });
+                    moves++;
+                    document.getElementById('movesValue').textContent = moves;
+                    selectedGem = null;
+                } else {
+                    console.log('✗ Gems are NOT adjacent (distance=' + (dx + dy) + ') - changing selection to new gem');
+                    console.log('  To swap, gems must be directly next to each other (horizontally or vertically)');
+                    selectedGem = { row, col };
+                    renderBoard();
+                }
+            }
+        }
+
+        function swapGems(pos1, pos2) {
+            const gem1 = board[pos1.row][pos1.col];
+            const gem2 = board[pos2.row][pos2.col];
+
+            console.log('Attempting swap:', {
+                pos1: `${pos1.row},${pos1.col}`,
+                pos2: `${pos2.row},${pos2.col}`,
+                gem1: gem1 ? `${gem1.emoji} (type ${gem1.type})` : 'null',
+                gem2: gem2 ? `${gem2.emoji} (type ${gem2.type})` : 'null'
+            });
+
+            const temp = board[pos1.row][pos1.col];
+            board[pos1.row][pos1.col] = board[pos2.row][pos2.col];
+            board[pos2.row][pos2.col] = temp;
+
+            renderBoard();
+
+            // Log the board state after swap for debugging
+            console.log('Board state after swap:');
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                let rowStr = '';
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (board[r][c]) {
+                        rowStr += board[r][c].emoji + ' ';
+                    } else {
+                        rowStr += '· ';
+                    }
+                }
+                console.log('Row ' + r + ': ' + rowStr);
+            }
+
+            // Also log types for easier understanding
+            console.log('Board types after swap:');
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                let typeStr = '';
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (board[r][c]) {
+                        typeStr += board[r][c].type + ' ';
+                    } else {
+                        typeStr += '· ';
+                    }
+                }
+                console.log('Row ' + r + ' types: ' + typeStr);
+            }
+
+            const matches = findMatches();
+            console.log(`Swap result: ${matches.length} matches found`);
+            if (matches.length > 0) {
+                matches.forEach(match => {
+                    const gem = board[match.row][match.col];
+                    if (gem) {
+                        console.log(`Match at ${match.row},${match.col}: ${gem.emoji} (type ${gem.type})`);
+                    }
+                });
+            }
+
+            if (matches.length > 0) {
+                console.log('Matches found:', matches);
+                setTimeout(() => {
+                    clearMatches(matches);
+                }, 300);
+            } else {
+                console.log('No matches - swapping back');
+                console.log('Reason: This swap does not create a line of 3+ matching types');
+                setTimeout(() => {
+                    const temp = board[pos1.row][pos1.col];
+                    board[pos1.row][pos1.col] = board[pos2.row][pos2.col];
+                    board[pos2.row][pos2.col] = temp;
+                    renderBoard();
+                }, 300);
+            }
+        }
+
+        function findMatches() {
+            const matches = [];
+
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                let count = 1;
+                let currentType = board[row][0]?.type;
+
+                for (let col = 1; col < BOARD_SIZE; col++) {
+                    if (board[row][col] && board[row][col].type === currentType) {
+                        count++;
+                    } else {
+                        if (count >= 3) {
+                            for (let i = col - count; i < col; i++) {
+                                matches.push({ row, col: i });
+                            }
+                        }
+                        count = 1;
+                        currentType = board[row][col]?.type;
+                    }
+                }
+                if (count >= 3) {
+                    for (let i = BOARD_SIZE - count; i < BOARD_SIZE; i++) {
+                        matches.push({ row, col: i });
+                    }
+                }
+            }
+
+            for (let col = 0; col < BOARD_SIZE; col++) {
+                let count = 1;
+                let currentType = board[0][col]?.type;
+
+                for (let row = 1; row < BOARD_SIZE; row++) {
+                    if (board[row][col] && board[row][col].type === currentType) {
+                        count++;
+                    } else {
+                        if (count >= 3) {
+                            for (let i = row - count; i < row; i++) {
+                                matches.push({ row: i, col });
+                            }
+                        }
+                        count = 1;
+                        currentType = board[row][col]?.type;
+                    }
+                }
+                if (count >= 3) {
+                    for (let i = BOARD_SIZE - count; i < BOARD_SIZE; i++) {
+                        matches.push({ row: i, col });
+                    }
+                }
+            }
+
+            return matches;
+        }
+
+        // Helper function to count remaining gems on the board
+        function countRemainingGems() {
+            let count = 0;
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (board[row][col]) {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        // Helper function to get all remaining gems as an array
+        function getAllRemainingGems() {
+            const gems = [];
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (board[row][col]) {
+                        gems.push(board[row][col]);
+                    }
+                }
+            }
+            return gems;
+        }
+
+        function clearMatches(matches) {
+            if (matches.length === 0) {
+                // No more matches - check if we need to regenerate or if game is over
+                if (isBoardEmpty()) {
+                    gameActive = false;
+                    // Game finished - directly prompt for nickname and show leaderboard
+                    promptNicknameAndSave(score);
+                } else {
+                    // Board still has gems but no matches
+                    const gemCount = countRemainingGems();
+
+                    // Check for VICTORY conditions first:
+                    // 1. Only 1 gem left (effectively complete, can't match 1 item)
+                    if (gemCount === 1) {
+                        console.log('Only 1 gem left - game complete!');
+                        gameActive = false;
+                        promptNicknameAndSave(score);
+                        return;
+                    }
+
+                    // 2. Check if we have very few gems (≤4) - might be unwinnable
+                    if (gemCount <= 4) {
+                        console.log(`Only ${gemCount} gems left - checking if winnable...`);
+                        // Check if current gems can form a match
+                        const currentMatches = findMatches();
+                        if (currentMatches.length > 0) {
+                            // Already have a match - this shouldn't happen as we checked matches.length === 0
+                            console.log('ERROR: Found matches but matches.length was 0!');
+                        } else {
+                            // No current match
+                            const remainingGems = getAllRemainingGems();
+                            const typeCount = {};
+                            remainingGems.forEach(gem => {
+                                typeCount[gem.type] = (typeCount[gem.type] || 0) + 1;
+                            });
+                            const maxCount = Math.max(...Object.values(typeCount));
+                            const typeCountNum = Object.keys(typeCount).length;
+                            const hasDuplicateTypes = typeCountNum > 1;
+
+                            // VICTORY: If we have exactly 4 different types (1 of each),
+                            // it's impossible to match them all, so this is a victory
+                            if (gemCount === 4 && typeCountNum === 4 && maxCount === 1) {
+                                console.log('All 4 remaining gems are of different types - game complete!');
+                                gameActive = false;
+                                promptNicknameAndSave(score);
+                                return;
+                            }
+
+                            // VICTORY: If we have 3 different types (1 of each),
+                            // it's impossible to match them all, so this is a victory
+                            if (gemCount === 3 && typeCountNum === 3 && maxCount === 1) {
+                                console.log('All 3 remaining gems are of different types - game complete!');
+                                gameActive = false;
+                                promptNicknameAndSave(score);
+                                return;
+                            }
+
+                            // VICTORY: If we have 2 gems and they're different types
+                            if (gemCount === 2 && typeCountNum === 2) {
+                                console.log('Only 2 gems left of different types - game complete!');
+                                gameActive = false;
+                                promptNicknameAndSave(score);
+                                return;
+                            }
+
+                            // VICTORY: If we have 2 types with 2 gems each (e.g., A A B B),
+                            // it's impossible to clear all gems, so this is a victory
+                            if (gemCount === 4 && typeCountNum === 2) {
+                                const counts = Object.values(typeCount);
+                                if (counts.length === 2 && counts[0] === 2 && counts[1] === 2) {
+                                    console.log('Remaining gems are 2 of each type (A A B B) - game complete!');
+                                    gameActive = false;
+                                    promptNicknameAndSave(score);
+                                    return;
+                                }
+                            }
+
+                            // GAME OVER: If we have gems that could potentially match but don't
+                            if (maxCount < 3 && hasDuplicateTypes) {
+                                // Unwinnable: We have ≤4 gems but not 3+ of the same type
+                                console.log(`Unwinnable state detected with ${gemCount} gems:`, remainingGems.map(g => g.emoji).join(' '));
+                                console.log('Type distribution:', typeCount);
+                                gameActive = false;
+                                // Show game over message
+                                setTimeout(() => {
+                                    alert('Game Over! Not enough matching items left to clear the board.');
+                                    location.reload();
+                                }, 300);
+                                return;
+                            }
+                        }
+                    }
+
+                    // Check if valid moves exist
+                    if (!hasValidMoves()) {
+                        // No valid moves - regenerate board
+                        regenerateBoard();
+                    } else {
+                        // Valid moves exist, game continues - no action needed
+                    }
+                }
+                return;
+            }
+
+            matches.forEach(match => {
+                const gemElement = document.getElementById(`gem-${match.row}-${match.col}`);
+                if (gemElement) {
+                    gemElement.classList.add('matched');
+                }
+            });
+
+            score += matches.length * 10;
+            matchCount++;
+            document.getElementById('scoreValue').textContent = score;
+            document.getElementById('matchCountValue').textContent = matchCount;
+
+            // Award extra hint every 3 matches
+            if (matchCount % 3 === 0) {
+                hintsAvailable++;
+                updateHintButton();
+            }
+
+            setTimeout(() => {
+                matches.forEach(match => {
+                    board[match.row][match.col] = null;
+                });
+
+                applyGravity();
+                setTimeout(() => {
+                    const newMatches = findMatches();
+                    if (newMatches.length > 0) {
+                        clearMatches(newMatches);
+                    } else {
+                        // Continue checking after cascade
+                        setTimeout(() => {
+                            if (isBoardEmpty()) {
+                                gameActive = false;
+                                // Game finished - directly prompt for nickname and show leaderboard
+                                promptNicknameAndSave(score);
+                            } else {
+                                // Check for VICTORY: only 1 gem left
+                                const gemCount = countRemainingGems();
+                                if (gemCount === 1) {
+                                    console.log('Only 1 gem left after cascade - game complete!');
+                                    gameActive = false;
+                                    promptNicknameAndSave(score);
+                                    return;
+                                }
+
+                                // Check if valid moves exist
+                                if (!hasValidMoves()) {
+                                    // No valid moves - regenerate board
+                                    regenerateBoard();
+                                } else {
+                                    // Valid moves exist, game continues - no action needed
+                                }
+                            }
+                        }, 100);
+                    }
+                }, 500);
+            }, 500);
+        }
+
+        function applyGravity() {
+            for (let col = 0; col < BOARD_SIZE; col++) {
+                const gems = [];
+                for (let row = BOARD_SIZE - 1; row >= 0; row--) {
+                    if (board[row][col]) {
+                        gems.push(board[row][col]);
+                    }
+                }
+
+                for (let row = BOARD_SIZE - 1; row >= 0; row--) {
+                    if (gems.length > 0) {
+                        board[row][col] = gems.shift();
+                    } else {
+                        // Leave empty - don't create new random gems
+                        board[row][col] = null;
+                    }
+                }
+            }
+            renderBoard();
+
+            const gems = document.querySelectorAll('.gem');
+            gems.forEach(gem => {
+                gem.classList.add('falling');
+                setTimeout(() => gem.classList.remove('falling'), 500);
+            });
+        }
+
+        function isBoardEmpty() {
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (board[row][col]) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        // Check if there are any valid moves that can create a match
+        function hasValidMoves() {
+            const validSwaps = [];
+            // Try swapping adjacent gems to see if any match can be created
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    // Skip if current position is empty
+                    if (!board[row][col]) continue;
+
+                    // Check right neighbor
+                    if (col < BOARD_SIZE - 1 && board[row][col + 1]) {
+                        swapGemsTest(row, col, row, col + 1);
+                        const matches = findMatches();
+                        if (matches.length > 0) {
+                            validSwaps.push({
+                                pos1: { row, col },
+                                pos2: { row, col: col + 1 },
+                                matchCount: matches.length
+                            });
+                        }
+                        swapGemsTest(row, col, row, col + 1); // Swap back
+                    }
+                    // Check bottom neighbor
+                    if (row < BOARD_SIZE - 1 && board[row + 1][col]) {
+                        swapGemsTest(row, col, row + 1, col);
+                        const matches = findMatches();
+                        if (matches.length > 0) {
+                            validSwaps.push({
+                                pos1: { row, col },
+                                pos2: { row: row + 1, col },
+                                matchCount: matches.length
+                            });
+                        }
+                        swapGemsTest(row, col, row + 1, col); // Swap back
+                    }
+                }
+            }
+
+            if (validSwaps.length > 0) {
+                console.log(`hasValidMoves: Found ${validSwaps.length} valid swaps:`, validSwaps.slice(0, 5));
+                return true;
+            }
+            return false;
+        }
+
+        // Test swap without animation
+        function swapGemsTest(row1, col1, row2, col2) {
+            // Only swap if both positions have gems
+            if (!board[row1][col1] || !board[row2][col2]) return;
+            const temp = board[row1][col1];
+            board[row1][col1] = board[row2][col2];
+            board[row2][col2] = temp;
+        }
+
+        // Regenerate board by re-arranging remaining waste items
+        function regenerateBoard() {
+            console.log('Re-arranging remaining waste - no valid moves available');
+
+            // Collect all existing non-null gems from the current board
+            const existingGems = [];
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (board[row][col]) {
+                        existingGems.push(board[row][col]);
+                    }
+                }
+            }
+
+            // If no gems left, the game should have ended
+            if (existingGems.length === 0) {
+                console.log('No gems left to rearrange - game should be over');
+                return;
+            }
+
+            // Check if we have very few gems (≤4) that might be unwinnable
+            if (existingGems.length <= 4) {
+                console.log(`Only ${existingGems.length} gems left - checking if winnable...`);
+
+                // Count types to see if we can form a match
+                const typeCount = {};
+                existingGems.forEach(gem => {
+                    typeCount[gem.type] = (typeCount[gem.type] || 0) + 1;
+                });
+                const maxCount = Math.max(...Object.values(typeCount));
+                const typeCountNum = Object.keys(typeCount).length;
+                const hasDuplicateTypes = typeCountNum > 1;
+
+                // VICTORY: If we have exactly 4 different types (1 of each),
+                // it's impossible to match them all, so this is a victory
+                if (existingGems.length === 4 && typeCountNum === 4 && maxCount === 1) {
+                    console.log('All 4 remaining gems are of different types - game complete!');
+                    gameActive = false;
+                    promptNicknameAndSave(score);
+                    return;
+                }
+
+                // VICTORY: If we have 3 different types (1 of each),
+                // it's impossible to match them all, so this is a victory
+                if (existingGems.length === 3 && typeCountNum === 3 && maxCount === 1) {
+                    console.log('All 3 remaining gems are of different types - game complete!');
+                    gameActive = false;
+                    promptNicknameAndSave(score);
+                    return;
+                }
+
+                // VICTORY: If we have 2 gems and they're different types
+                if (existingGems.length === 2 && typeCountNum === 2) {
+                    console.log('Only 2 gems left of different types - game complete!');
+                    gameActive = false;
+                    promptNicknameAndSave(score);
+                    return;
+                }
+
+                // VICTORY: If we have 2 types with 2 gems each (e.g., A A B B),
+                // it's impossible to clear all gems, so this is a victory
+                if (existingGems.length === 4 && typeCountNum === 2) {
+                    const counts = Object.values(typeCount);
+                    if (counts.length === 2 && counts[0] === 2 && counts[1] === 2) {
+                        console.log('Remaining gems are 2 of each type (A A B B) - game complete!');
+                        gameActive = false;
+                        promptNicknameAndSave(score);
+                        return;
+                    }
+                }
+
+                // GAME OVER: If we have gems that could potentially match but don't
+                if (maxCount < 3 && hasDuplicateTypes) {
+                    // Unwinnable: We have ≤4 gems but not 3+ of the same type
+                    console.log(`Unwinnable state detected with ${existingGems.length} gems:`, existingGems.map(g => g.emoji).join(' '));
+                    console.log('Type distribution:', typeCount);
+                    gameActive = false;
+                    // Show game over message
+                    setTimeout(() => {
+                        alert('Game Over! Not enough matching items left to clear the board.');
+                        location.reload();
+                    }, 300);
+                    return;
+                }
+            }
+
+            // Clear the board
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    board[row][col] = null;
+                }
+            }
+
+            // Group gems by type to ensure we have variety
+            const gemsByType = {};
+            existingGems.forEach(gem => {
+                if (!gemsByType[gem.type]) {
+                    gemsByType[gem.type] = [];
+                }
+                gemsByType[gem.type].push(gem);
+            });
+
+            // Check if we have at least 2 gems of the same type
+            const validTypes = Object.keys(gemsByType).filter(type => gemsByType[type].length >= 2);
+            const hasValidPairs = validTypes.length > 0;
+
+            // Place gems strategically to ensure valid moves exist
+            const placedPositions = new Set();
+            let guaranteedMoveCreated = false;
+            let usedGems = []; // Store used gems for filtering
+
+            // If we have at least 2 gems of the same type, create a guaranteed move
+            if (hasValidPairs && existingGems.length >= 3) {
+                // Pick a random valid type
+                const chosenType = validTypes[Math.floor(Math.random() * validTypes.length)];
+                const availableGemsOfType = gemsByType[chosenType];
+
+                // Pick 2 gems of the same type for our guaranteed pattern
+                const gem1 = availableGemsOfType[0];
+                const gem2 = availableGemsOfType[1];
+
+                // Pick a random different type for the middle gem
+                const otherTypes = Object.keys(gemsByType).filter(type => type !== chosenType);
+                const otherType = otherTypes[Math.floor(Math.random() * otherTypes.length)];
+                const middleGem = gemsByType[otherType][0];
+
+                // Choose horizontal or vertical placement
+                const useHorizontal = Math.random() < 0.5;
+                let row, col, positions;
+
+                if (useHorizontal) {
+                    row = Math.floor(Math.random() * BOARD_SIZE);
+                    col = Math.floor(Math.random() * (BOARD_SIZE - 2));
+                    positions = [`${row}-${col}`, `${row}-${col + 1}`, `${row}-${col + 2}`];
+                } else {
+                    col = Math.floor(Math.random() * BOARD_SIZE);
+                    row = Math.floor(Math.random() * (BOARD_SIZE - 2));
+                    positions = [`${row}-${col}`, `${row + 1}-${col}`, `${row + 2}-${col}`];
+                }
+
+                // Place the pattern: X Y X (swapping Y with X creates XXX)
+                board[parseInt(positions[0].split('-')[0])][parseInt(positions[0].split('-')[1])] = {
+                    emoji: gem1.emoji,
+                    type: gem1.type,
+                    name: gem1.name
+                };
+                placedPositions.add(positions[0]);
+
+                board[parseInt(positions[1].split('-')[0])][parseInt(positions[1].split('-')[1])] = {
+                    emoji: middleGem.emoji,
+                    type: middleGem.type,
+                    name: middleGem.name
+                };
+                placedPositions.add(positions[1]);
+
+                board[parseInt(positions[2].split('-')[0])][parseInt(positions[2].split('-')[1])] = {
+                    emoji: gem2.emoji,
+                    type: gem2.type,
+                    name: gem2.name
+                };
+                placedPositions.add(positions[2]);
+
+                guaranteedMoveCreated = true;
+                console.log(`Created guaranteed move with type ${chosenType} at positions`, positions);
+
+                // Store the used gems for later filtering
+                usedGems = [gem1, gem2, middleGem];
+            }
+
+            // Collect all remaining gems (excluding the 3 we just placed if we created a guaranteed move)
+            const remainingGems = existingGems.filter(gem => {
+                if (guaranteedMoveCreated) {
+                    // Check if this gem was one of the 3 we used
+                    // Use a simple check based on emoji and type
+                    return !usedGems.some(usedGem =>
+                        usedGem.emoji === gem.emoji && usedGem.type === gem.type
+                    );
+                }
+                return true;
+            });
+
+            // Clear all positions except the guaranteed move positions
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    const pos = `${r}-${c}`;
+                    if (!placedPositions.has(pos)) {
+                        board[r][c] = null;
+                    }
+                }
+            }
+
+            // COMPACT PLACEMENT: Place remaining gems in a compact area
+            // Calculate optimal area to fit all gems with minimal empty space
+            const numGems = remainingGems.length;
+            const colsNeeded = Math.ceil(Math.sqrt(numGems));
+            const rowsNeeded = Math.ceil(numGems / colsNeeded);
+
+            // Start from bottom-left to leave room for gravity effects
+            const startRow = BOARD_SIZE - rowsNeeded;
+            const startCol = 0;
+
+            // Shuffle remaining gems for variety
+            const shuffledGems = [...remainingGems];
+            for (let i = shuffledGems.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledGems[i], shuffledGems[j]] = [shuffledGems[j], shuffledGems[i]];
+            }
+
+            // Place gems compactly in a rectangle
+            for (let i = 0; i < shuffledGems.length; i++) {
+                const gem = shuffledGems[i];
+                const row = startRow + Math.floor(i / colsNeeded);
+                const col = startCol + (i % colsNeeded);
+
+                // Safety check
+                if (row < BOARD_SIZE && col < BOARD_SIZE) {
+                    board[row][col] = gem;
+                }
+            }
+
+            // If we have many empty positions, try to move gems closer together
+            // This is especially important when there are < 20 gems
+            if (remainingGems.length < 20) {
+                const allPositions = [];
+                for (let r = 0; r < BOARD_SIZE; r++) {
+                    for (let c = 0; c < BOARD_SIZE; c++) {
+                        if (board[r][c] && !placedPositions.has(`${r}-${c}`)) {
+                            allPositions.push({ r, c });
+                        }
+                    }
+                }
+
+                // If gems are too spread out, compact them more
+                const spreadThreshold = remainingGems.length * 1.5;
+                if (allPositions.length > spreadThreshold) {
+                    console.log(`Compacting ${remainingGems.length} gems from ${allPositions.length} positions`);
+
+                    // Gather all gems
+                    const gemsToMove = allPositions.map(pos => board[pos.r][pos.c]);
+                    for (const pos of allPositions) {
+                        board[pos.r][pos.c] = null;
+                    }
+
+                    // Re-place in even more compact arrangement (triangular packing)
+                    const compactRows = Math.ceil(Math.sqrt(remainingGems.length));
+                    for (let i = 0; i < gemsToMove.length; i++) {
+                        const gem = gemsToMove[i];
+                        // More compact triangular arrangement
+                        const row = startRow + Math.floor(i / (colsNeeded - 1));
+                        const col = startCol + (i % (colsNeeded - 1));
+
+                        if (row < BOARD_SIZE && col < BOARD_SIZE && board[row][col] === null) {
+                            board[row][col] = gem;
+                        } else {
+                            // Find first available spot
+                            for (let r = startRow; r < BOARD_SIZE; r++) {
+                                for (let c = 0; c < BOARD_SIZE; c++) {
+                                    if (board[r][c] === null) {
+                                        board[r][c] = gem;
+                                        r = BOARD_SIZE; // Break outer loop
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Verify that we have valid moves and NO pre-existing matches
+            let existingMatches = findMatches();
+            let validMovesCheck = hasValidMoves();
+
+            if (existingMatches.length > 0) {
+                console.warn('WARNING: Pre-existing matches found after regeneration! Re-arranging...');
+                console.log('Pre-existing matches:', existingMatches.length);
+            }
+
+            if (existingMatches.length > 0 || !validMovesCheck) {
+                if (existingMatches.length > 0) {
+                    console.log('Board state with pre-existing matches:', board.map(row => row.map(cell => cell ? cell.emoji : '·').join(' ')).join('\n'));
+                } else {
+                    console.warn('WARNING: No valid moves found after regeneration attempt. This should not happen!');
+                    console.log('Board state:', board.map(row => row.map(cell => cell ? cell.emoji : '·').join(' ')).join('\n'));
+                }
+
+                // Try different COMPACT arrangement strategies
+                const allGems = [];
+                for (let r = 0; r < BOARD_SIZE; r++) {
+                    for (let c = 0; c < BOARD_SIZE; c++) {
+                        if (board[r][c] && !placedPositions.has(`${r}-${c}`)) {
+                            allGems.push(board[r][c]);
+                        }
+                        board[r][c] = null; // Clear for fresh placement
+                    }
+                }
+
+                let arrangementTried = 0;
+                const maxArrangements = 100; // Increased attempts for compact placement
+                let foundValidBoard = false;
+
+                // For small numbers of gems (<=6), use more aggressive clustering
+                const gemCount = allGems.length;
+                const isSmallCount = gemCount <= 6;
+
+                // Strategy 1: Try compact placement in different areas
+                while ((findMatches().length > 0 || !hasValidMoves()) && arrangementTried < maxArrangements && !foundValidBoard) {
+                    arrangementTried++;
+
+                    // Clear board except guaranteed move
+                    for (let r = 0; r < BOARD_SIZE; r++) {
+                        for (let c = 0; c < BOARD_SIZE; c++) {
+                            const pos = `${r}-${c}`;
+                            if (!placedPositions.has(pos)) {
+                                board[r][c] = null;
+                            }
+                        }
+                    }
+
+                    // For small counts, start from bottom-left corner always for consistency
+                    const anchorRow = isSmallCount ? BOARD_SIZE - 2 : Math.floor(Math.random() * (BOARD_SIZE - 2));
+                    const anchorCol = isSmallCount ? 0 : Math.floor(Math.random() * (BOARD_SIZE - 2));
+
+                    // Shuffle gems
+                    const shuffled = [...allGems];
+                    for (let i = shuffled.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                    }
+
+                    // For small gem counts, group by type first to ensure clustering
+                    if (isSmallCount) {
+                        // Group gems by type
+                        const gemsByType = {};
+                        shuffled.forEach(gem => {
+                            if (!gemsByType[gem.type]) {
+                                gemsByType[gem.type] = [];
+                            }
+                            gemsByType[gem.type].push(gem);
+                        });
+
+                        // Place types in alternating pattern to enable matches
+                        let row = anchorRow;
+                        let col = anchorCol;
+                        const types = Object.keys(gemsByType);
+                        let typeIndex = 0;
+
+                        // For each type, place all gems of that type
+                        types.forEach(type => {
+                            const gemsOfType = gemsByType[type];
+                            gemsOfType.forEach(gem => {
+                                if (col >= BOARD_SIZE) {
+                                    row--;
+                                    col = 0;
+                                }
+                                if (row >= 0) {
+                                    board[row][col] = gem;
+                                    col++;
+                                }
+                            });
+                            typeIndex++;
+                        });
+                    } else {
+                        // Original placement for larger counts
+                        // Place in compact rectangle near anchor
+                        const colsNeeded = Math.ceil(Math.sqrt(shuffled.length));
+                        for (let i = 0; i < shuffled.length; i++) {
+                            const row = anchorRow + Math.floor(i / colsNeeded);
+                            const col = anchorCol + (i % colsNeeded);
+                            if (row < BOARD_SIZE && col < BOARD_SIZE) {
+                                board[row][col] = shuffled[i];
+                            }
+                        }
+                    }
+
+                    // Check if this arrangement works
+                    if (findMatches().length === 0 && hasValidMoves()) {
+                        foundValidBoard = true;
+                        console.log(`SUCCESS: Found valid compact arrangement at attempt ${arrangementTried}`);
+                    }
+                }
+
+                // Strategy 2: Try spiral compaction
+                if (!foundValidBoard && arrangementTried < maxArrangements) {
+                    const centerR = Math.floor(BOARD_SIZE / 2);
+                    const centerC = Math.floor(BOARD_SIZE / 2);
+
+                    // Clear board
+                    for (let r = 0; r < BOARD_SIZE; r++) {
+                        for (let c = 0; c < BOARD_SIZE; c++) {
+                            const pos = `${r}-${c}`;
+                            if (!placedPositions.has(pos)) {
+                                board[r][c] = null;
+                            }
+                        }
+                    }
+
+                    // Create spiral positions
+                    const spiralPositions = [];
+                    let top = 0, bottom = BOARD_SIZE - 1, left = 0, right = BOARD_SIZE - 1;
+
+                    while (top <= bottom && left <= right) {
+                        for (let c = left; c <= right; c++) spiralPositions.push({ r: top, c });
+                        top++;
+                        for (let r = top; r <= bottom; r++) spiralPositions.push({ r, c: right });
+                        right--;
+                        if (top <= bottom) {
+                            for (let c = right; c >= left; c--) spiralPositions.push({ r: bottom, c });
+                            bottom--;
+                        }
+                        if (left <= right) {
+                            for (let r = bottom; r >= top; r--) spiralPositions.push({ r, c: left });
+                            left++;
+                        }
+                    }
+
+                    // Place gems in spiral order
+                    const shuffled = [...allGems];
+                    for (let i = shuffled.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                    }
+
+                    let placed = 0;
+                    for (let i = 0; i < spiralPositions.length && placed < shuffled.length; i++) {
+                        const pos = spiralPositions[i];
+                        const posKey = `${pos.r}-${pos.c}`;
+                        if (!placedPositions.has(posKey)) {
+                            board[pos.r][pos.c] = shuffled[placed];
+                            placed++;
+                        }
+                    }
+
+                    if (findMatches().length === 0 && hasValidMoves()) {
+                        foundValidBoard = true;
+                        console.log(`SUCCESS: Found valid spiral arrangement at attempt ${arrangementTried}`);
+                    }
+                }
+
+                const finalMatches = findMatches();
+                const finalValidMoves = hasValidMoves();
+
+                if (finalMatches.length > 0) {
+                    console.error(`FAILED: Still have ${finalMatches.length} pre-existing matches after ${arrangementTried} attempts!`);
+                } else if (!finalValidMoves) {
+                    console.error(`FAILED: No valid moves after ${arrangementTried} compact arrangement attempts!`);
+                    console.log('This board configuration may truly have no valid moves.');
+                } else {
+                    console.log(`SUCCESS: Found valid board with no pre-existing matches after ${arrangementTried} attempts`);
+                }
+            } else {
+                console.log('Valid moves confirmed, no pre-existing matches - board is good!');
+            }
+
+            renderBoard();
+
+            // Show message to user
+            const hintDiv = document.getElementById('hint');
+            hintDiv.textContent = 'Waste re-arranged! Try finding new matches.';
+            setTimeout(() => {
+                hintDiv.textContent = 'Click two adjacent emojis to swap them. Match 3+ of the same type to clear them! Clear all waste to win!';
+            }, 3000);
+        }
+
+        // Create a board that is guaranteed to have at least one valid move
+        function createGuaranteedValidBoard() {
+            // Clear board
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    board[row][col] = null;
+                }
+            }
+
+            // Fill board with random gems first
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    board[row][col] = createRandomGem();
+                }
+            }
+
+            // Create 2-3 guaranteed swap patterns that will create matches when swapped
+            // Pattern: X Y X - swapping Y with a matching X creates XXX
+            const numMoves = 2 + Math.floor(Math.random() * 2); // 2-3 moves
+            const usedPositions = new Set();
+
+            for (let m = 0; m < numMoves; m++) {
+                let attempts = 0;
+                let placed = false;
+
+                while (!placed && attempts < 50) {
+                    attempts++;
+
+                    // Try horizontal swap pattern
+                    if (Math.random() < 0.5) {
+                        const row = Math.floor(Math.random() * BOARD_SIZE);
+                        const col = Math.floor(Math.random() * (BOARD_SIZE - 2));
+
+                        // We'll place X Y X pattern (positions col, col+1, col+2)
+                        // Where Y is different from X
+                        const pos1 = `${row}-${col}`;
+                        const pos2 = `${row}-${col + 1}`;
+                        const pos3 = `${row}-${col + 2}`;
+
+                        // Check if positions are free
+                        let canPlace = true;
+                        for (const pos of [pos1, pos2, pos3]) {
+                            if (usedPositions.has(pos)) {
+                                canPlace = false;
+                                break;
+                            }
+                        }
+
+                        if (canPlace) {
+                            const typeX = Math.floor(Math.random() * TYPES_COUNT);
+                            const typeY = Math.floor(Math.random() * TYPES_COUNT);
+                            // Make sure Y is different from X
+                            const finalTypeY = typeY === typeX ? (typeY + 1) % TYPES_COUNT : typeY;
+
+                            const availableGemsX = wasteEmojis.filter(w => w.type === typeX);
+                            const availableGemsY = wasteEmojis.filter(w => w.type === finalTypeY);
+
+                            // Place X at position 0
+                            const gem1 = availableGemsX[Math.floor(Math.random() * availableGemsX.length)];
+                            board[row][col] = {
+                                emoji: gem1.emoji,
+                                type: typeX,
+                                name: gem1.name
+                            };
+                            usedPositions.add(pos1);
+
+                            // Place Y at position 1
+                            const gem2 = availableGemsY[Math.floor(Math.random() * availableGemsY.length)];
+                            board[row][col + 1] = {
+                                emoji: gem2.emoji,
+                                type: finalTypeY,
+                                name: gem2.name
+                            };
+                            usedPositions.add(pos2);
+
+                            // Place X at position 2
+                            const gem3 = availableGemsX[Math.floor(Math.random() * availableGemsX.length)];
+                            board[row][col + 2] = {
+                                emoji: gem3.emoji,
+                                type: typeX,
+                                name: gem3.name
+                            };
+                            usedPositions.add(pos3);
+
+                            placed = true;
+                        }
+                    } else {
+                        // Try vertical swap pattern
+                        const row = Math.floor(Math.random() * (BOARD_SIZE - 2));
+                        const col = Math.floor(Math.random() * BOARD_SIZE);
+
+                        // We'll place X Y X pattern vertically (rows row, row+1, row+2)
+                        const pos1 = `${row}-${col}`;
+                        const pos2 = `${row + 1}-${col}`;
+                        const pos3 = `${row + 2}-${col}`;
+
+                        // Check if positions are free
+                        let canPlace = true;
+                        for (let i = 0; i < 3; i++) {
+                            const pos = `${row + i}-${col}`;
+                            if (usedPositions.has(pos)) {
+                                canPlace = false;
+                                break;
+                            }
+                        }
+
+                        if (canPlace) {
+                            const typeX = Math.floor(Math.random() * TYPES_COUNT);
+                            const typeY = Math.floor(Math.random() * TYPES_COUNT);
+                            // Make sure Y is different from X
+                            const finalTypeY = typeY === typeX ? (typeY + 1) % TYPES_COUNT : typeY;
+
+                            const availableGemsX = wasteEmojis.filter(w => w.type === typeX);
+                            const availableGemsY = wasteEmojis.filter(w => w.type === finalTypeY);
+
+                            // Place X at position 0
+                            const gem1 = availableGemsX[Math.floor(Math.random() * availableGemsX.length)];
+                            board[row][col] = {
+                                emoji: gem1.emoji,
+                                type: typeX,
+                                name: gem1.name
+                            };
+                            usedPositions.add(pos1);
+
+                            // Place Y at position 1
+                            const gem2 = availableGemsY[Math.floor(Math.random() * availableGemsY.length)];
+                            board[row + 1][col] = {
+                                emoji: gem2.emoji,
+                                type: finalTypeY,
+                                name: gem2.name
+                            };
+                            usedPositions.add(pos2);
+
+                            // Place X at position 2
+                            const gem3 = availableGemsX[Math.floor(Math.random() * availableGemsX.length)];
+                            board[row + 2][col] = {
+                                emoji: gem3.emoji,
+                                type: typeX,
+                                name: gem3.name
+                            };
+                            usedPositions.add(pos3);
+
+                            placed = true;
+                        }
+                    }
+                }
+            }
+
+            console.log('Created board with', numMoves, 'guaranteed swap moves (X Y X pattern)');
+        }
+
+        function newGame() {
+            score = 0;
+            moves = 0;
+            matchCount = 0;
+            hintsAvailable = 1; // Start with 1 hint available
+            suggestedMatch = null;
+            gameActive = false; // Start as inactive until preview is dismissed
+            selectedGem = null;
+
+            document.getElementById('scoreValue').textContent = '0';
+            document.getElementById('movesValue').textContent = '0';
+            document.getElementById('matchCountValue').textContent = '0';
+
+            console.log('New game initialized:', { hintsAvailable, gameActive });
+
+            // Initialize hint button
+            updateHintButton();
+
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('victory').style.display = 'none';
+
+            initBoard();
+            renderBoard();
+            showWasteTypePreview();
+        }
+
+        // Find potential swap moves that would create matches
+        function findSwapHints() {
+            const swapMoves = [];
+            let checkedPositions = 0;
+            let emptyPositions = 0;
+
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    checkedPositions++;
+
+                    // Skip if current position is empty
+                    if (!board[row][col]) {
+                        emptyPositions++;
+                        continue;
+                    }
+
+                    // Check right neighbor
+                    if (col < BOARD_SIZE - 1 && board[row][col + 1]) {
+                        swapGemsTest(row, col, row, col + 1);
+                        const matches = findMatches();
+                        swapGemsTest(row, col, row, col + 1); // Swap back
+
+                        if (matches.length > 0) {
+                            swapMoves.push({
+                                pos1: { row, col },
+                                pos2: { row: row, col: col + 1 },
+                                matches: matches
+                            });
+                        }
+                    }
+
+                    // Check bottom neighbor
+                    if (row < BOARD_SIZE - 1 && board[row + 1][col]) {
+                        swapGemsTest(row, col, row + 1, col);
+                        const matches = findMatches();
+                        swapGemsTest(row, col, row + 1, col); // Swap back
+
+                        if (matches.length > 0) {
+                            swapMoves.push({
+                                pos1: { row, col },
+                                pos2: { row: row + 1, col: col },
+                                matches: matches
+                            });
+                        }
+                    }
+                }
+            }
+
+            console.log('findSwapHints result:', {
+                checkedPositions,
+                emptyPositions,
+                validMovesFound: swapMoves.length
+            });
+
+            return swapMoves;
+        }
+
+        function showHint() {
+            console.log('showHint called:', { gameActive, hintsAvailable });
+
+            // Check if game is active
+            if (!gameActive) {
+                console.log('Hint failed: gameActive is', gameActive);
+                alert('Hint is not available during the preview screen. Start the game first!');
+                return;
+            }
+
+            // Check if hints are available
+            if (hintsAvailable <= 0) {
+                console.log('Hint failed: no hints available, hintsAvailable =', hintsAvailable);
+                alert('No hints available! Earn more by matching groups of waste.');
+                return;
+            }
+
+            const swapMoves = findSwapHints();
+            console.log('Found swap moves:', swapMoves.length);
+
+            if (swapMoves.length > 0) {
+                // Pick a random valid swap move
+                const randomMove = swapMoves[Math.floor(Math.random() * swapMoves.length)];
+                console.log('Showing hint for move:', randomMove);
+
+                // Highlight both gems that should be swapped
+                const gemElement1 = document.getElementById(`gem-${randomMove.pos1.row}-${randomMove.pos1.col}`);
+                const gemElement2 = document.getElementById(`gem-${randomMove.pos2.row}-${randomMove.pos2.col}`);
+
+                if (gemElement1) {
+                    gemElement1.style.animation = 'pulse 0.5s';
+                    setTimeout(() => {
+                        gemElement1.style.animation = '';
+                    }, 500);
+                } else {
+                    console.warn('Could not find gem element 1:', `gem-${randomMove.pos1.row}-${randomMove.pos1.col}`);
+                }
+
+                if (gemElement2) {
+                    gemElement2.style.animation = 'pulse 0.5s';
+                    setTimeout(() => {
+                        gemElement2.style.animation = '';
+                    }, 500);
+                } else {
+                    console.warn('Could not find gem element 2:', `gem-${randomMove.pos2.row}-${randomMove.pos2.col}`);
+                }
+
+                // Use up a hint
+                hintsAvailable--;
+                updateHintButton();
+                console.log('Hint used, remaining hints:', hintsAvailable);
+            } else {
+                // No valid swap moves found
+                console.log('No valid swap moves found, regenerating board...');
+                alert('No valid moves available! The board will be regenerated.');
+                regenerateBoard();
+            }
+        }
+
+        function updateHintButton() {
+            const hintBtn = document.getElementById('hintBtn');
+            if (!hintBtn) {
+                console.warn('Hint button not found in DOM');
+                return;
+            }
+
+            hintBtn.textContent = `Hint (${hintsAvailable})`;
+
+            // Update button state based on both game state and hint availability
+            if (hintsAvailable <= 0 || !gameActive) {
+                hintBtn.disabled = true;
+            } else {
+                hintBtn.disabled = false;
+            }
+
+            console.log('Hint button updated:', {
+                hintsAvailable,
+                gameActive,
+                disabled: hintBtn.disabled
+            });
+        }
+
+        // Show waste type preview screen
+        function showWasteTypePreview() {
+            const previewDiv = document.getElementById('wasteTypePreview');
+            const gridDiv = document.getElementById('wasteTypeGrid');
+
+            // Group waste by type
+            const wasteByType = {};
+            wasteEmojis.forEach(item => {
+                if (!wasteByType[item.type]) {
+                    wasteByType[item.type] = [];
+                }
+                wasteByType[item.type].push(item);
+            });
+
+            // Create waste type cards
+            let html = '';
+            const typeNames = {
+                0: 'E-waste',
+                1: 'Electronics',
+                2: 'Mixed Items',
+                3: 'Large Appliances',
+                4: 'Hazardous',
+                5: 'Glass',
+                6: 'Paper',
+                7: 'Plastic/Metal',
+                8: 'Textile',
+                9: 'Organic'
+            };
+
+            const colorMap = {
+                0: '#DC143C',
+                1: '#FF6347',
+                2: '#FFA500',
+                3: '#00CED1',
+                4: '#FF1493',
+                5: '#00CED1',
+                6: '#4169E1',
+                7: '#FFA500',
+                8: '#9370DB',
+                9: '#8B4513'
+            };
+
+            Object.keys(wasteByType).forEach(type => {
+                const typeName = typeNames[type] || `Type ${type}`;
+                const items = wasteByType[type];
+                const bgColor = colorMap[type] || '#666666';
+
+                // Create HTML for items with emoji and names
+                let itemsHtml = '';
+                items.forEach(item => {
+                    itemsHtml += `<div style="display: inline-flex; flex-direction: column; align-items: center; margin: 5px; max-width: 70px;">
+                        <span style="font-size: 24px;">${item.emoji}</span>
+                        <span style="font-size: 9px; line-height: 1.2; margin-top: 2px; word-wrap: break-word; text-align: center;">${item.name}</span>
+                    </div>`;
+                });
+
+                html += `
+                    <div style="background: ${bgColor}; color: white; padding: 10px; border-radius: 8px; text-align: center;">
+                        <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${typeName}</div>
+                        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 3px;">${itemsHtml}</div>
+                        <div style="font-size: 12px; margin-top: 5px; opacity: 0.8;">${items.length} items</div>
+                    </div>
+                `;
+            });
+
+            gridDiv.innerHTML = html;
+            previewDiv.style.display = 'block';
+        }
+
+        // Start game from preview
+        function startGameFromPreview() {
+            document.getElementById('wasteTypePreview').style.display = 'none';
+            gameActive = true;
+            // Update hint button state
+            updateHintButton();
+        }
+
+        // Initialize SQLite database
+        function initDatabase() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('MatchWasteDB', 1);
+
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('scores')) {
+                        const store = db.createObjectStore('scores', { keyPath: 'id', autoIncrement: true });
+                        store.createIndex('score', 'score', { unique: false });
+                    }
+                };
+            });
+        }
+
+        // Save score to SQLite
+        async function saveScore() {
+            const nickname = document.getElementById('nicknameInput').value.trim();
+            if (!nickname) {
+                alert('Please enter a nickname!');
+                return;
+            }
+
+            const scoreToSave = window.pendingScore || score;
+
+            try {
+                await initDatabase();
+                const transaction = db.transaction(['scores'], 'readwrite');
+                const store = transaction.objectStore('scores');
+                const scoreData = {
+                    nickname: nickname,
+                    score: scoreToSave,
+                    date: new Date().toISOString()
+                };
+
+                store.add(scoreData);
+
+                transaction.oncomplete = async () => {
+                    document.getElementById('nicknamePrompt').style.display = 'none';
+                    // Load and display leaderboard
+                    const topScores = await loadLeaderboard();
+                    showLeaderboardTable(topScores, nickname, scoreToSave);
+                };
+
+                transaction.onerror = () => {
+                    console.error('Error saving score:', transaction.error);
+                    alert('Error saving score!');
+                };
+            } catch (error) {
+                console.error('Error initializing database:', error);
+                alert('Error initializing database!');
+            }
+        }
+
+        // Show leaderboard
+        function showLeaderboard() {
+            const transaction = db.transaction(['scores'], 'readonly');
+            const store = transaction.objectStore('scores');
+            const index = store.index('score');
+            const direction = 'prev';
+            const count = 10;
+
+            const request = index.openCursor(null, direction);
+            request.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (cursor && count > 0) {
+                    const score = cursor.value;
+                    // Process score
+                    cursor.continue();
+                }
+            };
+        }
+
+        function loadLeaderboard() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['scores'], 'readonly');
+                const store = transaction.objectStore('scores');
+                const index = store.index('score');
+                const direction = 'prev';
+                const scores = [];
+
+                const request = index.openCursor(null, direction);
+                request.onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (cursor) {
+                        scores.push(cursor.value);
+                        cursor.continue();
+                    } else {
+                        resolve(scores.slice(0, 10));
+                    }
+                };
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function showLeaderboardTable(scores, playerName, playerScore) {
+            const leaderboard = document.getElementById('leaderboard');
+            const table = document.getElementById('leaderboardTable');
+            const playerEntry = document.getElementById('playerEntry');
+
+            let html = '<table style="width: 100%; border-collapse: collapse;">';
+            html += '<tr style="background: rgba(0,255,255,0.2);"><th style="padding: 8px; border: 1px solid #00ffff;">Rank</th><th style="padding: 8px; border: 1px solid #00ffff;">Name</th><th style="padding: 8px; border: 1px solid #00ffff;">Score</th><th style="padding: 8px; border: 1px solid #00ffff;">Date</th></tr>';
+
+            scores.forEach((score, index) => {
+                const isPlayer = score.nickname === playerName && score.score === playerScore;
+                const rowStyle = isPlayer ? 'background: rgba(255,255,0,0.3);' : '';
+                const date = new Date(score.date).toLocaleDateString();
+                html += `<tr style="${rowStyle}"><td style="padding: 8px; border: 1px solid #00ffff;">${index + 1}</td><td style="padding: 8px; border: 1px solid #00ffff;">${score.nickname}</td><td style="padding: 8px; border: 1px solid #00ffff;">${score.score}</td><td style="padding: 8px; border: 1px solid #00ffff;">${date}</td></tr>`;
+            });
+
+            html += '</table>';
+            table.innerHTML = html;
+
+            // Show player's entry if not in top 10
+            const playerInTop10 = scores.some(score => score.nickname === playerName && score.score === playerScore);
+            if (!playerInTop10) {
+                playerEntry.textContent = `Your Score: ${playerName} - ${playerScore}`;
+            } else {
+                playerEntry.textContent = '';
+            }
+
+            leaderboard.style.display = 'block';
+        }
+
+        function closeLeaderboard() {
+            document.getElementById('leaderboard').style.display = 'none';
+        }
+
+        function promptNicknameAndSave(finalScore) {
+            const nicknamePrompt = document.getElementById('nicknamePrompt');
+            const input = document.getElementById('nicknameInput');
+
+            nicknamePrompt.style.display = 'block';
+            input.focus();
+
+            // Store score globally for saving
+            window.pendingScore = finalScore;
+        }
+
+        // Add pulse animation for hints
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.2); background: rgba(255, 255, 0, 0.5); }
+                100% { transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize game
+        newGame();
+    </script>
+</body>
+</html>

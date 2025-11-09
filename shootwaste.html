@@ -614,6 +614,21 @@
         window.firebaseDB = {
             addScore: async (name, score) => {
                 try {
+                    // Wait for Firebase to be initialized
+                    if (!window.firebaseDatabase || !database) {
+                        console.log('Firebase not ready for addScore, waiting...');
+                        await new Promise(resolve => {
+                            const checkFirebase = () => {
+                                if (window.firebaseDatabase && database) {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkFirebase, 100);
+                                }
+                            };
+                            checkFirebase();
+                        });
+                    }
+
                     const scoresRef = ref(database, 'leaderboard/shooting');
                     const newScoreRef = push(scoresRef);
                     await set(newScoreRef, {
@@ -630,10 +645,25 @@
             },
             getTopScores: async (limit = 10) => {
                 try {
+                    // Wait for Firebase to be initialized
+                    if (!window.firebaseDatabase || !database) {
+                        console.log('Firebase not ready for getTopScores, waiting...');
+                        await new Promise(resolve => {
+                            const checkFirebase = () => {
+                                if (window.firebaseDatabase && database) {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkFirebase, 100);
+                                }
+                            };
+                            checkFirebase();
+                        });
+                    }
+
                     const scoresRef = ref(database, 'leaderboard/shooting');
                     const topScoresQuery = query(scoresRef, orderByChild('score'), limitToLast(limit * 2));
                     const snapshot = await get(topScoresQuery);
-                    
+
                     if (!snapshot.exists()) {
                         return [];
                     }
@@ -997,9 +1027,11 @@
                 if (!gameStateData) return;
 
                 // Check if this is a competitive game
-                const isCompetitive = window.multiplayerManager.gameMode === 'competitive';
+                const isCompetitiveMode = window.multiplayerManager &&
+                    window.multiplayerManager.isMultiplayer &&
+                    window.multiplayerManager.gameMode === 'competitive';
 
-                if (isCompetitive) {
+                if (isCompetitiveMode) {
                     // Competitive mode: Sync individual player scores
                     if (gameStateData.playerScores) {
                         Object.entries(gameStateData.playerScores).forEach(([playerId, score]) => {
@@ -1037,9 +1069,7 @@
 
                 // Sync enemies (shared enemy state in both modes)
                 // Skip enemy syncing in competitive mode - each player has independent enemies
-                const isCompetitive = window.multiplayerManager &&
-                    window.multiplayerManager.isMultiplayer &&
-                    window.multiplayerManager.gameMode === 'competitive';
+                const isCompetitive = isCompetitiveMode;
 
                 if (gameStateData.enemies && typeof enemies !== 'undefined' && !isCompetitive) {
                     // Create a map of server enemies by ID for efficient lookup
@@ -1714,12 +1744,12 @@
         // Global multiplayer functions (moved here to access Firebase variables)
         function showMultiplayerLobby() {
             console.log('Opening multiplayer lobby...');
-            
-            // Check if Firebase is ready
-            if (!window.firebaseInitialized) {
+
+            // Wait for Firebase to be properly initialized
+            if (!window.firebaseInitialized || !window.firebaseDatabase || !window.firebaseAuthenticated) {
                 console.log('Firebase not ready yet, waiting...');
                 setTimeout(() => {
-                    if (window.firebaseInitialized) {
+                    if (window.firebaseInitialized && window.firebaseDatabase && window.firebaseAuthenticated) {
                         showMultiplayerLobby();
                     } else {
                         alert('Firebase is still initializing. Please wait a moment and try again.');
@@ -1727,17 +1757,17 @@
                 }, 1000);
                 return;
             }
-            
+
             // Hide main menu
             document.getElementById('languageSelect').style.display = 'none';
-            
+
             // Show multiplayer lobby
             document.getElementById('multiplayerLobby').style.display = 'block';
-            
+
             // Debug info
             console.log('Current language:', window.currentLanguage);
             console.log('Firebase database available:', typeof window.firebaseDatabase);
-            
+
             // Check Firebase availability
             if (!window.firebaseInitialized || typeof window.firebaseDatabase === 'undefined') {
                 console.error('Firebase not initialized. Available functions:', {
@@ -1750,22 +1780,8 @@
                 alert('Firebase is not available. Multiplayer features are disabled.');
                 return;
             }
-            
-            // Load and display available games
-            refreshGameList();
-        }
 
-        function showMultiplayerLobby() {
-            // Hide all menus
-            document.getElementById('languageSelect').style.display = 'none';
-            document.getElementById('multiplayerLobby').style.display = 'block';
-            
-            // Initialize lobby sections
-            document.getElementById('gameCreation').style.display = 'block';
-            document.getElementById('gameList').style.display = 'block';
-            document.getElementById('currentLobby').style.display = 'none';
-            
-            // Auto-refresh game list when entering lobby
+            // Load and display available games
             refreshGameList();
         }
 
@@ -2034,29 +2050,18 @@
             }
         }
 
-        // Fix showMultiplayerLobby to hide gameModeSelect
-        function showMultiplayerLobby() {
-            console.log('Opening multiplayer lobby');
-            // Hide game mode selection and show multiplayer lobby
-            document.getElementById('gameModeSelect').style.display = 'none';
-            document.getElementById('gameCreation').style.display = 'block';
-            document.getElementById('gameList').style.display = 'block';
-            document.getElementById('currentLobby').style.display = 'none';
-            document.getElementById('multiplayerLobby').style.display = 'block';
-            
-            // Clean up old games and refresh
-            cleanupOldGames().then(() => {
-                refreshGameList();
-            });
-        }
+        // Fix showMultiplayerLobby to hide gameModeSelect - already defined above
 
         // Update server with local game state changes (for host)
         async function updateServerGameState() {
             if (!window.multiplayerManager || !window.multiplayerManager.isHost || !window.multiplayerManager.gameId) return;
-            
+
             try {
                 const gameStateRef = window.firebaseRef(window.firebaseDatabase, `games/${window.multiplayerManager.gameId}/gameState`);
-                
+
+                // Check if this is competitive mode
+                const isCompetitiveMode = window.multiplayerManager.gameMode === 'competitive';
+
                 // Prepare game state data
                 const gameStateData = {
                     score: gameState.score,
@@ -2065,7 +2070,7 @@
                     bullets: {},
                     powerUps: {},
                     // Only sync boss in cooperative mode, not competitive
-                    boss: !isCompetitive && boss ? {
+                    boss: !isCompetitiveMode && boss ? {
                         x: boss.x,
                         y: boss.y,
                         health: boss.health,
@@ -2074,11 +2079,10 @@
                         isInStealth: boss.isInStealth
                     } : null
                 };
-                
+
                 // Add enemies to sync (only in cooperative mode, not competitive)
                 // In competitive mode, each player has their own independent enemies
-                const isCompetitive = window.multiplayerManager &&
-                    window.multiplayerManager.gameMode === 'competitive';
+                const isCompetitive = isCompetitiveMode;
 
                 if (typeof enemies !== 'undefined' && !isCompetitive) {
                     enemies.forEach((enemy, index) => {
@@ -2188,40 +2192,20 @@
         window.leaveLobby = leaveLobby;
         window.startMultiplayerGame = startMultiplayerGame;
         
-        // Global multiplayer functions
-        function showMultiplayerLobby() {
-            console.log('Opening multiplayer lobby...');
-            
-            // Check if Firebase is ready
-            if (!window.firebaseInitialized) {
-                console.log('Firebase not ready yet, waiting...');
-                setTimeout(() => {
-                    if (window.firebaseInitialized) {
-                        showMultiplayerLobby();
-                    } else {
-                        alert('Firebase is still initializing. Please wait a moment and try again.');
-                    }
-                }, 1000);
-                return;
-            }
-            
-            document.getElementById('languageSelect').style.display = 'none';
-            document.getElementById('multiplayerLobby').style.display = 'block';
-            refreshGameList();
-        }
+        // Global multiplayer functions - already defined above
         
         function showMainMenu() {
             // Hide all menus
             document.getElementById('multiplayerLobby').style.display = 'none';
             document.getElementById('currentLobby').style.display = 'none';
             document.getElementById('multiplayerGameUI').style.display = 'none';
-            
+
             // Show language selection
             document.getElementById('languageSelect').style.display = 'block';
-            
+
             // Leave current game if in one
-            if (multiplayerManager.isMultiplayer) {
-                multiplayerManager.leaveGame();
+            if (window.multiplayerManager && window.multiplayerManager.isMultiplayer) {
+                window.multiplayerManager.leaveGame();
             }
         }
         
@@ -4056,9 +4040,24 @@
         
         async function saveScoreAndShowLeaderboard(nickname, score) {
             try {
+                // Wait for Firebase to be initialized before saving score
+                if (!window.firebaseInitialized || !window.firebaseDatabase) {
+                    console.log('Waiting for Firebase initialization before saving score...');
+                    await new Promise(resolve => {
+                        const checkFirebase = () => {
+                            if (window.firebaseInitialized && window.firebaseDatabase && window.firebaseDB) {
+                                resolve();
+                            } else {
+                                setTimeout(checkFirebase, 100);
+                            }
+                        };
+                        checkFirebase();
+                    });
+                }
+
                 // Save score to Firebase
                 await window.firebaseDB.addScore(nickname, score);
-                
+
                 // Get top scores and show leaderboard
                 const topScores = await window.firebaseDB.getTopScores(10);
                 showLeaderboard(topScores, nickname, score);
