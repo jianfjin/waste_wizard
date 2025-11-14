@@ -1,14 +1,55 @@
 {
   "rules": {
-    ".read": "auth != null",
-    ".write": "auth != null",
+    ".read": true,
+    ".write": true,
     "games": {
-      ".indexOn": ["gameInfo/status"]
+      ".indexOn": [
+        "gameInfo/status",
+        "gameInfo/currentPlayers",
+        "gameInfo/mode",
+        "gameInfo/difficulty",
+        "gameInfo/language",
+        "gameInfo/createdAt"
+      ],
+      "$gameId": {
+        ".read": true,
+        ".write": true,
+        "players": {
+          "$playerId": {
+            ".read": true,
+            ".write": true
+          }
+        },
+        "gameState": {
+          ".read": true,
+          ".write": true,
+          "playerScores": {
+            "$playerId": {
+              ".read": true,
+              ".write": true
+            }
+          },
+          "playerTargets": {
+            "$playerId": {
+              ".read": true,
+              ".write": true
+            }
+          }
+        },
+        "gameInfo": {
+          ".read": true,
+          ".write": true
+        }
+      }
     },
     "leaderboard": {
       "shooting": {
-        ".indexOn": ["score"]
-      }
+        ".indexOn": ["score", "timestamp"],
+        ".read": true,
+        ".write": true
+      },
+      ".read": true,
+      ".write": true
     }
   }
 }

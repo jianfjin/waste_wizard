@@ -1,0 +1,140 @@
+/* Gem styling */
+.gem {
+  transition: all 0.3s ease;
+}
+
+.gem:hover {
+  transform: scale(1.1);
+}
+
+.gem.selected {
+  animation: pulse 0.5s infinite alternate;
+}
+
+@keyframes pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.1); }
+}
+
+.gem.matched {
+  animation: blast 0.5s ease;
+}
+
+@keyframes blast {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3) rotate(180deg); background: rgba(255, 255, 255, 0.8); }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+.falling {
+  animation: fall 0.5s ease;
+}
+
+@keyframes fall {
+  from { transform: translateY(-100px); }
+  to { transform: translateY(0); }
+}
+
+/* Waste type colors */
+.waste-type-0 { background: rgba(139, 69, 19, 0.3); }
+.waste-type-1 { background: rgba(65, 105, 225, 0.3); }
+.waste-type-2 { background: rgba(255, 165, 0, 0.3); }
+.waste-type-3 { background: rgba(0, 206, 209, 0.3); }
+.waste-type-4 { background: rgba(147, 112, 219, 0.3); }
+.waste-type-5 { background: rgba(105, 105, 105, 0.3); }
+.waste-type-6 { background: rgba(220, 20, 60, 0.3); }
+.waste-type-7 { background: rgba(255, 20, 147, 0.3); }
+.waste-type-8 { background: rgba(85, 107, 47, 0.3); }
+
+/* Menu styles for modals */
+.menu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 50, 0.95);
+  padding: 40px;
+  border: 3px solid #00ffff;
+  border-radius: 15px;
+  text-align: center;
+  color: #00ffff;
+  z-index: 1000;
+  max-width: 90%;
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+}
+
+.menu h1 {
+  font-size: 36px;
+  margin: 0 0 20px 0;
+  text-shadow: 0 0 20px #00ffff;
+}
+
+.menu h3 {
+  color: #00ffff;
+  margin-bottom: 20px;
+}
+
+.menu button {
+  margin: 10px;
+  padding: 15px 30px;
+  font-size: 18px;
+  background: linear-gradient(45deg, #00ffff, #0088ff);
+  border: none;
+  border-radius: 5px;
+  color: #000;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+.menu button:hover {
+  background: linear-gradient(45deg, #00ffff, #00ccff);
+  transform: scale(1.05);
+}
+
+#leaderboard {
+  position: fixed;
+  bottom: 0;
+  top: auto;
+  left: 0;
+  right: 0;
+  transform: none;
+  max-height: 50vh;
+  overflow-y: auto;
+  border-radius: 15px 15px 0 0;
+  z-index: 1001;
+  background: rgba(0, 0, 50, 0.98);
+}
+
+#leaderboardTable {
+  margin: 20px 0;
+  max-height: 30vh;
+  overflow-y: auto;
+}
+
+#leaderboardTable table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#leaderboardTable th,
+#leaderboardTable td {
+  padding: 8px;
+  border: 1px solid #00ffff;
+}
+
+#leaderboardTable th {
+  background: rgba(0, 255, 255, 0.2);
+}
+
+#playerEntry {
+  margin: 10px 0;
+  color: #ffff00;
+  font-weight: bold;
+}
+
+/* Hide game board when waste type preview is shown */
+#wasteTypePreview:not([style*="display: none"]) ~ #gameContainer {
+  display: none;
+}
+
