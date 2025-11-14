@@ -555,133 +555,130 @@
         </div>
     </div>
     
-    <!-- Firebase SDK -->
+    <!-- IndexedDB (SQLite) for local leaderboard -->
     <script type="module">
-        // Import Firebase modules
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js';
-        import { getDatabase, ref, push, set, query, orderByChild, limitToLast, get, onValue, update, remove, equalTo, off } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js';
-        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js';
+        // IndexedDB initialization
+        let db = null;
 
-        // Firebase configuration using environment variables
-        // Placeholders will be replaced at build time by build.cjs script
-        const firebaseConfig = {
-            apiKey: "AIzaSyBeOfeGzsT9NzLqbFRajz_dbhJlEqRk82A",
-            authDomain: "game20250601.firebaseapp.com",
-            databaseURL: "https://game20250601-default-rtdb.firebaseio.com",
-            projectId: "game20250601",
-            storageBucket: "game20250601.firebasestorage.app",
-            messagingSenderId: "553578269459",
-            appId: "1:553578269459:web:75017156f8b91d9bc3e8e6"
-        };
+        // Initialize IndexedDB
+        function initDatabase() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('ShootWasteDB', 1);
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-        const auth = getAuth(app);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    console.log('IndexedDB initialized successfully');
+                    resolve(db);
+                };
 
-        // Mark as authenticated to bypass authentication issues
-        // Note: This works because we're using public Firebase rules
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    
+                    // Create scores object store with score index
+                    if (!db.objectStoreNames.contains('scores')) {
+                        const store = db.createObjectStore('scores', { keyPath: 'id', autoIncrement: true });
+                        store.createIndex('score', 'score', { unique: false });
+                        store.createIndex('timestamp', 'timestamp', { unique: false });
+                        console.log('IndexedDB object stores created');
+                    }
+                };
+            });
+        }
+
+        // Mark as authenticated (for compatibility)
         let isAuthenticated = true;
         window.firebaseAuthenticated = true;
 
-        console.log('Firebase initialized (auth bypassed for public access)');
-        console.log('User authenticated: anonymous-public-access');
+        console.log('IndexedDB initialized (local storage)');
         window.firebaseAuthenticated = true;
 
-        // Damage event tracking for multiplayer cooperative mode
+        // Damage event tracking for multiplayer cooperative mode (disabled for SQLite version)
         window.damageEventListeners = [];
 
-        // Make Firebase database and functions available globally
-        window.firebaseDatabase = database;
-        window.firebaseRef = ref;
-        window.firebaseGet = get;
-        window.firebaseQuery = query;
-        window.firebaseOrderByChild = orderByChild;
-        window.firebaseEqualTo = equalTo;
-        window.firebaseUpdate = update;
-        window.firebaseSet = set;
-        window.firebasePush = push;
-        window.firebaseRemove = remove;
-        window.firebaseOnValue = onValue;
-        window.firebaseOff = off;
-        window.firebaseLimitToLast = limitToLast;
-        
-        // Set Firebase initialization flag
-        window.firebaseInitialized = true;
-        console.log('Firebase functions made globally available successfully');
+        // Initialize database on load
+        initDatabase().catch(err => console.error('Failed to initialize IndexedDB:', err));
 
-        // Make Firebase functions available globally
+        // Make database functions available globally (compatible API with Firebase)
         window.firebaseDB = {
             addScore: async (name, score) => {
                 try {
-                    // Wait for Firebase to be initialized
-                    if (!window.firebaseDatabase || !database) {
-                        console.log('Firebase not ready for addScore, waiting...');
-                        await new Promise(resolve => {
-                            const checkFirebase = () => {
-                                if (window.firebaseDatabase && database) {
-                                    resolve();
-                                } else {
-                                    setTimeout(checkFirebase, 100);
-                                }
-                            };
-                            checkFirebase();
-                        });
+                    // Ensure database is initialized
+                    if (!db) {
+                        await initDatabase();
                     }
 
-                    const scoresRef = ref(database, 'leaderboard/shooting');
-                    const newScoreRef = push(scoresRef);
-                    await set(newScoreRef, {
+                    const transaction = db.transaction(['scores'], 'readwrite');
+                    const store = transaction.objectStore('scores');
+                    const scoreData = {
                         name: name.trim() || 'Anonymous',
                         score,
                         timestamp: Date.now(),
                         gameType: 'shooting'
+                    };
+
+                    return new Promise((resolve, reject) => {
+                        const request = store.add(scoreData);
+                        request.onsuccess = () => {
+                            console.log('Score saved successfully');
+                            resolve(true);
+                        };
+                        request.onerror = () => {
+                            console.error('Error saving score:', request.error);
+                            reject(false);
+                        };
                     });
-                    return true;
                 } catch (error) {
-                    console.error('Error adding score to Firebase:', error);
+                    console.error('Error adding score to IndexedDB:', error);
                     return false;
                 }
             },
+            
             getTopScores: async (limit = 10) => {
                 try {
-                    // Wait for Firebase to be initialized
-                    if (!window.firebaseDatabase || !database) {
-                        console.log('Firebase not ready for getTopScores, waiting...');
-                        await new Promise(resolve => {
-                            const checkFirebase = () => {
-                                if (window.firebaseDatabase && database) {
-                                    resolve();
-                                } else {
-                                    setTimeout(checkFirebase, 100);
-                                }
-                            };
-                            checkFirebase();
-                        });
+                    // Ensure database is initialized
+                    if (!db) {
+                        await initDatabase();
                     }
 
-                    const scoresRef = ref(database, 'leaderboard/shooting');
-                    const topScoresQuery = query(scoresRef, orderByChild('score'), limitToLast(limit * 2));
-                    const snapshot = await get(topScoresQuery);
+                    return new Promise((resolve, reject) => {
+                        const transaction = db.transaction(['scores'], 'readonly');
+                        const store = transaction.objectStore('scores');
+                        const index = store.index('score');
+                        
+                        // Get all scores
+                        const request = index.openCursor(null, 'prev'); // Descending order
+                        const scores = [];
 
-                    if (!snapshot.exists()) {
-                        return [];
-                    }
+                        request.onsuccess = (event) => {
+                            const cursor = event.target.result;
+                            if (cursor && scores.length < limit) {
+                                scores.push(cursor.value);
+                                cursor.continue();
+                            } else {
+                                console.log(`Retrieved ${scores.length} top scores`);
+                                resolve(scores);
+                            }
+                        };
 
-                    const scores = [];
-                    snapshot.forEach((childSnapshot) => {
-                        scores.push(childSnapshot.val());
+                        request.onerror = () => {
+                            console.error('Error getting scores from IndexedDB:', request.error);
+                            resolve([]);
+                        };
                     });
-
-                    return scores.sort((a, b) => b.score - a.score).slice(0, limit);
                 } catch (error) {
-                    console.error('Error getting scores from Firebase:', error);
+                    console.error('Error getting scores from IndexedDB:', error);
                     return [];
                 }
             }
         };
 
-        // Multiplayer Manager
+        // Set initialization flag
+        window.firebaseInitialized = true;
+        window.firebaseDatabase = db; // For compatibility
+        console.log('IndexedDB functions made globally available successfully');
+
+        // Multiplayer Manager (disabled for SQLite version)
         window.multiplayerManager = {
             gameId: null,
             playerId: null,
@@ -691,9 +688,9 @@
             gameMode: 'cooperative', // 'cooperative' or 'competitive'
             players: new Map(),
             gameListeners: [],
-            gameState: null, // Reference to game state from server
-            playerScore: 0, // Individual score for competitive mode
-            targetType: '', // Individual target for competitive mode
+            gameState: null,
+            playerScore: 0,
+            targetType: '',
 
             // Generate unique player ID
             generatePlayerId() {
@@ -1069,9 +1066,7 @@
 
                 // Sync enemies (shared enemy state in both modes)
                 // Skip enemy syncing in competitive mode - each player has independent enemies
-                const isCompetitive = isCompetitiveMode;
-
-                if (gameStateData.enemies && typeof enemies !== 'undefined' && !isCompetitive) {
+                if (gameStateData.enemies && typeof enemies !== 'undefined' && !isCompetitiveMode) {
                     // Create a map of server enemies by ID for efficient lookup
                     const serverEnemiesMap = new Map();
                     Object.entries(gameStateData.enemies).forEach(([enemyId, enemyData]) => {
@@ -2082,9 +2077,7 @@
 
                 // Add enemies to sync (only in cooperative mode, not competitive)
                 // In competitive mode, each player has their own independent enemies
-                const isCompetitive = isCompetitiveMode;
-
-                if (typeof enemies !== 'undefined' && !isCompetitive) {
+                if (typeof enemies !== 'undefined' && !isCompetitiveMode) {
                     enemies.forEach((enemy, index) => {
                         // Use localId if available (multiplayer), otherwise use index
                         const enemyId = enemy.localId || `enemy_${index}`;
@@ -2184,15 +2177,14 @@
             }
         }
 
-        // Expose multiplayer functions globally (AFTER they are defined)
-        window.showMultiplayerLobby = showMultiplayerLobby;
-        window.createMultiplayerGame = createMultiplayerGame;
-        window.refreshGameList = refreshGameList;
-        window.showMainMenu = showMainMenu;
-        window.leaveLobby = leaveLobby;
-        window.startMultiplayerGame = startMultiplayerGame;
+        // Global multiplayer functions - DISABLED (Firebase removed)
         
-        // Global multiplayer functions - already defined above
+        function showMultiplayerLobby() {
+            alert('Multiplayer mode is not available in this version.\n\nMultiplayer requires a real-time database connection which has been disabled.\n\nPlease play Single Player mode instead.');
+            // Show game mode selection
+            document.getElementById('multiplayerLobby').style.display = 'none';
+            document.getElementById('gameModeSelect').style.display = 'block';
+        }
         
         function showMainMenu() {
             // Hide all menus
@@ -2210,132 +2202,23 @@
         }
         
         async function createMultiplayerGame() {
-            const nickname = document.getElementById('playerNickname').value.trim();
-            if (!nickname) {
-                alert('Please enter a nickname');
-                return;
-            }
-            
-            console.log('Creating multiplayer game...');
-            console.log('Current language:', window.currentLanguage);
-            console.log('Firebase database available:', typeof window.firebaseDatabase);
-            
-            // Check if Firebase is properly initialized
-            if (!window.firebaseInitialized || typeof window.firebaseDatabase === 'undefined') {
-                console.error('Firebase not initialized. Available functions:', {
-                    firebaseInitialized: window.firebaseInitialized,
-                    firebaseDatabase: typeof window.firebaseDatabase,
-                    firebaseRef: typeof window.firebaseRef,
-                    firebaseSet: typeof window.firebaseSet,
-                    firebasePush: typeof window.firebasePush
-                });
-                alert('Firebase is not properly initialized. Please refresh the page and try again.');
-                return;
-            }
-            
-            const settings = {
-                mode: document.getElementById('gameMode').value,
-                maxPlayers: document.getElementById('maxPlayers').value,
-                difficulty: document.getElementById('gameDifficulty').value
-            };
-            
-            console.log('Game settings:', settings);
-            
-            try {
-                const success = await multiplayerManager.createGame(settings);
-                if (!success) {
-                    alert('Failed to create game. Please check the console for details.');
-                }
-            } catch (error) {
-                console.error('Error in createMultiplayerGame:', error);
-                alert('Failed to create game: ' + error.message);
-            }
+            alert('Multiplayer is disabled. Firebase connection has been removed.');
         }
         
         async function refreshGameList() {
-            const gamesListDiv = document.getElementById('availableGames');
-            gamesListDiv.innerHTML = '<div class="loading">Looking for games...</div>';
-            
-            try {
-                console.log('Refreshing game list...');
-                console.log('Current language:', window.currentLanguage);
-                console.log('Firebase database:', window.firebaseDatabase);
-                
-                const gamesRef = window.firebaseRef(window.firebaseDatabase, 'games');
-                const snapshot = await window.firebaseGet(window.firebaseQuery(gamesRef, window.firebaseOrderByChild('gameInfo/status'), window.firebaseEqualTo('waiting')));
-                
-                console.log('Snapshot exists:', snapshot.exists());
-                
-                if (!snapshot.exists()) {
-                    gamesListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No games available. Create one!</div>';
-                    return;
-                }
-                
-                let html = '';
-                let gamesFound = 0;
-                snapshot.forEach((childSnapshot) => {
-                    const gameId = childSnapshot.key;
-                    const gameData = childSnapshot.val();
-                    const gameInfo = gameData.gameInfo;
-                    
-                    console.log('Found game:', gameId, gameInfo);
-                    gamesFound++;
-                    
-                    // Filter by language (show all languages for now to debug)
-                    if (gameInfo.language === window.currentLanguage || true) { // Temporarily show all games
-                        html += `
-                            <div style="margin: 10px 0; padding: 15px; border: 1px solid #00ffff; border-radius: 8px; background: rgba(0,255,255,0.1);">
-                                <div style="font-weight: bold; margin-bottom: 5px;">${gameInfo.mode.charAt(0).toUpperCase() + gameInfo.mode.slice(1)} Game</div>
-                                <div style="font-size: 14px; margin-bottom: 8px;">
-                                    Players: ${gameInfo.currentPlayers}/${gameInfo.maxPlayers} | 
-                                    Difficulty: ${gameInfo.difficulty} | 
-                                    Language: ${gameInfo.language}
-                                </div>
-                                <button onclick="joinGame('${gameId}')" style="padding: 8px 16px; background: #00ff00; color: #000; border: none; border-radius: 4px; cursor: pointer;">Join Game</button>
-                            </div>
-                        `;
-                    }
-                });
-                
-                console.log('Games found:', gamesFound, 'HTML length:', html.length);
-                
-                if (html === '') {
-                    gamesListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No games available. Create one!</div>';
-                } else {
-                    gamesListDiv.innerHTML = html;
-                }
-            } catch (error) {
-                console.error('Error refreshing game list:', error);
-                console.error('Error code:', error.code);
-                console.error('Error details:', error.errorInfo);
-                console.error('Stack trace:', error.stack);
-                const errorMsg = error.message || error.toString() || 'Unknown error';
-                const errorCode = error.code || 'N/A';
-                gamesListDiv.innerHTML = `<div style="padding: 20px; text-align: center; color: #ff0000;">Error loading games: ${errorMsg}<br>Error code: ${errorCode}<br>Please check console for details.</div>`;
-            }
+            alert('Multiplayer is disabled. Firebase connection has been removed.');
         }
         
         async function joinGame(gameId) {
-            const nickname = document.getElementById('playerNickname').value.trim();
-            if (!nickname) {
-                alert('Please enter a nickname');
-                return;
-            }
-            
-            await multiplayerManager.joinGame(gameId);
+            alert('Multiplayer is disabled. Firebase connection has been removed.');
         }
         
         async function startMultiplayerGame() {
-            if (multiplayerManager.isHost) {
-                await multiplayerManager.startMultiplayerGameplay();
-            }
+            alert('Multiplayer is disabled. Firebase connection has been removed.');
         }
         
         function leaveLobby() {
-            if (confirm('Are you sure you want to leave the lobby?')) {
-                multiplayerManager.leaveGame();
-                showMainMenu();
-            }
+            showMainMenu();
         }
         
         // Expose multiplayer functions globally (AFTER they are defined)
@@ -4040,22 +3923,7 @@
         
         async function saveScoreAndShowLeaderboard(nickname, score) {
             try {
-                // Wait for Firebase to be initialized before saving score
-                if (!window.firebaseInitialized || !window.firebaseDatabase) {
-                    console.log('Waiting for Firebase initialization before saving score...');
-                    await new Promise(resolve => {
-                        const checkFirebase = () => {
-                            if (window.firebaseInitialized && window.firebaseDatabase && window.firebaseDB) {
-                                resolve();
-                            } else {
-                                setTimeout(checkFirebase, 100);
-                            }
-                        };
-                        checkFirebase();
-                    });
-                }
-
-                // Save score to Firebase
+                // Save score to IndexedDB
                 await window.firebaseDB.addScore(nickname, score);
 
                 // Get top scores and show leaderboard
@@ -4063,7 +3931,7 @@
                 showLeaderboard(topScores, nickname, score);
             } catch (error) {
                 console.error('Error saving score:', error);
-                // Still show local leaderboard even if Firebase fails
+                // Still show local leaderboard even if save fails
                 showLeaderboard([], nickname, score);
             }
         }
