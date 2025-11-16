@@ -579,14 +579,30 @@
         const database = getDatabase(app);
         const auth = getAuth(app);
 
-        // Mark as authenticated to bypass authentication issues
-        // Note: This works because we're using public Firebase rules
-        let isAuthenticated = true;
-        window.firebaseAuthenticated = true;
+        // Anonymous authentication for secure database access
+        signInAnonymously(auth)
+            .then(() => {
+                console.log('Firebase Auth: Anonymous sign-in successful');
+                window.firebaseAuthenticated = true;
+                window.firebaseAuth = auth;
+            })
+            .catch((error) => {
+                console.error('Firebase Auth error:', error);
+                // Fallback for offline mode
+                window.firebaseAuthenticated = false;
+                alert('Authentication failed. Some features may not work properly.');
+            });
 
-        console.log('Firebase initialized (auth bypassed for public access)');
-        console.log('User authenticated: anonymous-public-access');
-        window.firebaseAuthenticated = true;
+        // Listen for auth state changes
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('User authenticated:', user.uid);
+                window.firebaseAuthenticated = true;
+            } else {
+                console.log('User not authenticated');
+                window.firebaseAuthenticated = false;
+            }
+        });
 
         // Damage event tracking for multiplayer cooperative mode
         window.damageEventListeners = [];

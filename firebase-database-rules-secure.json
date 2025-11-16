@@ -1,0 +1,286 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    
+    "leaderboard": {
+      ".read": true,
+      "shooting": {
+        ".indexOn": ["score"],
+        "$scoreId": {
+          ".write": "newData.hasChildren(['name', 'score', 'timestamp', 'gameType']) && newData.child('name').isString() && newData.child('score').isNumber() && newData.child('timestamp').isNumber() && newData.child('gameType').val() == 'shooting'"
+        }
+      }
+    },
+    
+    "games": {
+      ".read": true,
+      ".indexOn": ["gameInfo/status"],
+      "$gameId": {
+        ".write": true,
+        ".validate": "newData.hasChildren(['gameInfo', 'players', 'gameState'])",
+        
+        "gameInfo": {
+          ".validate": "newData.hasChildren(['mode', 'maxPlayers', 'currentPlayers', 'status', 'sessionTime', 'targetType', 'createdAt', 'language', 'difficulty', 'hostId'])",
+          "mode": {
+            ".validate": "newData.isString() && (newData.val() == 'cooperative' || newData.val() == 'competitive')"
+          },
+          "maxPlayers": {
+            ".validate": "newData.isNumber() && newData.val() >= 2 && newData.val() <= 8"
+          },
+          "currentPlayers": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= data.parent().child('maxPlayers').val()"
+          },
+          "status": {
+            ".validate": "newData.isString() && (newData.val() == 'waiting' || newData.val() == 'active' || newData.val() == 'finished')"
+          },
+          "sessionTime": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "targetType": {
+            ".validate": "newData.isString()"
+          },
+          "createdAt": {
+            ".validate": "newData.isNumber()"
+          },
+          "language": {
+            ".validate": "newData.isString() && (newData.val() == 'en' || newData.val() == 'nl' || newData.val() == 'zh')"
+          },
+          "difficulty": {
+            ".validate": "newData.isString() && (newData.val() == 'easy' || newData.val() == 'normal' || newData.val() == 'hard')"
+          },
+          "hostId": {
+            ".validate": "newData.isString()"
+          }
+        },
+        
+        "players": {
+          "$playerId": {
+            ".validate": "newData.hasChildren(['nickname', 'x', 'y', 'rotation', 'lives', 'connected', 'lastUpdate', 'isHost'])",
+            "nickname": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 20"
+            },
+            "x": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 800"
+            },
+            "y": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 600"
+            },
+            "rotation": {
+              ".validate": "newData.isNumber()"
+            },
+            "lives": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10"
+            },
+            "connected": {
+              ".validate": "newData.isBoolean()"
+            },
+            "lastUpdate": {
+              ".validate": "newData.isNumber()"
+            },
+            "isHost": {
+              ".validate": "newData.isBoolean()"
+            }
+          }
+        },
+        
+        "gameState": {
+          "score": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "totalLives": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "enemies": {
+            "$enemyId": {
+              ".validate": "newData.hasChildren(['x', 'y', 'type', 'health', 'speed'])",
+              "x": {
+                ".validate": "newData.isNumber()"
+              },
+              "y": {
+                ".validate": "newData.isNumber()"
+              },
+              "type": {
+                ".validate": "newData.isString()"
+              },
+              "health": {
+                ".validate": "newData.isNumber() && newData.val() > 0"
+              },
+              "speed": {
+                ".validate": "newData.isNumber() && newData.val() > 0"
+              }
+            }
+          },
+          "bullets": {
+            "$bulletId": {
+              ".validate": "newData.hasChildren(['x', 'y', 'vx', 'vy', 'playerId', 'timestamp'])",
+              "x": {
+                ".validate": "newData.isNumber()"
+              },
+              "y": {
+                ".validate": "newData.isNumber()"
+              },
+              "vx": {
+                ".validate": "newData.isNumber()"
+              },
+              "vy": {
+                ".validate": "newData.isNumber()"
+              },
+              "playerId": {
+                ".validate": "newData.isString()"
+              },
+              "timestamp": {
+                ".validate": "newData.isNumber()"
+              }
+            }
+          },
+          "powerUps": {
+            "$powerUpId": {
+              ".validate": "newData.hasChildren(['x', 'y', 'type'])",
+              "x": {
+                ".validate": "newData.isNumber()"
+              },
+              "y": {
+                ".validate": "newData.isNumber()"
+              },
+              "type": {
+                ".validate": "newData.isString()"
+              }
+            }
+          },
+          "boss": {
+            ".validate": "newData.hasChildren(['x', 'y', 'health', 'maxHealth', 'phase']) || newData.val() == null",
+            "x": {
+              ".validate": "newData.isNumber()"
+            },
+            "y": {
+              ".validate": "newData.isNumber()"
+            },
+            "health": {
+              ".validate": "newData.isNumber() && newData.val() >= 0"
+            },
+            "maxHealth": {
+              ".validate": "newData.isNumber() && newData.val() > 0"
+            },
+            "phase": {
+              ".validate": "newData.isNumber() && newData.val() >= 1"
+            }
+          }
+        }
+      }
+    },
+    
+    "lobbies": {
+      ".read": true,
+      "$lobbyId": {
+        ".write": true,
+        ".validate": "newData.hasChildren(['hostId', 'players', 'settings'])",
+        "hostId": {
+          ".validate": "newData.isString()"
+        },
+        "players": {
+          "$index": {
+            ".validate": "newData.isString()"
+          }
+        },
+        "settings": {
+          ".validate": "newData.hasChildren(['maxPlayers', 'difficulty', 'language'])",
+          "maxPlayers": {
+            ".validate": "newData.isNumber() && newData.val() >= 2 && newData.val() <= 8"
+          },
+          "difficulty": {
+            ".validate": "newData.isString() && (newData.val() == 'easy' || newData.val() == 'normal' || newData.val() == 'hard')"
+          },
+          "language": {
+            ".validate": "newData.isString() && (newData.val() == 'en' || newData.val() == 'nl' || newData.val() == 'zh')"
+          }
+        }
+      }
+    },
+    
+    "matchmaking": {
+      ".read": true,
+      "queue": {
+        "$playerId": {
+          ".write": true,
+          ".validate": "newData.hasChildren(['nickname', 'language', 'skillLevel', 'timestamp'])",
+          "nickname": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 20"
+          },
+          "language": {
+            ".validate": "newData.isString() && (newData.val() == 'en' || newData.val() == 'nl' || newData.val() == 'zh')"
+          },
+          "skillLevel": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10"
+          },
+          "timestamp": {
+            ".validate": "newData.isNumber()"
+          }
+        }
+      }
+    },
+    
+    "analytics": {
+      ".read": false,
+      "gameMetrics": {
+        "$gameId": {
+          ".write": true,
+          ".validate": "newData.hasChildren(['startTime', 'endTime', 'playerCount', 'gameMode', 'language'])",
+          "startTime": {
+            ".validate": "newData.isNumber()"
+          },
+          "endTime": {
+            ".validate": "newData.isNumber() || newData.val() == null"
+          },
+          "playerCount": {
+            ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 8"
+          },
+          "gameMode": {
+            ".validate": "newData.isString() && (newData.val() == 'cooperative' || newData.val() == 'competitive' || newData.val() == 'single')"
+          },
+          "language": {
+            ".validate": "newData.isString() && (newData.val() == 'en' || newData.val() == 'nl' || newData.val() == 'zh')"
+          },
+          "finalScore": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "duration": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          }
+        }
+      },
+      "playerMetrics": {
+        "$playerId": {
+          ".write": true,
+          ".validate": "newData.hasChildren(['gamesPlayed', 'totalScore', 'averageScore', 'lastPlayed'])",
+          "gamesPlayed": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "totalScore": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "averageScore": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "lastPlayed": {
+            ".validate": "newData.isNumber()"
+          }
+        }
+      }
+    },
+    
+    "maintenance": {
+      ".read": true,
+      ".write": false,
+      "status": {
+        ".validate": "newData.isString() && (newData.val() == 'online' || newData.val() == 'maintenance')"
+      },
+      "message": {
+        ".validate": "newData.isString()"
+      },
+      "version": {
+        ".validate": "newData.isString()"
+      }
+    }
+  }
+}
