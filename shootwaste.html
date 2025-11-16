@@ -555,119 +555,77 @@
         </div>
     </div>
     
-    <!-- IndexedDB (SQLite) for local leaderboard -->
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <script type="module">
-        // IndexedDB initialization
-        let db = null;
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://gadoqxoguhwlpobvtljw.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhZG9xeG9ndWh3bHBvYnZ0bGp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxNTY0MjMsImV4cCI6MjA3ODczMjQyM30.qKScFxEFS1fgTOtoWv9zl6wCIeqXMDtQg3e8DRxSf5w';
 
-        // Initialize IndexedDB
-        function initDatabase() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open('ShootWasteDB', 1);
-
-                request.onerror = () => reject(request.error);
-                request.onsuccess = () => {
-                    db = request.result;
-                    console.log('IndexedDB initialized successfully');
-                    resolve(db);
-                };
-
-                request.onupgradeneeded = (event) => {
-                    const db = event.target.result;
-                    
-                    // Create scores object store with score index
-                    if (!db.objectStoreNames.contains('scores')) {
-                        const store = db.createObjectStore('scores', { keyPath: 'id', autoIncrement: true });
-                        store.createIndex('score', 'score', { unique: false });
-                        store.createIndex('timestamp', 'timestamp', { unique: false });
-                        console.log('IndexedDB object stores created');
-                    }
-                };
-            });
-        }
+        // Initialize Supabase Client and make it globally accessible
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        window.supabaseClient = supabase; // Make available globally
+        console.log('Supabase client initialized and made globally available');
 
         // Mark as authenticated (for compatibility)
         let isAuthenticated = true;
         window.firebaseAuthenticated = true;
 
-        console.log('IndexedDB initialized (local storage)');
-        window.firebaseAuthenticated = true;
-
-        // Damage event tracking for multiplayer cooperative mode (disabled for SQLite version)
+        // Damage event tracking for multiplayer cooperative mode (disabled for now)
         window.damageEventListeners = [];
 
-        // Initialize database on load
-        initDatabase().catch(err => console.error('Failed to initialize IndexedDB:', err));
-
-        // Make database functions available globally (compatible API with Firebase)
+        // Make database functions available globally (compatible API with previous Firebase/IndexedDB)
         window.firebaseDB = {
             addScore: async (name, score) => {
                 try {
-                    // Ensure database is initialized
-                    if (!db) {
-                        await initDatabase();
+                    console.log('Saving score to Supabase:', { name, score });
+                    
+                    const { data, error } = await supabase
+                        .from('scores')
+                        .insert([
+                            {
+                                name: name.trim() || 'Anonymous',
+                                score: score,
+                                timestamp: Date.now(),
+                                game_type: 'shooting'
+                            }
+                        ])
+                        .select();
+
+                    if (error) {
+                        console.error('Error saving score to Supabase:', error);
+                        return false;
                     }
 
-                    const transaction = db.transaction(['scores'], 'readwrite');
-                    const store = transaction.objectStore('scores');
-                    const scoreData = {
-                        name: name.trim() || 'Anonymous',
-                        score,
-                        timestamp: Date.now(),
-                        gameType: 'shooting'
-                    };
-
-                    return new Promise((resolve, reject) => {
-                        const request = store.add(scoreData);
-                        request.onsuccess = () => {
-                            console.log('Score saved successfully');
-                            resolve(true);
-                        };
-                        request.onerror = () => {
-                            console.error('Error saving score:', request.error);
-                            reject(false);
-                        };
-                    });
+                    console.log('Score saved successfully to Supabase:', data);
+                    return true;
                 } catch (error) {
-                    console.error('Error adding score to IndexedDB:', error);
+                    console.error('Error adding score to Supabase:', error);
                     return false;
                 }
             },
             
             getTopScores: async (limit = 10) => {
                 try {
-                    // Ensure database is initialized
-                    if (!db) {
-                        await initDatabase();
+                    console.log('Fetching top scores from Supabase, limit:', limit);
+                    
+                    const { data, error } = await supabase
+                        .from('scores')
+                        .select('*')
+                        .eq('game_type', 'shooting')
+                        .order('score', { ascending: false })
+                        .limit(limit);
+
+                    if (error) {
+                        console.error('Error getting scores from Supabase:', error);
+                        return [];
                     }
 
-                    return new Promise((resolve, reject) => {
-                        const transaction = db.transaction(['scores'], 'readonly');
-                        const store = transaction.objectStore('scores');
-                        const index = store.index('score');
-                        
-                        // Get all scores
-                        const request = index.openCursor(null, 'prev'); // Descending order
-                        const scores = [];
-
-                        request.onsuccess = (event) => {
-                            const cursor = event.target.result;
-                            if (cursor && scores.length < limit) {
-                                scores.push(cursor.value);
-                                cursor.continue();
-                            } else {
-                                console.log(`Retrieved ${scores.length} top scores`);
-                                resolve(scores);
-                            }
-                        };
-
-                        request.onerror = () => {
-                            console.error('Error getting scores from IndexedDB:', request.error);
-                            resolve([]);
-                        };
-                    });
+                    console.log(`Retrieved ${data?.length || 0} top scores from Supabase`);
+                    return data || [];
                 } catch (error) {
-                    console.error('Error getting scores from IndexedDB:', error);
+                    console.error('Error getting scores from Supabase:', error);
                     return [];
                 }
             }
@@ -675,8 +633,8 @@
 
         // Set initialization flag
         window.firebaseInitialized = true;
-        window.firebaseDatabase = db; // For compatibility
-        console.log('IndexedDB functions made globally available successfully');
+        window.firebaseDatabase = supabase; // For compatibility
+        console.log('Supabase functions made globally available successfully');
 
         // Multiplayer Manager (disabled for SQLite version)
         window.multiplayerManager = {
@@ -986,37 +944,20 @@
                 }
             },
             
-            // Update player position
+            // Update player position (DISABLED - use syncPlayerPosition instead)
             async updatePlayerPosition(x, y, rotation) {
-                if (!this.gameId || !this.playerId) return;
-                
-                try {
-                    const playerRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/players/${this.playerId}`);
-                    await window.firebaseUpdate(playerRef, { 
-                        x: Math.round(x), 
-                        y: Math.round(y), 
-                        rotation: rotation, 
-                        lastUpdate: Date.now() 
-                    });
-                } catch (error) {
-                    console.error('Error updating player position:', error);
-                }
+                // This function is disabled - the global syncPlayerPosition() function
+                // handles player position updates using Supabase
+                // Keeping this stub for compatibility
+                return;
             },
             
-            // Sync bullets fired
+            // Sync bullets fired (DISABLED)
             async fireBullet(bulletData) {
-                if (!this.gameId || !this.playerId) return;
-                
-                try {
-                    const bulletRef = window.firebasePush(window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/gameState/bullets`));
-                    await window.firebaseSet(bulletRef, { 
-                        ...bulletData, 
-                        playerId: this.playerId,
-                        timestamp: Date.now()
-                    });
-                } catch (error) {
-                    console.error('Error firing bullet:', error);
-                }
+                // Disabled - Firebase Realtime Database functions removed
+                // Would need real-time sync implementation with Supabase Realtime
+                console.log('fireBullet called but disabled:', bulletData);
+                return;
             },
             
             // Sync local game state with server
@@ -1279,9 +1220,16 @@
                 if (!this.isHost) return;
 
                 try {
-                    await window.firebaseUpdate(window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/gameInfo`), {
-                        status: 'active'
-                    });
+                    // Update game status using Supabase
+                    await window.supabaseClient
+                        .from('games')
+                        .update({
+                            game_info: {
+                                ...this.gameInfo,
+                                status: 'active'
+                            }
+                        })
+                        .eq('id', this.gameId);
 
                     // Hide lobby and start game
                     document.getElementById('multiplayerLobby').style.display = 'none';
@@ -1331,79 +1279,93 @@
 
                 if (scoreChange !== 0) {
                     this.playerScore += scoreChange;
-                    const playerScoreRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/gameState/playerScores/${this.playerId}`);
-                    await window.firebaseUpdate(playerScoreRef, this.playerScore);
+                    
+                    // Update score in Supabase
+                    try {
+                        const { data: game } = await window.supabaseClient
+                            .from('games')
+                            .select('game_state')
+                            .eq('id', this.gameId)
+                            .single();
+                        
+                        if (game) {
+                            const playerScores = game.game_state?.playerScores || {};
+                            playerScores[this.playerId] = this.playerScore;
+                            
+                            await window.supabaseClient
+                                .from('games')
+                                .update({
+                                    game_state: {
+                                        ...game.game_state,
+                                        playerScores: playerScores
+                                    }
+                                })
+                                .eq('id', this.gameId);
+                        }
+                    } catch (error) {
+                        console.error('Error updating player position:', error);
+                    }
 
                     // Check for win condition
                     if (this.playerScore >= 100 && !window.gameState.winner) {
-                        const gameStateRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/gameState`);
-                        await window.firebaseUpdate(gameStateRef, {
-                            winner: this.playerId,
-                            winScore: this.playerScore
-                        });
+                        try {
+                            const { data: game } = await window.supabaseClient
+                                .from('games')
+                                .select('game_state')
+                                .eq('id', this.gameId)
+                                .single();
+                            
+                            if (game) {
+                                await window.supabaseClient
+                                    .from('games')
+                                    .update({
+                                        game_state: {
+                                            ...game.game_state,
+                                            winner: this.playerId,
+                                            winScore: this.playerScore
+                                        }
+                                    })
+                                    .eq('id', this.gameId);
+                            }
+                        } catch (error) {
+                            console.error('Error updating winner:', error);
+                        }
                     }
 
                     return { scoreChange, message, newScore: this.playerScore };
                 }
 
                 return null;
+            },
+            
+            // Leave current game
+            async leaveGame() {
+                console.log('Leaving game:', this.gameId);
+                // The actual leave logic is handled by the global leaveGame() function
+                // This is just a placeholder for compatibility
             }
         };
 
-        // Damage event system for cooperative multiplayer
+        // Damage event system for cooperative multiplayer (DISABLED - requires real-time sync)
         function sendDamageEvent(enemyId, damage, weaponType) {
-            if (!window.multiplayerManager || !window.multiplayerManager.gameId) return;
-
-            try {
-                const damageRef = window.firebaseRef(window.firebaseDatabase, `games/${window.multiplayerManager.gameId}/damageEvents`);
-                window.firebasePush(damageRef, {
-                    enemyId: enemyId,
-                    damage: damage,
-                    weaponType: weaponType,
-                    playerId: window.multiplayerManager.playerId,
-                    timestamp: Date.now()
-                });
-            } catch (error) {
-                console.error('Error sending damage event:', error);
-            }
+            // Disabled - Firebase Realtime Database functions removed
+            // Would need to implement with Supabase Realtime if needed
+            console.log('sendDamageEvent called but disabled:', { enemyId, damage, weaponType });
         }
 
-        // Listen for damage events (host only)
+        // Listen for damage events (host only) (DISABLED)
         function setupDamageEventListeners() {
-            if (!window.multiplayerManager || !window.multiplayerManager.isHost || !window.multiplayerManager.gameId) return;
-
-            try {
-                const damageEventsRef = window.firebaseRef(window.firebaseDatabase, `games/${window.multiplayerManager.gameId}/damageEvents`);
-                const unsubscribe = window.firebaseOnValue(damageEventsRef, (snapshot) => {
-                    if (snapshot.exists()) {
-                        const damageEvents = snapshot.val();
-                        // Process damage events and apply to local enemies
-                        Object.values(damageEvents).forEach((event) => {
-                            // Find the enemy with the matching ID
-                            const enemyIndex = enemies.findIndex(e =>
-                                e.localId === event.enemyId || e.multiplayerId === event.enemyId
-                            );
-                            if (enemyIndex !== -1) {
-                                enemies[enemyIndex].health -= event.damage;
-                                console.log(`Applied ${event.damage} damage to enemy ${event.enemyId}, health now: ${enemies[enemyIndex].health}`);
-                            }
-                        });
-
-                        // Clear damage events after processing
-                        window.firebaseRemove(damageEventsRef);
-                    }
-                });
-                window.damageEventListeners.push(unsubscribe);
-            } catch (error) {
-                console.error('Error setting up damage event listeners:', error);
-            }
+            // Disabled - Firebase Realtime Database functions removed
+            console.log('setupDamageEventListeners called but disabled');
         }
 
         // Cleanup damage event listeners
         function cleanupDamageEventListeners() {
             window.damageEventListeners.forEach(unsubscribe => {
                 try {
-                    unsubscribe();
+                    if (typeof unsubscribe === 'function') {
+                        unsubscribe();
+                    }
                 } catch (error) {
                     console.error('Error cleaning up damage event listener:', error);
                 }
@@ -2177,13 +2139,18 @@
             }
         }
 
-        // Global multiplayer functions - DISABLED (Firebase removed)
+        // Global multiplayer functions - ENABLED with Supabase
         
         function showMultiplayerLobby() {
-            alert('Multiplayer mode is not available in this version.\n\nMultiplayer requires a real-time database connection which has been disabled.\n\nPlease play Single Player mode instead.');
-            // Show game mode selection
-            document.getElementById('multiplayerLobby').style.display = 'none';
-            document.getElementById('gameModeSelect').style.display = 'block';
+            console.log('Showing multiplayer lobby');
+            document.getElementById('multiplayerLobby').style.display = 'block';
+            document.getElementById('gameModeSelect').style.display = 'none';
+            document.getElementById('gameCreation').style.display = 'block';
+            document.getElementById('gameList').style.display = 'block';
+            document.getElementById('currentLobby').style.display = 'none';
+            
+            // Refresh available games
+            refreshGameList();
         }
         
         function showMainMenu() {
@@ -2202,23 +2169,468 @@
         }
         
         async function createMultiplayerGame() {
-            alert('Multiplayer is disabled. Firebase connection has been removed.');
+            const nickname = document.getElementById('playerNickname').value.trim();
+            if (!nickname) {
+                alert('Please enter a nickname');
+                return;
+            }
+            
+            const mode = document.getElementById('gameMode').value;
+            const maxPlayers = parseInt(document.getElementById('maxPlayers').value);
+            const difficulty = document.getElementById('gameDifficulty').value;
+            
+            console.log('Creating multiplayer game:', { nickname, mode, maxPlayers, difficulty });
+            
+            try {
+                const playerId = 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                
+                // Create game in Supabase
+                const { data: gameData, error: gameError } = await window.supabaseClient
+                    .from('games')
+                    .insert([{
+                        game_info: {
+                            mode: mode,
+                            status: 'waiting',
+                            language: window.currentLanguage || 'en',
+                            maxPlayers: maxPlayers,
+                            currentPlayers: 1,
+                            difficulty: difficulty,
+                            hostPlayerId: playerId,
+                            createdAt: Date.now()
+                        },
+                        game_state: {
+                            score: 0,
+                            lives: 3,
+                            enemies: {},
+                            powerUps: {},
+                            playerScores: {},
+                            playerTargets: {}
+                        }
+                    }])
+                    .select()
+                    .single();
+                
+                if (gameError) {
+                    console.error('Error creating game:', gameError);
+                    alert('Failed to create game: ' + gameError.message);
+                    return;
+                }
+                
+                console.log('Game created:', gameData);
+                
+                // Add host as first player
+                const { error: playerError } = await window.supabaseClient
+                    .from('game_players')
+                    .insert([{
+                        game_id: gameData.id,
+                        player_id: playerId,
+                        player_data: {
+                            nickname: nickname,
+                            x: 400,
+                            y: 550,
+                            connected: true,
+                            isHost: true,
+                            lives: 3
+                        }
+                    }]);
+                
+                if (playerError) {
+                    console.error('Error adding player:', playerError);
+                    alert('Failed to join game: ' + playerError.message);
+                    return;
+                }
+                
+                // Update multiplayer manager
+                window.multiplayerManager.gameId = gameData.id;
+                window.multiplayerManager.playerId = playerId;
+                window.multiplayerManager.playerNickname = nickname;
+                window.multiplayerManager.isHost = true;
+                window.multiplayerManager.isMultiplayer = true;
+                window.multiplayerManager.gameMode = mode;
+                window.multiplayerManager.players = new Map();
+                window.multiplayerManager.players.set(playerId, {
+                    nickname: nickname,
+                    isHost: true,
+                    connected: true
+                });
+                
+                // Subscribe to game updates
+                subscribeToGame(gameData.id);
+                
+                // Show current lobby
+                showCurrentLobby();
+                updateLobbyDisplay();
+                
+                console.log('Successfully created and joined game');
+            } catch (error) {
+                console.error('Error in createMultiplayerGame:', error);
+                alert('Failed to create game: ' + error.message);
+            }
         }
         
         async function refreshGameList() {
-            alert('Multiplayer is disabled. Firebase connection has been removed.');
+            const gamesListDiv = document.getElementById('availableGames');
+            gamesListDiv.innerHTML = '<div class="loading" style="padding: 20px; text-align: center;">Looking for games...</div>';
+            
+            try {
+                console.log('Refreshing game list for language:', window.currentLanguage || 'en');
+                
+                const { data: games, error } = await window.supabaseClient
+                    .from('games')
+                    .select('*')
+                    .eq('game_info->>status', 'waiting')
+                    .eq('game_info->>language', window.currentLanguage || 'en')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+                
+                if (error) {
+                    console.error('Error fetching games:', error);
+                    gamesListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #ff0000;">Error loading games</div>';
+                    return;
+                }
+                
+                console.log('Found games:', games);
+                
+                if (!games || games.length === 0) {
+                    gamesListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No games available. Create one!</div>';
+                    return;
+                }
+                
+                let html = '';
+                games.forEach(game => {
+                    const info = game.game_info;
+                    html += `
+                        <div style="margin: 10px 0; padding: 15px; border: 1px solid #00ffff; border-radius: 8px; background: rgba(0,255,255,0.1);">
+                            <div style="font-weight: bold; margin-bottom: 5px;">${info.mode.charAt(0).toUpperCase() + info.mode.slice(1)} Game</div>
+                            <div style="font-size: 14px; margin-bottom: 8px;">
+                                Players: ${info.currentPlayers}/${info.maxPlayers} | 
+                                Difficulty: ${info.difficulty}
+                            </div>
+                            <button onclick="joinGame('${game.id}')" style="padding: 8px 16px; background: #00ff00; color: #000; border: none; border-radius: 4px; cursor: pointer;">Join Game</button>
+                        </div>
+                    `;
+                });
+                
+                gamesListDiv.innerHTML = html;
+            } catch (error) {
+                console.error('Error refreshing game list:', error);
+                gamesListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #ff0000;">Error: ' + error.message + '</div>';
+            }
         }
         
         async function joinGame(gameId) {
-            alert('Multiplayer is disabled. Firebase connection has been removed.');
+            const nickname = document.getElementById('playerNickname').value.trim();
+            if (!nickname) {
+                alert('Please enter a nickname');
+                return;
+            }
+            
+            console.log('Joining game:', gameId);
+            
+            try {
+                // Get game info
+                const { data: game, error: gameError } = await window.supabaseClient
+                    .from('games')
+                    .select('*')
+                    .eq('id', gameId)
+                    .single();
+                
+                if (gameError || !game) {
+                    alert('Game not found');
+                    return;
+                }
+                
+                // Check if game is full
+                if (game.game_info.currentPlayers >= game.game_info.maxPlayers) {
+                    alert('Game is full');
+                    return;
+                }
+                
+                const playerId = 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                
+                // Add player to game
+                const { error: playerError } = await window.supabaseClient
+                    .from('game_players')
+                    .insert([{
+                        game_id: gameId,
+                        player_id: playerId,
+                        player_data: {
+                            nickname: nickname,
+                            x: 400 + (Math.random() * 100 - 50),
+                            y: 550,
+                            connected: true,
+                            isHost: false,
+                            lives: 3
+                        }
+                    }]);
+                
+                if (playerError) {
+                    console.error('Error joining game:', playerError);
+                    alert('Failed to join game: ' + playerError.message);
+                    return;
+                }
+                
+                // Update game player count
+                const { error: updateError } = await window.supabaseClient
+                    .from('games')
+                    .update({
+                        game_info: {
+                            ...game.game_info,
+                            currentPlayers: game.game_info.currentPlayers + 1
+                        }
+                    })
+                    .eq('id', gameId);
+                
+                if (updateError) {
+                    console.error('Error updating game:', updateError);
+                }
+                
+                // Update multiplayer manager
+                window.multiplayerManager.gameId = gameId;
+                window.multiplayerManager.playerId = playerId;
+                window.multiplayerManager.playerNickname = nickname;
+                window.multiplayerManager.isHost = false;
+                window.multiplayerManager.isMultiplayer = true;
+                window.multiplayerManager.gameMode = game.game_info.mode;
+                window.multiplayerManager.players = new Map();
+                
+                // Subscribe to game updates
+                subscribeToGame(gameId);
+                
+                // Show current lobby
+                showCurrentLobby();
+                await loadGamePlayers(gameId);
+                
+                console.log('Successfully joined game');
+            } catch (error) {
+                console.error('Error in joinGame:', error);
+                alert('Failed to join game: ' + error.message);
+            }
         }
         
         async function startMultiplayerGame() {
-            alert('Multiplayer is disabled. Firebase connection has been removed.');
+            if (!window.multiplayerManager.isHost) {
+                alert('Only the host can start the game');
+                return;
+            }
+            
+            console.log('Starting multiplayer game');
+            
+            try {
+                // Update game status to active
+                const { error } = await window.supabaseClient
+                    .from('games')
+                    .update({
+                        game_info: {
+                            ...window.multiplayerManager.gameInfo,
+                            status: 'active'
+                        }
+                    })
+                    .eq('id', window.multiplayerManager.gameId);
+                
+                if (error) {
+                    console.error('Error starting game:', error);
+                    return;
+                }
+                
+                // Hide lobby and start game
+                document.getElementById('multiplayerLobby').style.display = 'none';
+                document.getElementById('multiplayerGameUI').style.display = 'block';
+                
+                // Initialize game
+                gameState.gameStarted = true;
+                startGameFromPreview();
+            } catch (error) {
+                console.error('Error starting multiplayer game:', error);
+            }
         }
         
         function leaveLobby() {
-            showMainMenu();
+            if (confirm('Are you sure you want to leave the lobby?')) {
+                leaveGame();
+                showMainMenu();
+            }
+        }
+        
+        async function leaveGame() {
+            if (!window.multiplayerManager.isMultiplayer) return;
+            
+            try {
+                // Remove player from game
+                await window.supabaseClient
+                    .from('game_players')
+                    .delete()
+                    .eq('game_id', window.multiplayerManager.gameId)
+                    .eq('player_id', window.multiplayerManager.playerId);
+                
+                // If host is leaving, delete the game
+                if (window.multiplayerManager.isHost) {
+                    await window.supabaseClient
+                        .from('games')
+                        .delete()
+                        .eq('id', window.multiplayerManager.gameId);
+                } else {
+                    // Update player count
+                    const { data: game } = await window.supabaseClient
+                        .from('games')
+                        .select('game_info')
+                        .eq('id', window.multiplayerManager.gameId)
+                        .single();
+                    
+                    if (game) {
+                        await window.supabaseClient
+                            .from('games')
+                            .update({
+                                game_info: {
+                                    ...game.game_info,
+                                    currentPlayers: Math.max(0, game.game_info.currentPlayers - 1)
+                                }
+                            })
+                            .eq('id', window.multiplayerManager.gameId);
+                    }
+                }
+                
+                // Unsubscribe from channels
+                if (window.multiplayerManager.gameChannel) {
+                    await window.supabaseClient.removeChannel(window.multiplayerManager.gameChannel);
+                }
+                if (window.multiplayerManager.playersChannel) {
+                    await window.supabaseClient.removeChannel(window.multiplayerManager.playersChannel);
+                }
+                
+                // Reset multiplayer manager
+                window.multiplayerManager.gameId = null;
+                window.multiplayerManager.playerId = null;
+                window.multiplayerManager.isMultiplayer = false;
+                window.multiplayerManager.isHost = false;
+                window.multiplayerManager.players.clear();
+                
+            } catch (error) {
+                console.error('Error leaving game:', error);
+            }
+        }
+        
+        function showCurrentLobby() {
+            document.getElementById('gameCreation').style.display = 'none';
+            document.getElementById('gameList').style.display = 'none';
+            document.getElementById('currentLobby').style.display = 'block';
+            
+            if (window.multiplayerManager.isHost) {
+                document.getElementById('multiplayerStartBtn').style.display = 'inline-block';
+            } else {
+                document.getElementById('multiplayerStartBtn').style.display = 'none';
+            }
+            
+            updateLobbyInfo();
+        }
+        
+        function updateLobbyDisplay() {
+            const playersDiv = document.getElementById('lobbyPlayers');
+            let html = '<h4>Players in Lobby:</h4>';
+            
+            window.multiplayerManager.players.forEach((playerData, playerId) => {
+                const isCurrentPlayer = playerId === window.multiplayerManager.playerId;
+                const hostBadge = playerData.isHost ? ' 👑' : '';
+                const connectionStatus = playerData.connected ? '🟢' : '🔴';
+                
+                html += `<div style="margin: 5px 0; padding: 8px; background: ${isCurrentPlayer ? 'rgba(0,255,255,0.2)' : 'rgba(255,255,255,0.1)'}; border-radius: 5px;">
+                    ${connectionStatus} ${playerData.nickname}${hostBadge}
+                    ${isCurrentPlayer ? ' (You)' : ''}
+                </div>`;
+            });
+            
+            playersDiv.innerHTML = html;
+        }
+        
+        function updateLobbyInfo() {
+            if (!window.multiplayerManager.gameInfo) return;
+            
+            const info = window.multiplayerManager.gameInfo;
+            document.getElementById('lobbyGameMode').textContent = `Mode: ${info.mode}`;
+            document.getElementById('lobbyDifficulty').textContent = `Difficulty: ${info.difficulty}`;
+            
+            const statusDiv = document.getElementById('lobbyStatus');
+            statusDiv.textContent = `Players: ${info.currentPlayers}/${info.maxPlayers} | Status: ${info.status}`;
+        }
+        
+        async function loadGamePlayers(gameId) {
+            try {
+                const { data: players, error } = await window.supabaseClient
+                    .from('game_players')
+                    .select('*')
+                    .eq('game_id', gameId);
+                
+                if (error) {
+                    console.error('Error loading players:', error);
+                    return;
+                }
+                
+                window.multiplayerManager.players.clear();
+                players.forEach(player => {
+                    window.multiplayerManager.players.set(player.player_id, {
+                        ...player.player_data,
+                        playerId: player.player_id
+                    });
+                });
+                
+                updateLobbyDisplay();
+            } catch (error) {
+                console.error('Error in loadGamePlayers:', error);
+            }
+        }
+        
+        function subscribeToGame(gameId) {
+            console.log('Subscribing to game:', gameId);
+            
+            // Subscribe to game changes
+            const gameChannel = window.supabaseClient
+                .channel(`game_${gameId}`)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'games',
+                        filter: `id=eq.${gameId}`
+                    },
+                    (payload) => {
+                        console.log('Game updated:', payload);
+                        if (payload.new) {
+                            window.multiplayerManager.gameInfo = payload.new.game_info;
+                            updateLobbyInfo();
+                            
+                            // If game started, join it
+                            if (payload.new.game_info.status === 'active' && !window.multiplayerManager.isHost) {
+                                document.getElementById('multiplayerLobby').style.display = 'none';
+                                document.getElementById('multiplayerGameUI').style.display = 'block';
+                                gameState.gameStarted = true;
+                                startGameFromPreview();
+                            }
+                        }
+                    }
+                )
+                .subscribe();
+            
+            // Subscribe to player changes
+            const playersChannel = window.supabaseClient
+                .channel(`players_${gameId}`)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'game_players',
+                        filter: `game_id=eq.${gameId}`
+                    },
+                    (payload) => {
+                        console.log('Players updated:', payload);
+                        loadGamePlayers(gameId);
+                    }
+                )
+                .subscribe();
+            
+            window.multiplayerManager.gameChannel = gameChannel;
+            window.multiplayerManager.playersChannel = playersChannel;
         }
         
         // Expose multiplayer functions globally (AFTER they are defined)
@@ -2228,6 +2640,7 @@
         window.showMainMenu = showMainMenu;
         window.leaveLobby = leaveLobby;
         window.startMultiplayerGame = startMultiplayerGame;
+        window.joinGame = joinGame;
         
         // Show waste type preview screen
         function showWasteTypePreview() {
@@ -2314,6 +2727,381 @@
             // Start background music
             playBackgroundMusic();
             updateWeaponDisplay(); // Initialize weapon display
+            
+            // Start multiplayer sync if in multiplayer mode
+            if (window.multiplayerManager && window.multiplayerManager.isMultiplayer) {
+                startMultiplayerSync();
+            }
+        }
+        
+        // Multiplayer synchronization functions
+        let lastSyncTime = 0;
+        let lastGameStateSyncTime = 0;
+        const SYNC_INTERVAL = 50; // Sync player position every 50ms (20 times per second)
+        const GAME_STATE_SYNC_INTERVAL = 100; // Sync game state every 100ms (10 times per second)
+        
+        function startMultiplayerSync() {
+            console.log('Starting multiplayer synchronization');
+            
+            // Subscribe to game state updates
+            if (window.multiplayerManager.gameId) {
+                subscribeToGameState();
+            }
+        }
+        
+        function subscribeToGameState() {
+            const gameId = window.multiplayerManager.gameId;
+            
+            // Subscribe to game state changes
+            const stateChannel = window.supabaseClient
+                .channel(`gamestate_${gameId}`)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'games',
+                        filter: `id=eq.${gameId}`
+                    },
+                    (payload) => {
+                        if (payload.new && payload.new.game_state) {
+                            applyGameStateUpdate(payload.new.game_state);
+                        }
+                    }
+                )
+                .subscribe();
+            
+            window.multiplayerManager.stateChannel = stateChannel;
+            
+            // Subscribe to player position updates
+            const playersChannel = window.supabaseClient
+                .channel(`players_${gameId}`)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+                        schema: 'public',
+                        table: 'game_players',
+                        filter: `game_id=eq.${gameId}`
+                    },
+                    (payload) => {
+                        console.log('Player update received:', payload);
+                        if (payload.new && payload.new.player_data) {
+                            const playerId = payload.new.player_id;
+                            const playerData = payload.new.player_data;
+                            
+                            // Update player in local map
+                            window.multiplayerManager.players.set(playerId, playerData);
+                            updateMultiplayerUI();
+                        } else if (payload.eventType === 'DELETE' && payload.old) {
+                            // Remove disconnected player
+                            window.multiplayerManager.players.delete(payload.old.player_id);
+                            updateMultiplayerUI();
+                        }
+                    }
+                )
+                .subscribe();
+            
+            window.multiplayerManager.playersChannel = playersChannel;
+            
+            // Also load initial player positions
+            loadInitialPlayers();
+        }
+        
+        // Load initial player positions from database
+        async function loadInitialPlayers() {
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from('game_players')
+                    .select('*')
+                    .eq('game_id', window.multiplayerManager.gameId);
+                
+                if (error) {
+                    console.error('Error loading initial players:', error);
+                    return;
+                }
+                
+                if (data) {
+                    data.forEach(row => {
+                        window.multiplayerManager.players.set(row.player_id, row.player_data);
+                    });
+                    updateMultiplayerUI();
+                }
+            } catch (error) {
+                console.error('Error loading initial players:', error);
+            }
+        }
+        
+        async function syncPlayerPosition() {
+            if (!window.multiplayerManager || !window.multiplayerManager.isMultiplayer) return;
+            
+            const now = Date.now();
+            if (now - lastSyncTime < SYNC_INTERVAL) return;
+            lastSyncTime = now;
+            
+            try {
+                // Upsert player position in database (insert or update)
+                // onConflict specifies which columns form the unique constraint
+                const { error } = await window.supabaseClient
+                    .from('game_players')
+                    .upsert({
+                        game_id: window.multiplayerManager.gameId,
+                        player_id: window.multiplayerManager.playerId,
+                        player_data: {
+                            nickname: window.multiplayerManager.playerNickname,
+                            x: player.x,
+                            y: player.y,
+                            rotation: player.rotation,
+                            connected: true,
+                            isHost: window.multiplayerManager.isHost,
+                            lives: gameState.lives,
+                            weaponType: player.weaponType
+                        }
+                    }, {
+                        onConflict: 'game_id,player_id'
+                    });
+                
+                if (error) {
+                    console.error('Error syncing player position:', error);
+                }
+            } catch (error) {
+                console.error('Error syncing player position:', error);
+            }
+        }
+        
+        async function syncGameState() {
+            if (!window.multiplayerManager || !window.multiplayerManager.isMultiplayer) return;
+            if (!window.multiplayerManager.isHost) return; // Only host syncs game state
+            
+            const now = Date.now();
+            if (now - lastGameStateSyncTime < GAME_STATE_SYNC_INTERVAL) return;
+            lastGameStateSyncTime = now;
+            
+            try {
+                const gameState_data = {
+                    score: gameState.score,
+                    lives: gameState.lives,
+                    targetType: gameState.targetType,
+                    sessionTime: gameState.sessionTime,
+                    enemies: enemies.map(e => ({
+                        id: e.localId,
+                        x: e.x,
+                        y: e.y,
+                        wasteType: e.wasteType,
+                        emoji: e.emoji,
+                        health: e.health,
+                        rotation: e.rotation,
+                        width: e.width || 40,
+                        height: e.height || 40,
+                        speed: e.speed || 2
+                    })),
+                    powerUps: powerUps.map(p => ({
+                        x: p.x,
+                        y: p.y,
+                        type: p.type
+                    })),
+                    boss: boss ? {
+                        x: boss.x,
+                        y: boss.y,
+                        health: boss.health,
+                        maxHealth: boss.maxHealth,
+                        isImmune: boss.isImmune,
+                        isInStealth: boss.isInStealth
+                    } : null
+                };
+                
+                await window.supabaseClient
+                    .from('games')
+                    .update({
+                        game_state: gameState_data
+                    })
+                    .eq('id', window.multiplayerManager.gameId);
+            } catch (error) {
+                console.error('Error syncing game state:', error);
+            }
+        }
+        
+        function applyGameStateUpdate(newState) {
+            if (!newState) return;
+            if (window.multiplayerManager.isHost) return; // Host doesn't need updates from server
+            
+            // Update score and lives
+            if (newState.score !== undefined) {
+                gameState.score = newState.score;
+                document.getElementById('score').textContent = gameState.score;
+            }
+            
+            if (newState.lives !== undefined) {
+                gameState.lives = newState.lives;
+                document.getElementById('lives').textContent = gameState.lives;
+            }
+            
+            // Update target type
+            if (newState.targetType) {
+                gameState.targetType = newState.targetType;
+                updateTargetInfo();
+            }
+            
+            // Sync enemies (for cooperative mode)
+            if (newState.enemies && window.multiplayerManager.gameMode === 'cooperative') {
+                syncEnemies(newState.enemies);
+            }
+            
+            // Sync power-ups
+            if (newState.powerUps) {
+                syncPowerUps(newState.powerUps);
+            }
+            
+            // Sync boss
+            if (newState.boss) {
+                syncBoss(newState.boss);
+            }
+        }
+        
+        function syncEnemies(serverEnemies) {
+            if (!serverEnemies || serverEnemies.length === 0) {
+                // If server says no enemies, clear local enemies
+                enemies = [];
+                return;
+            }
+            
+            // Create a map of server enemies by ID
+            const serverEnemyMap = new Map();
+            serverEnemies.forEach(e => {
+                if (e.id) serverEnemyMap.set(e.id, e);
+            });
+            
+            // Remove local enemies that no longer exist on server
+            enemies = enemies.filter(localEnemy => {
+                if (!localEnemy.localId) return false; // Remove enemies without ID
+                return serverEnemyMap.has(localEnemy.localId);
+            });
+            
+            // Update or add enemies from server
+            serverEnemies.forEach(serverEnemy => {
+                const localEnemy = enemies.find(e => e.localId === serverEnemy.id);
+                if (localEnemy) {
+                    // Update existing enemy - smooth interpolation for position
+                    localEnemy.x = serverEnemy.x;
+                    localEnemy.y = serverEnemy.y;
+                    localEnemy.health = serverEnemy.health;
+                    localEnemy.rotation = serverEnemy.rotation;
+                    localEnemy.wasteType = serverEnemy.wasteType;
+                    localEnemy.emoji = serverEnemy.emoji;
+                } else {
+                    // Add new enemy
+                    enemies.push({
+                        x: serverEnemy.x,
+                        y: serverEnemy.y,
+                        width: serverEnemy.width || 40,
+                        height: serverEnemy.height || 40,
+                        speed: serverEnemy.speed || 2,
+                        health: serverEnemy.health,
+                        maxHealth: 10,
+                        rotation: serverEnemy.rotation,
+                        rotationSpeed: 0.05,
+                        wasteType: serverEnemy.wasteType,
+                        emoji: serverEnemy.emoji,
+                        localId: serverEnemy.id
+                    });
+                }
+            });
+        }
+        
+        function syncPowerUps(serverPowerUps) {
+            // Simple replacement for now
+            powerUps = serverPowerUps.map(p => ({
+                x: p.x,
+                y: p.y,
+                width: 30,
+                height: 30,
+                type: p.type,
+                speed: 2
+            }));
+        }
+        
+        function syncBoss(serverBoss) {
+            if (!boss && serverBoss) {
+                // Spawn boss if it doesn't exist on client
+                bossSpawned = true;
+                document.getElementById('bossLabel').style.display = 'block';
+                document.getElementById('bossHealthBar').style.display = 'block';
+                
+                boss = {
+                    x: serverBoss.x,
+                    y: serverBoss.y,
+                    width: 120,
+                    height: 120,
+                    health: serverBoss.health,
+                    maxHealth: serverBoss.maxHealth || 500,
+                    phase: 1,
+                    moveDirection: 1,
+                    speed: 2 * getMobileSpeedModifier(),
+                    shootTimer: 0,
+                    shootInterval: 60,
+                    immuneUntil: 0,
+                    isImmune: serverBoss.isImmune || false,
+                    halfHealthImmunityUsed: false,
+                    stealthUntil: 0,
+                    isInStealth: serverBoss.isInStealth || false,
+                    consecutiveHits: 0,
+                    lastHitTime: 0
+                };
+            }
+            
+            if (boss && serverBoss) {
+                boss.x = serverBoss.x;
+                boss.y = serverBoss.y;
+                boss.health = serverBoss.health;
+                boss.isImmune = serverBoss.isImmune || false;
+                boss.isInStealth = serverBoss.isInStealth || false;
+                
+                // Update boss health bar
+                const healthPercent = (boss.health / boss.maxHealth) * 100;
+                document.getElementById('bossHealth').style.width = healthPercent + '%';
+            }
+        }
+        
+        // Draw other players' spaceships
+        function drawMultiplayerSpaceships() {
+            if (!window.multiplayerManager || !window.multiplayerManager.isMultiplayer) return;
+            
+            window.multiplayerManager.players.forEach((playerData, playerId) => {
+                // Don't draw current player
+                if (playerId === window.multiplayerManager.playerId) return;
+                if (!playerData.connected) return;
+                
+                const px = playerData.x || 400;
+                const py = playerData.y || 550;
+                const rotation = playerData.rotation || 0;
+                
+                // Draw spaceship (simplified version)
+                ctx.save();
+                ctx.translate(px + player.width / 2, py + player.height / 2);
+                ctx.rotate(rotation);
+                
+                // Draw with different color to distinguish from current player
+                ctx.fillStyle = '#ffff00'; // Yellow for other players
+                ctx.shadowColor = '#ffff00';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.moveTo(0, -player.height / 2);
+                ctx.lineTo(-player.width / 2, player.height / 2);
+                ctx.lineTo(-player.width / 4, player.height / 2 * 0.6);
+                ctx.lineTo(player.width / 4, player.height / 2 * 0.6);
+                ctx.lineTo(player.width / 2, player.height / 2);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+                ctx.restore();
+                
+                // Draw nickname above player
+                ctx.fillStyle = '#ffff00';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(playerData.nickname || 'Player', px + player.width / 2, py - 10);
+            });
         }
 
         // Audio Context for sound effects and background music
@@ -2967,9 +3755,9 @@
             if (player.rotation > Math.PI) player.rotation -= Math.PI * 2;
             if (player.rotation < -Math.PI) player.rotation += Math.PI * 2;
 
-            // Sync player position to Firebase for multiplayer
+            // Sync player position to Supabase for multiplayer
             if (window.multiplayerManager && window.multiplayerManager.isMultiplayer) {
-                window.multiplayerManager.updatePlayerPosition(player.x, player.y, player.rotation);
+                syncPlayerPosition();
             }
 
             // Shooting
@@ -3005,10 +3793,26 @@
             }
             
             // Update enemies
+            // In cooperative multiplayer, only host updates enemy positions
+            // Clients receive positions from server sync
+            const isCooperativeClient = window.multiplayerManager &&
+                window.multiplayerManager.isMultiplayer &&
+                window.multiplayerManager.gameMode === 'cooperative' &&
+                !window.multiplayerManager.isHost;
+            
             for (let i = enemies.length - 1; i >= 0; i--) {
                 const enemy = enemies[i];
-                enemy.y += enemy.speed;
-                enemy.rotation += enemy.rotationSpeed;
+                
+                // Only host updates enemy movement in cooperative mode
+                if (!isCooperativeClient) {
+                    enemy.y += enemy.speed;
+                    enemy.rotation += enemy.rotationSpeed;
+                    
+                    if (enemy.y > canvas.height) {
+                        enemies.splice(i, 1);
+                        continue;
+                    }
+                }
                 
                 if (enemy.y > canvas.height) {
                     enemies.splice(i, 1);
@@ -3185,8 +3989,11 @@
             }
             
             // Update boss
+            // In cooperative mode, only host updates boss movement
             if (boss) {
-                updateBoss();
+                if (!isCooperativeClient) {
+                    updateBoss();
+                }
                 
                 // Check collision with bullets
                 for (let j = player.bullets.length - 1; j >= 0; j--) {
@@ -3371,10 +4178,14 @@
                 }
             }
 
-            // Sync game state to Firebase in multiplayer (host only)
+            // Multiplayer synchronization
             if (window.multiplayerManager && window.multiplayerManager.isMultiplayer) {
+                // Sync player position
+                syncPlayerPosition();
+                
+                // Sync game state (host only)
                 if (window.multiplayerManager.isHost) {
-                    updateServerGameState();
+                    syncGameState();
                 }
             }
 
