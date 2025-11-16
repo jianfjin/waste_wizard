@@ -1169,7 +1169,7 @@
 
                 // Sync boss (shared boss state only in cooperative mode)
                 // Skip boss syncing in competitive mode - each player has independent boss
-                const isCompetitive = window.multiplayerManager &&
+                isCompetitive = window.multiplayerManager &&
                     window.multiplayerManager.isMultiplayer &&
                     window.multiplayerManager.gameMode === 'competitive';
 
@@ -1430,6 +1430,9 @@
         canvas.height = 600;
         saturnCanvas.width = 800;
         saturnCanvas.height = 600;
+        
+        // Global variable to check competitive mode - declared once to avoid redeclaration errors
+        let isCompetitive = false;
         
         // Game translations
         const translations = {
@@ -2550,7 +2553,7 @@
             const sessionTimer = document.getElementById('sessionTimer');
 
             // In competitive mode, use the player's individual target
-            const isCompetitive = window.multiplayerManager &&
+            isCompetitive = window.multiplayerManager &&
                 window.multiplayerManager.isMultiplayer &&
                 window.multiplayerManager.gameMode === 'competitive';
 
@@ -2706,7 +2709,7 @@
             let currentTargetType = gameState.targetType;
 
             // Check if this is competitive mode - use individual player target
-            const isCompetitive = window.multiplayerManager &&
+            isCompetitive = window.multiplayerManager &&
                 window.multiplayerManager.isMultiplayer &&
                 window.multiplayerManager.gameMode === 'competitive';
 
@@ -3441,7 +3444,7 @@
             
             // Spawn enemies
             // Check if this is competitive mode
-            const isCompetitive = window.multiplayerManager &&
+            isCompetitive = window.multiplayerManager &&
                 window.multiplayerManager.isMultiplayer &&
                 window.multiplayerManager.gameMode === 'competitive';
 

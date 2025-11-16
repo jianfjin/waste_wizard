@@ -3,8 +3,6 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
-    // Load environment variables from .env file
-    // This will read VITE_FIREBASE_* and GEMINI_API_KEY from .env
     const env = loadEnv(mode, '.', '');
     return {
       server: {
@@ -13,12 +11,8 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
-        // Inject Gemini API key for React app
-        // Reads from GEMINI_API_KEY in .env file
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        // Make Firebase environment variables available to HTML files
-        // These come from .env file and are injected into shootwaste.html by build.cjs
         'window.FIREBASE_CONFIG': JSON.stringify({
           apiKey: env.VITE_FIREBASE_API_KEY,
           authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -32,6 +26,15 @@ export default defineConfig(({ mode }) => {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
+        }
+      },
+      build: {
+        rollupOptions: {
+          input: {
+            main: path.resolve(__dirname, 'index.html'),
+            shootwaste: path.resolve(__dirname, 'shootwaste.html'),
+            matchwaste: path.resolve(__dirname, 'matchwaste.html')
+          }
         }
       }
     };

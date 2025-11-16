@@ -29,8 +29,8 @@ npm run build
 
 # Copy additional assets to dist folder
 echo "📁 Copying additional assets..."
-echo "  - Copying shootwaste.html and music files..."
-cp shootwaste.html game-music-loop-3-144252.mp3 short-game-music-loop-38898.mp3 dist/
+echo "  - Copying music files..."
+cp game-music-loop-3-144252.mp3 short-game-music-loop-38898.mp3 dist/
 
 echo "  - Copying images_selected folder..."
 cp -r images_selected dist/
