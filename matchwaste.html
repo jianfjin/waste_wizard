@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -43,7 +44,9 @@
             flex-wrap: wrap;
         }
 
-        #time, #moves, #matchCount {
+        #time,
+        #moves,
+        #matchCount {
             background: rgba(255, 255, 255, 0.1);
             padding: 10px 20px;
             border-radius: 10px;
@@ -95,9 +98,19 @@
         }
 
         @keyframes blast {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.3) rotate(180deg); background: rgba(255, 255, 255, 0.8); }
-            100% { transform: scale(0); opacity: 0; }
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.3) rotate(180deg);
+                background: rgba(255, 255, 255, 0.8);
+            }
+
+            100% {
+                transform: scale(0);
+                opacity: 0;
+            }
         }
 
         .falling {
@@ -105,8 +118,13 @@
         }
 
         @keyframes fall {
-            from { transform: translateY(-100px); }
-            to { transform: translateY(0); }
+            from {
+                transform: translateY(-100px);
+            }
+
+            to {
+                transform: translateY(0);
+            }
         }
 
         #controls {
@@ -136,7 +154,8 @@
             transform: translateY(0);
         }
 
-        #gameOver, #victory {
+        #gameOver,
+        #victory {
             position: fixed;
             top: 0;
             left: 0;
@@ -176,18 +195,45 @@
             opacity: 0.8;
         }
 
-        .waste-type-0 { background: rgba(139, 69, 19, 0.3); }
-        .waste-type-1 { background: rgba(65, 105, 225, 0.3); }
-        .waste-type-2 { background: rgba(255, 165, 0, 0.3); }
-        .waste-type-3 { background: rgba(0, 206, 209, 0.3); }
-        .waste-type-4 { background: rgba(147, 112, 219, 0.3); }
-        .waste-type-5 { background: rgba(105, 105, 105, 0.3); }
-        .waste-type-6 { background: rgba(220, 20, 60, 0.3); }
-        .waste-type-7 { background: rgba(255, 20, 147, 0.3); }
-        .waste-type-8 { background: rgba(85, 107, 47, 0.3); }
+        .waste-type-0 {
+            background: rgba(139, 69, 19, 0.3);
+        }
+
+        .waste-type-1 {
+            background: rgba(65, 105, 225, 0.3);
+        }
+
+        .waste-type-2 {
+            background: rgba(255, 165, 0, 0.3);
+        }
+
+        .waste-type-3 {
+            background: rgba(0, 206, 209, 0.3);
+        }
+
+        .waste-type-4 {
+            background: rgba(147, 112, 219, 0.3);
+        }
+
+        .waste-type-5 {
+            background: rgba(105, 105, 105, 0.3);
+        }
+
+        .waste-type-6 {
+            background: rgba(220, 20, 60, 0.3);
+        }
+
+        .waste-type-7 {
+            background: rgba(255, 20, 147, 0.3);
+        }
+
+        .waste-type-8 {
+            background: rgba(85, 107, 47, 0.3);
+        }
 
         /* ========== FULL-SCREEN MODAL SOLUTION FOR MOBILE ========== */
         @media (max-width: 1024px) {
+
             /* Body locked when modal is open */
             body.modal-open {
                 overflow: hidden !important;
@@ -195,7 +241,7 @@
                 width: 100% !important;
                 height: 100% !important;
             }
-            
+
             /* FULL-SCREEN MODAL CONTAINER */
             #wasteTypePreview {
                 position: fixed !important;
@@ -219,40 +265,40 @@
                 /* Make container invisible to touch events */
                 pointer-events: none !important;
             }
-            
+
             /* Modal header with title - target both h2 and h3 */
-            #wasteTypePreview > h2, 
-            #wasteTypePreview > h3,
+            #wasteTypePreview>h2,
+            #wasteTypePreview>h3,
             #wasteTypePreview #previewTitle {
-                background: rgba(0,0,0,0.2) !important;
+                background: rgba(0, 0, 0, 0.2) !important;
                 color: white !important;
                 margin: 0 !important;
                 padding: 20px !important;
                 text-align: center !important;
                 font-size: 24px !important;
-                border-bottom: 2px solid rgba(255,255,255,0.3) !important;
+                border-bottom: 2px solid rgba(255, 255, 255, 0.3) !important;
                 flex-shrink: 0 !important;
                 order: 1 !important;
                 /* Re-enable pointer events for header */
                 pointer-events: auto !important;
             }
-            
+
             /* Modal subtitle */
-            #wasteTypePreview > p,
+            #wasteTypePreview>p,
             #wasteTypePreview #previewSubtitle {
-                background: rgba(0,0,0,0.1) !important;
-                color: rgba(255,255,255,0.9) !important;
+                background: rgba(0, 0, 0, 0.1) !important;
+                color: rgba(255, 255, 255, 0.9) !important;
                 margin: 0 !important;
                 padding: 10px 20px !important;
                 text-align: center !important;
                 font-size: 16px !important;
-                border-bottom: 1px solid rgba(255,255,255,0.2) !important;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
                 flex-shrink: 0 !important;
                 order: 2 !important;
                 /* Re-enable pointer events for subtitle */
                 pointer-events: auto !important;
             }
-            
+
             /* INDEPENDENT SCROLLING GRID CONTAINER */
             #wasteTypeGridPreview {
                 flex: 1 !important;
@@ -268,18 +314,18 @@
                 height: auto !important;
                 order: 3 !important;
                 /* Add padding bottom to prevent content from being hidden behind button bar */
-                padding-bottom: 120px !important;
+                padding-bottom: 140px !important;
                 /* CRITICAL: Re-enable pointer events for scrollable content */
                 pointer-events: auto !important;
             }
-            
+
             /* Waste type items styling */
-            #wasteTypeGridPreview > div {
-                background: rgba(255,255,255,0.9) !important;
+            #wasteTypeGridPreview>div {
+                background: rgba(255, 255, 255, 0.9) !important;
                 border-radius: 12px !important;
                 padding: 15px !important;
                 text-align: center !important;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
                 transition: transform 0.2s ease !important;
                 cursor: pointer !important;
                 min-height: 80px !important;
@@ -288,13 +334,13 @@
                 justify-content: center !important;
                 align-items: center !important;
             }
-            
-            #wasteTypeGridPreview > div:active,
-            #wasteTypeGridPreview > div:hover {
+
+            #wasteTypeGridPreview>div:active,
+            #wasteTypeGridPreview>div:hover {
                 transform: scale(1.05) !important;
-                background: rgba(255,255,255,1) !important;
+                background: rgba(255, 255, 255, 1) !important;
             }
-            
+
             /* PERMANENTLY DOCKED BUTTON BAR */
             #gameButtonContainer {
                 position: fixed !important;
@@ -306,10 +352,12 @@
                 z-index: 10001 !important;
                 background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%) !important;
                 padding: 20px !important;
+                padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
+                /* Handle iPhone Home Indicator */
                 margin: 0 !important;
                 border-radius: 0 !important;
-                border-top: 3px solid rgba(255,255,255,0.4) !important;
-                box-shadow: 0 -5px 20px rgba(0,0,0,0.3) !important;
+                border-top: 3px solid rgba(255, 255, 255, 0.4) !important;
+                box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3) !important;
                 display: flex !important;
                 gap: 15px !important;
                 justify-content: center !important;
@@ -317,8 +365,10 @@
                 order: 4 !important;
                 /* CRITICAL: Re-enable pointer events for buttons to be clickable */
                 pointer-events: auto !important;
+                box-sizing: border-box !important;
+                /* Prevent width + padding overflow */
             }
-            
+
             /* Prominent Start Game button */
             #startGameBtn {
                 flex: 2 !important;
@@ -333,12 +383,12 @@
                 text-transform: uppercase !important;
                 letter-spacing: 1px !important;
                 border-radius: 12px !important;
-                box-shadow: 0 4px 15px rgba(0,255,0,0.3) !important;
+                box-shadow: 0 4px 15px rgba(0, 255, 0, 0.3) !important;
                 min-height: 60px !important;
                 cursor: pointer !important;
                 touch-action: manipulation !important;
             }
-            
+
             #skipBtn {
                 flex: 1 !important;
                 max-width: 120px !important;
@@ -354,7 +404,7 @@
                 cursor: pointer !important;
                 touch-action: manipulation !important;
             }
-            
+
             /* Touch-friendly button styling */
             button {
                 min-height: 50px !important;
@@ -366,53 +416,54 @@
                 touch-action: manipulation !important;
                 -webkit-tap-highlight-color: transparent !important;
             }
-            
+
             button:active {
                 transform: scale(0.95) !important;
             }
-            
+
             /* Ensure buttons are clickable on mobile */
             #startGameBtn:active,
             #skipBtn:active {
-                background: rgba(0,255,0,0.8) !important;
+                background: rgba(0, 255, 0, 0.8) !important;
                 transform: scale(0.95) !important;
             }
-            
+
             #skipBtn:active {
-                background: rgba(255,170,0,0.8) !important;
+                background: rgba(255, 170, 0, 0.8) !important;
             }
         }
-        
+
         /* Specific adjustments for smaller mobile screens */
         @media (max-width: 600px) {
             #gameContainer {
                 padding: 15px;
                 max-width: 95%;
             }
-            
+
             .gem {
                 width: 40px;
                 height: 40px;
                 font-size: 24px;
             }
-            
+
             h1 {
                 font-size: 28px;
             }
-            
+
             /* Smaller grid items on very small screens */
-            #wasteTypeGrid, #wasteTypeGridPreview {
+            #wasteTypeGrid,
+            #wasteTypeGridPreview {
                 grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
                 gap: 10px;
             }
-            
+
             /* Slightly smaller buttons on tiny screens */
             button {
                 font-size: 16px;
                 padding: 15px 20px;
                 min-height: 50px;
             }
-            
+
             #startGameBtn {
                 font-size: 18px !important;
                 padding: 18px !important;
@@ -420,7 +471,7 @@
         }
 
         /* Hide game board when waste type preview is shown */
-        #wasteTypePreview:not([style*="display: none"]) ~ #gameContainer {
+        #wasteTypePreview:not([style*="display: none"])~#gameContainer {
             display: none;
         }
 
@@ -437,6 +488,7 @@
 
         /* Additional mobile-specific components */
         @media (max-width: 1024px) {
+
             /* Leaderboard mobile positioning */
             #leaderboard {
                 position: fixed;
@@ -471,25 +523,28 @@
             }
 
             /* Waste types guide in main menu mobile adjustments */
-            #gameModeSelect > div:last-child {
+            #gameModeSelect>div:last-child {
                 margin-top: 25px;
                 padding-top: 20px;
-                border-top: 2px solid rgba(255,255,255,0.2);
+                border-top: 2px solid rgba(255, 255, 255, 0.2);
             }
 
             /* Better spacing for waste type items in grid */
-            #wasteTypeGrid > div, #wasteTypeGridPreview > div {
+            #wasteTypeGrid>div,
+            #wasteTypeGridPreview>div {
                 padding: 12px;
                 border-radius: 8px;
                 transition: transform 0.2s ease;
             }
 
-            #wasteTypeGrid > div:hover, #wasteTypeGridPreview > div:hover {
+            #wasteTypeGrid>div:hover,
+            #wasteTypeGridPreview>div:hover {
                 transform: scale(1.05);
             }
         }
     </style>
 </head>
+
 <body>
     <div id="gameContainer">
         <h1>♢ MatchWaste ♢</h1>
@@ -503,7 +558,8 @@
             <button onclick="newGame()">New Game</button>
             <button onclick="showHint()" id="hintBtn" disabled>Hint</button>
         </div>
-        <div id="hint">Click two adjacent emojis to swap them. Match 3+ of the same type to clear them! Clear all waste to win!</div>
+        <div id="hint">Click two adjacent emojis to swap them. Match 3+ of the same type to clear them! Clear all waste
+            to win!</div>
     </div>
 
     <!-- Language selection menu -->
@@ -519,17 +575,23 @@
     <div id="gameModeSelect" class="menu" style="display:none;">
         <h1>MatchWaste</h1>
         <h3 style="color: white;">Choose Game Mode</h3>
-        <button onclick="showMultiplayerLobby()" style="background: linear-gradient(45deg, #ff6600, #ff9900); margin-bottom: 10px; padding: 15px 30px; font-size: 18px;">🎮 Multiplayer</button>
+        <button onclick="showMultiplayerLobby()"
+            style="background: linear-gradient(45deg, #ff6600, #ff9900); margin-bottom: 10px; padding: 15px 30px; font-size: 18px;">🎮
+            Multiplayer</button>
         <br>
-        <button onclick="startSinglePlayer()" style="background: linear-gradient(45deg, #00ff00, #00cc00); padding: 15px 30px; font-size: 18px;">👤 Single Player</button>
+        <button onclick="startSinglePlayer()"
+            style="background: linear-gradient(45deg, #00ff00, #00cc00); padding: 15px 30px; font-size: 18px;">👤 Single
+            Player</button>
         <br><br>
         <button onclick="showLanguageSelect()" style="background: #666; padding: 10px 20px;">← Back to Language</button>
 
         <!-- Waste Type Guide moved here -->
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.3);">
             <h3 style="color: white;">Waste Types Guide</h3>
-            <p style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 15px;">Learn the waste categories before you start!</p>
-            <div id="wasteTypeGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; max-height: 400px; overflow-y: auto; padding: 10px;">
+            <p style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 15px;">Learn the waste categories
+                before you start!</p>
+            <div id="wasteTypeGrid"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; max-height: 400px; overflow-y: auto; padding: 10px;">
                 <!-- Waste types will be dynamically inserted here -->
             </div>
         </div>
@@ -557,13 +619,19 @@
 
     <div id="wasteTypePreview" class="menu" style="display:none;">
         <h2 id="previewTitle" style="text-align: center;">Waste Types Guide</h2>
-        <p id="previewSubtitle" style="font-size: 14px; margin-bottom: 20px; text-align: center;">Learn the waste categories before you start!</p>
-        <div id="wasteTypeGridPreview" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; max-height: 400px; overflow-y: auto; padding: 10px;">
+        <p id="previewSubtitle" style="font-size: 14px; margin-bottom: 20px; text-align: center;">Learn the waste
+            categories before you start!</p>
+        <div id="wasteTypeGridPreview"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; max-height: 400px; overflow-y: auto; padding: 10px;">
             <!-- Waste types will be dynamically inserted here -->
         </div>
-        <div id="gameButtonContainer" style="margin-top: 20px; text-align: center; position: sticky; bottom: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 10px; border-top: 2px solid rgba(255,255,255,0.3);">
-            <button id="startGameBtn" onclick="startGameFromPreview()" style="background: #00ff00; color: #000; font-weight: bold; padding: 15px 30px; font-size: 18px; margin: 5px; border: 2px solid #00aa00; border-radius: 8px; cursor: pointer; min-width: 140px;">Start Game</button>
-            <button id="skipBtn" onclick="startGameFromPreview()" style="background: #ffaa00; color: #000; padding: 12px 20px; border: 2px solid #cc7700; border-radius: 8px; cursor: pointer; margin: 5px;">Skip</button>
+        <div id="gameButtonContainer"
+            style="margin-top: 20px; text-align: center; position: sticky; bottom: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 10px; border-top: 2px solid rgba(255,255,255,0.3);">
+            <button id="startGameBtn" onclick="startGameFromPreview()"
+                style="background: #00ff00; color: #000; font-weight: bold; padding: 15px 30px; font-size: 18px; margin: 5px; border: 2px solid #00aa00; border-radius: 8px; cursor: pointer; min-width: 140px;">Start
+                Game</button>
+            <button id="skipBtn" onclick="startGameFromPreview()"
+                style="background: #ffaa00; color: #000; padding: 12px 20px; border: 2px solid #cc7700; border-radius: 8px; cursor: pointer; margin: 5px;">Skip</button>
         </div>
     </div>
 
@@ -584,7 +652,8 @@
 
     <div id="nicknamePrompt" class="menu" style="display:none;">
         <h2>Enter Your Nickname</h2>
-        <input type="text" id="nicknameInput" maxlength="15" placeholder="Your Name" style="padding: 10px; font-size: 18px; margin: 10px 0; width: 80%;">
+        <input type="text" id="nicknameInput" maxlength="15" placeholder="Your Name"
+            style="padding: 10px; font-size: 18px; margin: 10px 0; width: 80%;">
         <br>
         <button id="submitNicknameBtn" onclick="saveScore()" style="margin-top: 10px;">Submit</button>
     </div>
@@ -854,11 +923,11 @@
         function startGameTimer() {
             gameStartTime = Date.now();
             gameTime = 0;
-            
+
             if (gameTimer) {
                 clearInterval(gameTimer);
             }
-            
+
             gameTimer = setInterval(() => {
                 if (gameActive && !gameState.paused) {
                     gameTime = Math.floor((Date.now() - gameStartTime) / 1000);
@@ -1823,7 +1892,7 @@
                 } else if (!finalValidMoves) {
                     console.error(`FAILED: No valid moves after ${arrangementTried} compact arrangement attempts!`);
                     console.log('This board configuration may truly have no valid moves.');
-                    
+
                     // Final check: Is it mathematically impossible?
                     const typeCount = {};
                     let totalGems = 0;
@@ -1836,7 +1905,7 @@
                             }
                         }
                     }
-                    
+
                     const maxOfAnyType = Math.max(...Object.values(typeCount));
                     if (maxOfAnyType < 3) {
                         console.log(`Declaring victory: ${totalGems} gems remaining, no type has 3+ gems (max: ${maxOfAnyType})`);
@@ -2432,7 +2501,7 @@
                 request.onupgradeneeded = (event) => {
                     const db = event.target.result;
                     const oldVersion = event.oldVersion;
-                    
+
                     // Version 1 to 2 upgrade: change from 'score' to 'time' index
                     if (oldVersion < 2) {
                         // Delete old object store if it exists
@@ -2590,4 +2659,5 @@
         newGame();
     </script>
 </body>
+
 </html>

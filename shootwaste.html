@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -17,7 +18,7 @@
             overflow: hidden;
             touch-action: none;
         }
-        
+
         #gameContainer {
             position: relative;
             border: 2px solid #00ffff;
@@ -26,9 +27,10 @@
             height: 100vh;
             max-width: 800px;
             max-height: 600px;
-            aspect-ratio: 4 / 3; /* Maintain proper aspect ratio */
+            aspect-ratio: 4 / 3;
+            /* Maintain proper aspect ratio */
         }
-        
+
         #gameCanvas {
             background: transparent;
             display: block;
@@ -38,9 +40,10 @@
             top: 0;
             left: 0;
             z-index: 1;
-            image-rendering: crisp-edges; /* Prevent blurring */
+            image-rendering: crisp-edges;
+            /* Prevent blurring */
         }
-        
+
         #saturnCanvas {
             position: absolute;
             top: 0;
@@ -50,27 +53,32 @@
             pointer-events: none;
             z-index: 0;
             background: #000011;
-            image-rendering: crisp-edges; /* Prevent blurring */
+            image-rendering: crisp-edges;
+            /* Prevent blurring */
         }
-        
+
         @media (max-width: 1920px) {
             #gameContainer {
                 border: none;
                 box-shadow: none;
                 max-width: none;
                 max-height: none;
-                aspect-ratio: 4 / 3; /* Maintain 4:3 aspect ratio */
+                aspect-ratio: 4 / 3;
+                /* Maintain 4:3 aspect ratio */
             }
         }
-        
+
         @media (max-width: 768px) {
             #gameContainer {
-                height: 82.5vh; /* 75vh * 1.1 = 82.5vh (10% increase from the 1/4 reduced height) */
-                width: 110%; /* Increase width by 10% */
-                margin-left: -5%; /* Center the wider container */
+                height: 82.5vh;
+                /* 75vh * 1.1 = 82.5vh (10% increase from the 1/4 reduced height) */
+                width: 110%;
+                /* Increase width by 10% */
+                margin-left: -5%;
+                /* Center the wider container */
             }
         }
-        
+
         #mobileControls {
             position: absolute;
             bottom: 20px;
@@ -85,21 +93,21 @@
             max-width: 400px;
             justify-content: space-between;
         }
-        
+
         #dpad {
             display: grid;
             grid-template-columns: 55px 55px 55px;
             grid-template-rows: 55px 55px 55px;
             gap: 8px;
         }
-        
+
         #actionButtons {
             display: flex;
             flex-direction: column;
             gap: 15px;
             align-items: center;
         }
-        
+
         .control-btn {
             background: rgba(0, 255, 255, 0.3);
             border: 2px solid #00ffff;
@@ -114,12 +122,12 @@
             touch-action: manipulation;
             box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
         }
-        
+
         .control-btn:active {
             background: rgba(0, 255, 255, 0.6);
             transform: scale(0.95);
         }
-        
+
         #shootBtn {
             width: 75px;
             height: 75px;
@@ -129,11 +137,11 @@
             font-size: 22px;
             box-shadow: 0 0 15px rgba(255, 255, 0, 0.5);
         }
-        
+
         #shootBtn:active {
             background: rgba(255, 255, 0, 0.6);
         }
-        
+
         #weaponToggleBtn {
             width: 60px;
             height: 60px;
@@ -144,17 +152,17 @@
             box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
             text-align: center;
         }
-        
+
         #weaponToggleBtn:active {
             background: rgba(0, 255, 0, 0.6);
         }
-        
+
         @media (max-width: 768px) {
             #mobileControls {
                 display: flex;
             }
         }
-        
+
         #ui {
             position: absolute;
             top: 10px;
@@ -164,7 +172,7 @@
             text-shadow: 0 0 10px #00ffff;
             z-index: 10;
         }
-        
+
         #weaponDisplay {
             position: absolute;
             top: 80px;
@@ -174,7 +182,7 @@
             text-shadow: 0 0 10px #ffff00;
             z-index: 10;
         }
-        
+
         #powerUps {
             position: absolute;
             top: 10px;
@@ -184,7 +192,7 @@
             text-shadow: 0 0 10px #00ff00;
             z-index: 10;
         }
-        
+
         #exitBtn {
             position: absolute;
             top: 10px;
@@ -198,11 +206,11 @@
             border-radius: 5px;
             z-index: 1000;
         }
-        
+
         #exitBtn:hover {
             background: rgba(255, 0, 0, 0.9);
         }
-        
+
         .menu {
             position: absolute;
             top: 50%;
@@ -220,21 +228,21 @@
             overflow-y: auto;
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
         }
-        
+
         #wasteTypeGrid::-webkit-scrollbar {
             width: 8px;
         }
-        
+
         #wasteTypeGrid::-webkit-scrollbar-track {
             background: rgba(0, 0, 0, 0.3);
             border-radius: 4px;
         }
-        
+
         #wasteTypeGrid::-webkit-scrollbar-thumb {
             background: #00ffff;
             border-radius: 4px;
         }
-        
+
         #wasteTypeGrid::-webkit-scrollbar-thumb:hover {
             background: #00cccc;
             border-radius: 10px;
@@ -243,13 +251,13 @@
             box-shadow: 0 0 30px #00ffff;
             z-index: 100;
         }
-        
+
         .menu h1 {
             font-size: 36px;
             margin: 0 0 20px 0;
             text-shadow: 0 0 20px #00ffff;
         }
-        
+
         .menu button {
             margin: 10px;
             padding: 15px 30px;
@@ -262,12 +270,12 @@
             font-weight: bold;
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
         }
-        
+
         .menu button:hover {
             background: linear-gradient(45deg, #00ffff, #00ccff);
             transform: scale(1.05);
         }
-        
+
         #targetInfo {
             position: absolute;
             top: 80px;
@@ -284,7 +292,7 @@
             box-shadow: 0 0 20px rgba(255, 255, 0, 0.8);
             z-index: 10;
         }
-        
+
         #sessionTimer {
             position: absolute;
             top: 120px;
@@ -299,7 +307,7 @@
             font-weight: bold;
             z-index: 10;
         }
-        
+
         #weaponHeat {
             position: absolute;
             bottom: 10px;
@@ -313,18 +321,19 @@
             overflow: hidden;
             z-index: 10;
         }
-        
+
         #heatBar {
             height: 100%;
             width: 0%;
             background: linear-gradient(to right, #00ff00, #ffff00, #ff0000);
             transition: width 0.1s;
         }
-        
-        #bossLabel, #bossHealthBar {
+
+        #bossLabel,
+        #bossHealthBar {
             display: none;
         }
-        
+
         #bossLabel {
             position: absolute;
             top: 160px;
@@ -335,7 +344,7 @@
             font-weight: bold;
             text-shadow: 0 0 10px #ff0000;
         }
-        
+
         #bossHealthBar {
             position: absolute;
             top: 190px;
@@ -347,7 +356,7 @@
             border: 2px solid #ff0000;
             border-radius: 5px;
         }
-        
+
         #bossHealth {
             height: 100%;
             width: 100%;
@@ -357,39 +366,42 @@
         }
     </style>
 </head>
+
 <body>
     <div id="gameContainer">
         <canvas id="saturnCanvas"></canvas>
         <canvas id="gameCanvas"></canvas>
-        
+
         <div id="ui">
             <div>Score: <span id="score">0</span></div>
             <div>Lives: <span id="lives">3</span></div>
             <div>Accuracy: <span id="accuracy">0%</span></div>
         </div>
-        
+
         <div id="weaponDisplay">
             Weapon: <span id="currentWeapon">Missile</span><br>
-            <small>Controls: Arrow keys=Move, A/D=Rotate, Space/Click=Shoot (Mobile: D-pad=Move, Shoot button=Shoot, Toggle button=Switch Weapon)</small>
+            <small>Controls: Arrow keys=Move, A/D=Rotate, Space/Click=Shoot (Mobile: D-pad=Move, Shoot button=Shoot,
+                Toggle button=Switch Weapon)</small>
         </div>
-        
+
         <div id="powerUps"></div>
-        
+
         <div id="targetInfo"></div>
         <div id="sessionTimer"></div>
-        
+
         <div id="weaponHeat">
             <div id="heatBar"></div>
         </div>
-        
+
         <div id="bossLabel">FINAL BOSS!</div>
         <div id="bossHealthBar">
             <div id="bossHealth"></div>
         </div>
-        
+
         <button id="exitBtn">Exit</button>
-        <button id="pauseBtn" style="position: absolute; top: 10px; left: 120px; padding: 10px 20px; background: rgba(255, 255, 0, 0.7); border: 2px solid #ffff00; color: #000; cursor: pointer; font-size: 16px; border-radius: 5px; z-index: 1000;">Pause</button>
-        
+        <button id="pauseBtn"
+            style="position: absolute; top: 10px; left: 120px; padding: 10px 20px; background: rgba(255, 255, 0, 0.7); border: 2px solid #ffff00; color: #000; cursor: pointer; font-size: 16px; border-radius: 5px; z-index: 1000;">Pause</button>
+
         <div id="languageSelect" class="menu">
             <h1>ShootWaste</h1>
             <p>Select Language / Selecteer taal / 选择语言</p>
@@ -397,57 +409,68 @@
             <button onclick="selectLanguage('nl')">Nederlands</button>
             <button onclick="selectLanguage('zh')">中文</button>
         </div>
-        
+
         <div id="gameModeSelect" class="menu" style="display:none;">
             <h1>ShootWaste</h1>
             <h3>Choose Game Mode</h3>
-            <button onclick="showMultiplayerLobby()" style="background: linear-gradient(45deg, #ff6600, #ff9900); margin-bottom: 10px; padding: 15px 30px; font-size: 18px;">🎮 Multiplayer</button>
+            <button onclick="showMultiplayerLobby()"
+                style="background: linear-gradient(45deg, #ff6600, #ff9900); margin-bottom: 10px; padding: 15px 30px; font-size: 18px;">🎮
+                Multiplayer</button>
             <br>
-            <button onclick="startSinglePlayer()" style="background: linear-gradient(45deg, #00ff00, #00cc00); padding: 15px 30px; font-size: 18px;">👤 Single Player</button>
+            <button onclick="startSinglePlayer()"
+                style="background: linear-gradient(45deg, #00ff00, #00cc00); padding: 15px 30px; font-size: 18px;">👤
+                Single Player</button>
             <br><br>
-            <button onclick="showLanguageSelect()" style="background: #666; padding: 10px 20px;">← Back to Language</button>
+            <button onclick="showLanguageSelect()" style="background: #666; padding: 10px 20px;">← Back to
+                Language</button>
         </div>
-        
+
         <div id="wasteTypePreview" class="menu" style="display:none;">
             <h2 id="previewTitle">Waste Types Guide</h2>
-            <p id="previewSubtitle" style="font-size: 14px; margin-bottom: 20px;">Learn the waste categories before you start!</p>
-            <div id="wasteTypeGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; max-height: 400px; overflow-y: auto; padding: 10px;">
+            <p id="previewSubtitle" style="font-size: 14px; margin-bottom: 20px;">Learn the waste categories before you
+                start!</p>
+            <div id="wasteTypeGrid"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; max-height: 400px; overflow-y: auto; padding: 10px;">
                 <!-- Waste types will be dynamically inserted here -->
             </div>
             <div style="margin-top: 20px;">
-                <button id="startGameBtn" onclick="startGameFromPreview()" style="background: #00ff00; color: #000; font-weight: bold; padding: 12px 30px; font-size: 18px; margin-right: 10px; border: none; border-radius: 5px; cursor: pointer;">Start Game</button>
-                <button id="skipBtn" onclick="startGameFromPreview()" style="background: #ffaa00; color: #000; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Skip</button>
+                <button id="startGameBtn" onclick="startGameFromPreview()"
+                    style="background: #00ff00; color: #000; font-weight: bold; padding: 12px 30px; font-size: 18px; margin-right: 10px; border: none; border-radius: 5px; cursor: pointer;">Start
+                    Game</button>
+                <button id="skipBtn" onclick="startGameFromPreview()"
+                    style="background: #ffaa00; color: #000; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Skip</button>
             </div>
         </div>
-        
+
         <div id="gameOver" class="menu" style="display:none;">
             <h1 id="gameOverTitle">Game Over</h1>
             <p id="finalScore"></p>
             <button onclick="location.reload()" id="gameOverRestartBtn">Play Again</button>
             <button onclick="location.reload()" id="gameOverChangeBtn">Change Language</button>
         </div>
-        
+
         <div id="victory" class="menu" style="display:none;">
             <h1 id="victoryTitle">Victory!</h1>
             <p id="victoryScore"></p>
             <button onclick="location.reload()" id="victoryRestartBtn">Play Again</button>
             <button onclick="location.reload()" id="victoryChangeBtn">Change Language</button>
         </div>
-        
+
         <div id="nicknamePrompt" class="menu" style="display:none; z-index: 1100;">
             <h2>Enter Your Nickname</h2>
-            <input type="text" id="nicknameInput" maxlength="15" placeholder="Your Name" style="padding: 10px; font-size: 18px; margin: 10px 0; width: 80%;">
+            <input type="text" id="nicknameInput" maxlength="15" placeholder="Your Name"
+                style="padding: 10px; font-size: 18px; margin: 10px 0; width: 80%;">
             <br>
             <button id="submitNicknameBtn" style="margin-top: 10px;">Submit</button>
         </div>
-        
+
         <div id="leaderboard" class="menu" style="display:none; z-index: 1100;">
             <h2>Leaderboard</h2>
             <div id="leaderboardTable" style="margin: 20px 0; max-height: 400px; overflow-y: auto;"></div>
             <div id="playerEntry" style="margin: 10px 0; color: #ffff00; font-weight: bold;"></div>
             <button onclick="closeLeaderboard()">Continue</button>
         </div>
-        
+
         <div id="pauseMenu" class="menu" style="display:none;">
             <h1 id="pauseTitle">Paused</h1>
             <button onclick="togglePause()">Resume</button>
@@ -458,23 +481,28 @@
         <!-- Multiplayer Lobby System -->
         <div id="multiplayerLobby" class="menu" style="display:none;">
             <h2>Multiplayer Lobby</h2>
-            
+
             <div id="playerNicknameSection" style="margin-bottom: 20px;">
                 <label for="playerNickname">Your Nickname:</label>
-                <input type="text" id="playerNickname" placeholder="Enter your nickname" maxlength="20" style="margin-left: 10px; padding: 5px;">
-                
-                <div style="margin-top: 15px; padding: 8px; background: rgba(0,255,255,0.1); border-radius: 5px; border: 1px solid rgba(0,255,255,0.3);">
+                <input type="text" id="playerNickname" placeholder="Enter your nickname" maxlength="20"
+                    style="margin-left: 10px; padding: 5px;">
+
+                <div
+                    style="margin-top: 15px; padding: 8px; background: rgba(0,255,255,0.1); border-radius: 5px; border: 1px solid rgba(0,255,255,0.3);">
                     <div style="font-size: 12px; color: #00ffff; margin-bottom: 5px;">WebRTC P2P Status:</div>
                     <div id="connectionStatus" style="font-size: 11px; color: #ffaa00;">Initializing...</div>
-                    <button onclick="debugPeerJS()" style="background: #ffaa00; color: #000; border: none; padding: 3px 8px; border-radius: 3px; margin-top: 5px; cursor: pointer; font-size: 10px;">
+                    <button onclick="debugPeerJS()"
+                        style="background: #ffaa00; color: #000; border: none; padding: 3px 8px; border-radius: 3px; margin-top: 5px; cursor: pointer; font-size: 10px;">
                         🔍 Debug Info
                     </button>
                 </div>
             </div>
-            
-            <div id="gameCreation" class="lobby-section" style="margin-bottom: 30px; padding: 20px; border: 1px solid #00ffff; border-radius: 10px;">
+
+            <div id="gameCreation" class="lobby-section"
+                style="margin-bottom: 30px; padding: 20px; border: 1px solid #00ffff; border-radius: 10px;">
                 <h3>Create Game</h3>
-                <div class="game-options" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0;">
+                <div class="game-options"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0;">
                     <div>
                         <label for="gameMode">Game Mode:</label>
                         <select id="gameMode" style="width: 100%; padding: 5px;">
@@ -482,12 +510,13 @@
                             <option value="competitive">Competitive</option>
                         </select>
                     </div>
-                    
+
                     <div>
                         <label for="maxPlayers">Max Players:</label>
-                        <input type="number" id="maxPlayers" min="2" max="4" value="4" style="width: 100%; padding: 5px;">
+                        <input type="number" id="maxPlayers" min="2" max="4" value="4"
+                            style="width: 100%; padding: 5px;">
                     </div>
-                    
+
                     <div>
                         <label for="gameDifficulty">Difficulty:</label>
                         <select id="gameDifficulty" style="width: 100%; padding: 5px;">
@@ -497,18 +526,22 @@
                         </select>
                     </div>
                 </div>
-                <button onclick="createMultiplayerGame()" class="lobby-btn" style="width: 100%; padding: 10px; margin-top: 10px;">Create Game</button>
+                <button onclick="createMultiplayerGame()" class="lobby-btn"
+                    style="width: 100%; padding: 10px; margin-top: 10px;">Create Game</button>
             </div>
-            
-            <div id="gameList" class="lobby-section" style="margin-bottom: 30px; padding: 20px; border: 1px solid #00ffff; border-radius: 10px;">
+
+            <div id="gameList" class="lobby-section"
+                style="margin-bottom: 30px; padding: 20px; border: 1px solid #00ffff; border-radius: 10px;">
                 <h3>Join Game</h3>
                 <div id="availableGames" class="games-list" style="min-height: 100px; margin: 15px 0;">
                     <div class="loading">Looking for games...</div>
                 </div>
-                <button onclick="refreshGameList()" class="lobby-btn" style="width: 100%; padding: 10px;">Refresh</button>
+                <button onclick="refreshGameList()" class="lobby-btn"
+                    style="width: 100%; padding: 10px;">Refresh</button>
             </div>
-            
-            <div id="currentLobby" class="lobby-section" style="display:none; padding: 20px; border: 1px solid #00ff00; border-radius: 10px;">
+
+            <div id="currentLobby" class="lobby-section"
+                style="display:none; padding: 20px; border: 1px solid #00ff00; border-radius: 10px;">
                 <h3>Current Lobby</h3>
                 <div id="lobbyInfo" style="margin: 15px 0;">
                     <div id="lobbyGameMode"></div>
@@ -516,17 +549,23 @@
                 </div>
                 <div id="lobbyPlayers" class="players-list" style="margin: 15px 0; min-height: 50px;"></div>
                 <div id="lobbyControls" style="margin-top: 20px;">
-                    <button id="multiplayerStartBtn" onclick="startMultiplayerGame()" class="lobby-btn" style="display:none; padding: 10px 20px; margin-right: 10px; background: #00ff00; color: #000;">Start Game</button>
-                    <button onclick="leaveLobby()" class="lobby-btn" style="padding: 10px 20px; background: #ff0000; color: #fff;">Leave Lobby</button>
+                    <button id="multiplayerStartBtn" onclick="startMultiplayerGame()" class="lobby-btn"
+                        style="display:none; padding: 10px 20px; margin-right: 10px; background: #00ff00; color: #000;">Start
+                        Game</button>
+                    <button onclick="leaveLobby()" class="lobby-btn"
+                        style="padding: 10px 20px; background: #ff0000; color: #fff;">Leave Lobby</button>
                 </div>
                 <div id="lobbyStatus" style="margin-top: 15px; font-style: italic;"></div>
             </div>
-            
-            <button onclick="showMainMenu()" class="lobby-btn" style="width: 100%; padding: 15px; margin-top: 20px; background: #666; color: #fff;">Back to Main Menu</button>
+
+            <button onclick="showMainMenu()" class="lobby-btn"
+                style="width: 100%; padding: 15px; margin-top: 20px; background: #666; color: #fff;">Back to Main
+                Menu</button>
         </div>
 
         <!-- Multiplayer Game UI -->
-        <div id="multiplayerGameUI" style="display:none; position: absolute; top: 10px; left: 10px; z-index: 1000; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px;">
+        <div id="multiplayerGameUI"
+            style="display:none; position: absolute; top: 10px; left: 10px; z-index: 1000; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px;">
             <div id="multiplayerPlayers" class="multiplayer-info" style="margin-bottom: 10px;">
                 <h4 style="margin: 0 0 5px 0; color: #00ffff;">Players:</h4>
                 <div id="playersList"></div>
@@ -535,7 +574,8 @@
                 <h4 style="margin: 0 0 5px 0; color: #ffff00;">Team Score: <span id="teamScore">0</span></h4>
             </div>
             <div id="multiplayerCompetitiveUI" class="multiplayer-info" style="display:none; margin-bottom: 10px;">
-                <h4 style="margin: 0 0 5px 0; color: #ff6600;">Your Score: <span id="playerCompetitiveScore">0</span></h4>
+                <h4 style="margin: 0 0 5px 0; color: #ff6600;">Your Score: <span id="playerCompetitiveScore">0</span>
+                </h4>
                 <div style="font-size: 12px; margin-top: 5px;">Target: <span id="playerCompetitiveTarget">-</span></div>
                 <div style="font-size: 11px; margin-top: 5px; color: #ffff00;">First to 100 wins!</div>
             </div>
@@ -543,7 +583,7 @@
                 <span id="connectionIndicator" style="color: #00ff00;">🟢 Connected</span>
             </div>
         </div>
-        
+
         <div id="mobileControls">
             <div id="dpad">
                 <div></div>
@@ -562,10 +602,10 @@
             </div>
         </div>
     </div>
-    
+
     <!-- PeerJS for WebRTC multiplayer -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    
+
     <!-- Firebase SDK (kept for leaderboards only) -->
     <script type="module">
         // Import Firebase modules
@@ -632,7 +672,7 @@
         window.firebaseOnValue = onValue;
         window.firebaseOff = off;
         window.firebaseLimitToLast = limitToLast;
-        
+
         // Set Firebase initialization flag
         window.firebaseInitialized = true;
         console.log('Firebase functions made globally available successfully');
@@ -730,7 +770,7 @@
                     packetsReceived: 0,
                     packetsSent: 0
                 };
-                
+
                 // Initialize PeerJS immediately since we're now calling this after page load
                 console.log('🚀 PeerManager constructor called');
                 this.initializePeer();
@@ -739,7 +779,7 @@
             // Initialize PeerJS peer connection
             initializePeer() {
                 console.log('🔧 Initializing PeerJS...');
-                
+
                 try {
                     // Check if Peer is available
                     if (typeof Peer === 'undefined') {
@@ -749,7 +789,7 @@
                     }
 
                     console.log('✅ PeerJS library found, creating peer...');
-                    
+
                     // Try multiple PeerJS server configurations for better reliability
                     const peerOptions = {
                         debug: 2, // Enable debug to see connection issues
@@ -782,16 +822,16 @@
             // Try alternative PeerJS server configurations
             tryAlternativeServer() {
                 if (this.isReady) return; // Already connected
-                
+
                 console.log('🔄 Attempting alternative server configuration...');
                 this.updateConnectionStatus('Trying alternative server...');
-                
+
                 try {
                     // Destroy existing peer if it exists
                     if (this.peer && !this.peer.destroyed) {
                         this.peer.destroy();
                     }
-                    
+
                     // Try with explicit server configuration
                     const alternativeOptions = {
                         host: 'peerjs-server.herokuapp.com',
@@ -806,15 +846,15 @@
                             ]
                         }
                     };
-                    
+
                     console.log('🌐 Trying alternative PeerJS server:', alternativeOptions.host);
                     this.peer = new Peer(alternativeOptions);
                     this.setupPeerEvents();
-                    
+
                 } catch (error) {
                     console.error('❌ Alternative server also failed:', error);
                     this.updateConnectionStatus('All servers failed');
-                    
+
                     // Last resort - try local/simple configuration
                     setTimeout(() => this.trySimpleConfiguration(), 3000);
                 }
@@ -823,19 +863,19 @@
             // Try the simplest possible PeerJS configuration
             trySimpleConfiguration() {
                 if (this.isReady) return;
-                
+
                 console.log('🔄 Trying simple PeerJS configuration...');
                 this.updateConnectionStatus('Trying simple config...');
-                
+
                 try {
                     if (this.peer && !this.peer.destroyed) {
                         this.peer.destroy();
                     }
-                    
+
                     // Ultra-simple configuration
                     this.peer = new Peer();
                     this.setupPeerEvents();
-                    
+
                 } catch (error) {
                     console.error('❌ Simple configuration failed:', error);
                     this.updateConnectionStatus('WebRTC unavailable');
@@ -849,7 +889,7 @@
                     console.log('✅ PeerJS initialized successfully with ID:', id);
                     this.playerId = id;
                     this.isReady = true;
-                    
+
                     // Show ready status in UI
                     this.updateConnectionStatus('Connected (Ready for multiplayer)');
                     console.log('🎮 WebRTC ready for multiplayer games!');
@@ -864,10 +904,10 @@
                     console.error('❌ PeerJS error:', error);
                     this.isReady = false;
                     this.updateConnectionStatus(`Connection Error: ${error.type || 'Unknown'}`);
-                    
+
                     // Try fallback connection methods
                     this.handleConnectionError(error);
-                    
+
                     // If it's a server error, try alternative server
                     if (error.type === 'server-error' || error.type === 'socket-error' || error.type === 'network') {
                         console.log('🔄 Trying alternative PeerJS server...');
@@ -879,7 +919,7 @@
                     console.log('🔌 PeerJS disconnected, attempting to reconnect...');
                     this.isReady = false;
                     this.updateConnectionStatus('Disconnected (Reconnecting...)');
-                    
+
                     if (!this.peer.destroyed) {
                         this.peer.reconnect();
                     }
@@ -905,20 +945,20 @@
             // Update connection status in UI
             updateConnectionStatus(status) {
                 console.log('🔗 Connection status:', status);
-                
+
                 // Try to update status in UI if elements exist
                 const statusElements = [
                     document.getElementById('connectionStatus'),
                     document.getElementById('multiplayerStatus')
                 ];
-                
+
                 statusElements.forEach(element => {
                     if (element) {
                         element.textContent = status;
                         element.style.color = this.isReady ? '#00ff00' : '#ffaa00';
                     }
                 });
-                
+
                 // Also update any debug info
                 this.lastStatusUpdate = {
                     time: new Date().toLocaleTimeString(),
@@ -932,19 +972,19 @@
             testConnection() {
                 return new Promise((resolve) => {
                     console.log('🧪 Testing PeerJS connection...');
-                    
+
                     if (!this.peer || !this.peer.open) {
                         console.error('❌ No peer connection available for testing');
                         resolve(false);
                         return;
                     }
-                    
+
                     // Simple connectivity test
                     const testPeerId = 'test-connection-' + Date.now();
                     try {
                         // Just test if we can create a connection object (doesn't need to connect)
                         const testConn = this.peer.connect(testPeerId);
-                        testConn.on('error', () => {}); // Ignore errors for this test
+                        testConn.on('error', () => { }); // Ignore errors for this test
                         setTimeout(() => {
                             testConn.close();
                             console.log('✅ PeerJS connection test passed');
@@ -964,19 +1004,19 @@
                     if (!this.isReady || !this.peer || !this.peer.open) {
                         // Try waiting a bit for PeerJS to initialize
                         console.log('⏳ PeerJS not ready yet, waiting...');
-                        
+
                         // Show loading state
                         this.updateConnectionStatus('Initializing connection...');
-                        
+
                         // Wait up to 10 seconds for PeerJS to be ready
                         const maxWait = 10000; // 10 seconds
                         const startTime = Date.now();
-                        
+
                         while (!this.isReady && (Date.now() - startTime) < maxWait) {
                             await new Promise(resolve => setTimeout(resolve, 500));
                             console.log('🔄 Still waiting for PeerJS...');
                         }
-                        
+
                         if (!this.isReady || !this.peer || !this.peer.open) {
                             throw new Error('PeerJS connection failed. Please refresh the page and try again.');
                         }
@@ -986,7 +1026,7 @@
                     this.isHost = true;
                     this.isMultiplayer = true;
                     this.gameMode = settings.mode || 'cooperative';
-                    
+
                     // Use the peer ID as the game code - this is what other players connect to
                     this.gameId = this.playerId;
 
@@ -1043,15 +1083,15 @@
                     if (!this.isReady || !this.peer || !this.peer.open) {
                         console.log('⏳ PeerJS not ready for joining, waiting...');
                         this.updateConnectionStatus('Preparing to join...');
-                        
+
                         // Wait up to 10 seconds for PeerJS to be ready
                         const maxWait = 10000;
                         const startTime = Date.now();
-                        
+
                         while (!this.isReady && (Date.now() - startTime) < maxWait) {
                             await new Promise(resolve => setTimeout(resolve, 500));
                         }
-                        
+
                         if (!this.isReady || !this.peer || !this.peer.open) {
                             throw new Error('PeerJS connection failed. Please refresh the page and try again.');
                         }
@@ -1087,7 +1127,7 @@
                             console.log('Connected to host:', this.gameId);
                             this.connections.set(this.gameId, hostConnection);
                             this.setupConnectionHandlers(hostConnection);
-                            
+
                             // Send join request
                             hostConnection.send({
                                 type: 'join_request',
@@ -1095,7 +1135,7 @@
                                 nickname: this.playerNickname,
                                 timestamp: Date.now()
                             });
-                            
+
                             resolve(true);
                         });
 
@@ -1175,6 +1215,9 @@
                     case 'game_over':
                         this.handleGameOver(message);
                         break;
+                    case 'damage':
+                        this.handleDamageEvent(message);
+                        break;
                 }
             }
 
@@ -1200,10 +1243,10 @@
                 let targetType = '';
                 if (this.gameMode === 'competitive') {
                     const existingTargets = Array.from(this.gameState.players.values()).map(p => p.targetType);
-                    const availableTypes = wasteTypes.filter(t => 
+                    const availableTypes = wasteTypes.filter(t =>
                         t !== 'rest' && t !== 'textiel' && !existingTargets.includes(t)
                     );
-                    targetType = availableTypes.length > 0 
+                    targetType = availableTypes.length > 0
                         ? availableTypes[Math.floor(Math.random() * availableTypes.length)]
                         : wasteTypes[Math.floor(Math.random() * wasteTypes.length)];
                 }
@@ -1257,7 +1300,7 @@
 
                 this.gameMode = message.gameMode;
                 this.targetType = message.targetType || '';
-                
+
                 // Initialize players map
                 this.gameState = {
                     players: new Map(message.players),
@@ -1369,7 +1412,7 @@
                         localId: message.enemy.localId,
                         isRemote: true // Mark as synchronized from host
                     };
-                    
+
                     enemies.push(enemy);
                     console.log('🎯 Received enemy spawn from host:', enemy.emoji, enemy.wasteType);
                 }
@@ -1395,12 +1438,12 @@
             // Handle boss spawn from host
             handleBossSpawn(message) {
                 if (this.isHost) return; // Hosts don't receive boss spawn messages
-                
+
                 if (message.boss && !bossSpawned) {
                     bossSpawned = true;
                     document.getElementById('bossLabel').style.display = 'block';
                     document.getElementById('bossHealthBar').style.display = 'block';
-                    
+
                     boss = {
                         x: message.boss.x,
                         y: message.boss.y,
@@ -1429,45 +1472,45 @@
             // Handle boss defeat from host
             handleBossDefeated(message) {
                 if (this.isHost) return; // Hosts don't receive boss defeat messages
-                
+
                 bossDefeated = true;
                 bossSpawned = true; // Keep true to prevent respawning
                 boss = null;
-                
+
                 // Hide boss UI
                 document.getElementById('bossLabel').style.display = 'none';
                 document.getElementById('bossHealthBar').style.display = 'none';
-                
+
                 // Show victory
                 gameState.victory = true;
                 gameState.gameOver = true;
-                
+
                 console.log('👹 Boss defeated by host - victory!');
-                
+
                 // Update UI
                 const finalScoreEl = document.getElementById('finalScore');
                 if (finalScoreEl) {
                     finalScoreEl.textContent = `Final Score: ${gameState.score}`;
                 }
-                
+
                 document.getElementById('gameOver').style.display = 'block';
             }
 
             // Handle game over from host
             handleGameOver(message) {
                 if (this.isHost) return; // Hosts don't receive game over messages
-                
+
                 gameState.gameOver = true;
                 gameState.lives = 0;
-                
+
                 // Update UI
                 document.getElementById('lives').textContent = '0';
-                
+
                 const finalScoreEl = document.getElementById('finalScore');
                 if (finalScoreEl) {
                     finalScoreEl.textContent = `Final Score: ${gameState.score}`;
                 }
-                
+
                 document.getElementById('gameOver').style.display = 'block';
                 console.log('💀 Game over from host');
             }
@@ -1475,7 +1518,7 @@
             // Broadcast enemy destruction to all clients
             broadcastEnemyDestroyed(enemyId) {
                 if (!this.isHost || !this.isMultiplayer) return;
-                
+
                 this.broadcastToAll({
                     type: 'enemy_destroyed',
                     enemyId: enemyId,
@@ -1486,7 +1529,7 @@
             // Broadcast boss spawn to all clients
             broadcastBossSpawn() {
                 if (!this.isHost || !this.isMultiplayer || !boss) return;
-                
+
                 this.broadcastToAll({
                     type: 'boss_spawn',
                     boss: {
@@ -1509,7 +1552,7 @@
             // Broadcast boss defeat to all clients
             broadcastBossDefeated() {
                 if (!this.isHost || !this.isMultiplayer) return;
-                
+
                 this.broadcastToAll({
                     type: 'boss_defeated',
                     score: gameState.score,
@@ -1521,7 +1564,7 @@
             // Broadcast game over to all clients
             broadcastGameOver() {
                 if (!this.isHost || !this.isMultiplayer) return;
-                
+
                 this.broadcastToAll({
                     type: 'game_over',
                     score: gameState.score,
@@ -1529,227 +1572,299 @@
                     timestamp: Date.now()
                 });
                 console.log('💀 Broadcasting game over to clients');
-                }
-
-                // Update competitive scores
-                if (this.gameMode === 'competitive' && message.playerScores) {
-                    Object.entries(message.playerScores).forEach(([playerId, score]) => {
-                        if (this.gameState.players.has(playerId)) {
-                            this.gameState.players.get(playerId).score = score;
-                        }
-                    });
-                    this.updateCompetitiveUI();
-                }
             }
 
-            // Handle game start
-            handleGameStart(message) {
-                document.getElementById('multiplayerLobby').style.display = 'none';
-                document.getElementById('multiplayerGameUI').style.display = 'block';
-                gameState.gameStarted = true;
-                startGameFromPreview();
-            }
+            // Broadcast full game state to all clients (periodic sync)
+            broadcastGameState() {
+                if (!this.isHost || !this.isMultiplayer) return;
 
-            // Broadcast message to all connected players
-            broadcastToAll(message) {
-                this.connections.forEach((conn, peerId) => {
-                    if (conn.open) {
-                        conn.send(message);
-                    }
-                });
-            }
+                // Prepare enemies data
+                const enemiesData = enemies.map(e => ({
+                    x: e.x,
+                    y: e.y,
+                    width: e.width,
+                    height: e.height,
+                    speed: e.speed,
+                    health: e.health,
+                    maxHealth: e.maxHealth,
+                    rotation: e.rotation,
+                    rotationSpeed: e.rotationSpeed,
+                    wasteType: e.wasteType,
+                    emoji: e.emoji,
+                    localId: e.localId
+                }));
 
-            // Broadcast message to all players except one
-            broadcastToOthers(message, excludePeer) {
-                this.connections.forEach((conn, peerId) => {
-                    if (conn.open && peerId !== excludePeer) {
-                        conn.send(message);
-                    }
-                });
-            }
+                // Prepare bullets data (optional, if we want to sync bullets too)
+                // For now, we focus on enemies and score/lives
 
-            // Update player position (called from game loop)
-            updatePlayerPosition(x, y, rotation) {
-                if (!this.isMultiplayer) return;
-
-                // Send to host or broadcast to clients
-                const message = {
-                    type: 'player_update',
-                    playerId: this.playerId,
-                    x: Math.round(x),
-                    y: Math.round(y),
-                    rotation: rotation,
-                    timestamp: Date.now()
-                };
-
-                if (this.isHost) {
-                    // Host broadcasts to all clients
-                    this.broadcastToAll(message);
-                } else {
-                    // Client sends to host only
-                    const hostConn = this.connections.get(this.gameId);
-                    if (hostConn && hostConn.open) {
-                        hostConn.send(message);
-                    }
-                }
-
-                // Update local player position
-                if (this.gameState && this.gameState.players.has(this.playerId)) {
-                    const player = this.gameState.players.get(this.playerId);
-                    player.x = x;
-                    player.y = y;
-                    player.rotation = rotation;
-                }
-            }
-
-            // Fire bullet (called when player shoots)
-            fireBullet(weapon = 'bullet') {
-                if (!this.isMultiplayer) return;
-
-                const message = {
-                    type: 'shoot',
-                    playerId: this.playerId,
-                    weapon: weapon,
-                    timestamp: Date.now()
-                };
-
-                if (this.isHost) {
-                    // Host processes shoot and broadcasts to clients
-                    this.handleShootEvent(message, this.playerId);
-                } else {
-                    // Client sends to host
-                    const hostConn = this.connections.get(this.gameId);
-                    if (hostConn && hostConn.open) {
-                        hostConn.send(message);
-                    }
-                }
-            }
-
-            // Start multiplayer game (host only)
-            startGame() {
-                if (!this.isHost) return;
-
-                // Broadcast game start to all players
                 this.broadcastToAll({
-                    type: 'game_start',
+                    type: 'game_state',
+                    enemies: enemiesData,
+                    score: gameState.score,
+                    lives: gameState.lives,
                     timestamp: Date.now()
                 });
-
-                // Start game locally
-                this.handleGameStart({});
             }
 
-            // Handle player disconnect
-            handlePlayerDisconnect(peerId) {
-                console.log('Player disconnected:', peerId);
-                
-                if (this.gameState && this.gameState.players.has(peerId)) {
-                    this.gameState.players.delete(peerId);
-                    this.players = this.gameState.players;
-                }
+            // Send damage event to host (Client -> Host)
+            sendDamageEvent(enemyId, damage, weaponType) {
+                if (this.isHost) return; // Host applies damage locally
 
-                this.connections.delete(peerId);
-
-                // If host, broadcast updated player list
-                if (this.isHost) {
-                    this.broadcastToAll({
-                        type: 'players_update',
-                        players: Array.from(this.gameState.players.entries()),
+                const hostConn = this.connections.get(this.gameId);
+                if (hostConn && hostConn.open) {
+                    hostConn.send({
+                        type: 'damage',
+                        enemyId: enemyId,
+                        damage: damage,
+                        weaponType: weaponType,
                         timestamp: Date.now()
                     });
                 }
-
-                this.updateLobbyDisplay();
             }
 
-            // Handle connection errors
-            handleConnectionError(error) {
-                console.error('PeerJS connection error:', error);
-                
-                if (error.type === 'peer-unavailable') {
-                    alert('Game not found. Please check the game code.');
-                } else if (error.type === 'network') {
-                    alert('Network error. Please check your connection.');
-                } else {
-                    alert('Connection error: ' + error.message);
-                }
-            }
+            // Handle damage event (Host only)
+            handleDamageEvent(message) {
+                if (!this.isHost) return;
 
-            // Leave current game
-            leaveGame() {
-                // Close all connections
-                this.connections.forEach((conn) => {
-                    if (conn.open) {
-                        conn.close();
-                    }
-                });
-                this.connections.clear();
+                const enemy = enemies.find(e => e.localId === message.enemyId);
+                if (enemy) {
+                    enemy.health -= message.damage;
 
-                // Reset state
-                this.gameId = null;
-                this.isHost = false;
-                this.isMultiplayer = false;
-                this.players.clear();
-                this.gameState = null;
+                    // Visual feedback (optional, maybe spawn particle on host?)
 
-                // Show main menu
-                document.getElementById('multiplayerLobby').style.display = 'none';
-                document.getElementById('multiplayerGameUI').style.display = 'none';
-                document.getElementById('gameModeSelect').style.display = 'block';
-
-                console.log('Left game');
-            }
-
-            // Update lobby display
-            updateLobbyDisplay() {
-                const lobbyPlayers = document.getElementById('lobbyPlayers');
-                if (!lobbyPlayers || !this.players) return;
-
-                let html = '<h4>Players:</h4>';
-                this.players.forEach((player, playerId) => {
-                    const hostBadge = player.isHost ? ' 👑' : '';
-                    const targetInfo = this.gameMode === 'competitive' && player.targetType 
-                        ? ` (Target: ${player.targetType})` 
-                        : '';
-                    html += `<div>${player.nickname}${hostBadge}${targetInfo}</div>`;
-                });
-
-                lobbyPlayers.innerHTML = html;
-
-                // Update start button for host
-                if (this.isHost) {
-                    const startBtn = document.getElementById('multiplayerStartBtn');
-                    if (startBtn) {
-                        startBtn.style.display = this.players.size >= 2 ? 'inline-block' : 'none';
+                    if (enemy.health <= 0) {
+                        // Enemy destroyed logic is handled in main update loop or here
+                        // We can trigger destruction immediately or let the update loop handle it
+                        // Let's ensure we broadcast destruction if we handle it here, 
+                        // but the update loop checks health <= 0 too.
+                        // To avoid double counting, we rely on the update loop to see health <= 0
+                        // OR we explicitly call the destruction logic.
+                        // Given the update loop runs every frame, it will catch health <= 0.
+                        // However, we need to ensure the client gets credit if needed.
+                        // For cooperative, it doesn't matter who killed it.
                     }
                 }
             }
+
+            // Update competitive scores
+            if(this.gameMode === 'competitive' && message.playerScores) {
+            Object.entries(message.playerScores).forEach(([playerId, score]) => {
+                if (this.gameState.players.has(playerId)) {
+                    this.gameState.players.get(playerId).score = score;
+                }
+            });
+            this.updateCompetitiveUI();
+        }
+            }
+
+        // Handle game start
+        handleGameStart(message) {
+            document.getElementById('multiplayerLobby').style.display = 'none';
+            document.getElementById('multiplayerGameUI').style.display = 'block';
+            gameState.gameStarted = true;
+            startGameFromPreview();
+        }
+
+        // Broadcast message to all connected players
+        broadcastToAll(message) {
+            this.connections.forEach((conn, peerId) => {
+                if (conn.open) {
+                    conn.send(message);
+                }
+            });
+        }
+
+        // Broadcast message to all players except one
+        broadcastToOthers(message, excludePeer) {
+            this.connections.forEach((conn, peerId) => {
+                if (conn.open && peerId !== excludePeer) {
+                    conn.send(message);
+                }
+            });
+        }
+
+        // Update player position (called from game loop)
+        updatePlayerPosition(x, y, rotation) {
+            if (!this.isMultiplayer) return;
+
+            // Send to host or broadcast to clients
+            const message = {
+                type: 'player_update',
+                playerId: this.playerId,
+                x: Math.round(x),
+                y: Math.round(y),
+                rotation: rotation,
+                timestamp: Date.now()
+            };
+
+            if (this.isHost) {
+                // Host broadcasts to all clients
+                this.broadcastToAll(message);
+            } else {
+                // Client sends to host only
+                const hostConn = this.connections.get(this.gameId);
+                if (hostConn && hostConn.open) {
+                    hostConn.send(message);
+                }
+            }
+
+            // Update local player position
+            if (this.gameState && this.gameState.players.has(this.playerId)) {
+                const player = this.gameState.players.get(this.playerId);
+                player.x = x;
+                player.y = y;
+                player.rotation = rotation;
+            }
+        }
+
+        // Fire bullet (called when player shoots)
+        fireBullet(weapon = 'bullet') {
+            if (!this.isMultiplayer) return;
+
+            const message = {
+                type: 'shoot',
+                playerId: this.playerId,
+                weapon: weapon,
+                timestamp: Date.now()
+            };
+
+            if (this.isHost) {
+                // Host processes shoot and broadcasts to clients
+                this.handleShootEvent(message, this.playerId);
+            } else {
+                // Client sends to host
+                const hostConn = this.connections.get(this.gameId);
+                if (hostConn && hostConn.open) {
+                    hostConn.send(message);
+                }
+            }
+        }
+
+        // Start multiplayer game (host only)
+        startGame() {
+            if (!this.isHost) return;
+
+            // Broadcast game start to all players
+            this.broadcastToAll({
+                type: 'game_start',
+                timestamp: Date.now()
+            });
+
+            // Start game locally
+            this.handleGameStart({});
+        }
+
+        // Handle player disconnect
+        handlePlayerDisconnect(peerId) {
+            console.log('Player disconnected:', peerId);
+
+            if (this.gameState && this.gameState.players.has(peerId)) {
+                this.gameState.players.delete(peerId);
+                this.players = this.gameState.players;
+            }
+
+            this.connections.delete(peerId);
+
+            // If host, broadcast updated player list
+            if (this.isHost) {
+                this.broadcastToAll({
+                    type: 'players_update',
+                    players: Array.from(this.gameState.players.entries()),
+                    timestamp: Date.now()
+                });
+            }
+
+            this.updateLobbyDisplay();
+        }
+
+        // Handle connection errors
+        handleConnectionError(error) {
+            console.error('PeerJS connection error:', error);
+
+            if (error.type === 'peer-unavailable') {
+                alert('Game not found. Please check the game code.');
+            } else if (error.type === 'network') {
+                alert('Network error. Please check your connection.');
+            } else {
+                alert('Connection error: ' + error.message);
+            }
+        }
+
+        // Leave current game
+        leaveGame() {
+            // Close all connections
+            this.connections.forEach((conn) => {
+                if (conn.open) {
+                    conn.close();
+                }
+            });
+            this.connections.clear();
+
+            // Reset state
+            this.gameId = null;
+            this.isHost = false;
+            this.isMultiplayer = false;
+            this.players.clear();
+            this.gameState = null;
+
+            // Show main menu
+            document.getElementById('multiplayerLobby').style.display = 'none';
+            document.getElementById('multiplayerGameUI').style.display = 'none';
+            document.getElementById('gameModeSelect').style.display = 'block';
+
+            console.log('Left game');
+        }
+
+        // Update lobby display
+        updateLobbyDisplay() {
+            const lobbyPlayers = document.getElementById('lobbyPlayers');
+            if (!lobbyPlayers || !this.players) return;
+
+            let html = '<h4>Players:</h4>';
+            this.players.forEach((player, playerId) => {
+                const hostBadge = player.isHost ? ' 👑' : '';
+                const targetInfo = this.gameMode === 'competitive' && player.targetType
+                    ? ` (Target: ${player.targetType})`
+                    : '';
+                html += `<div>${player.nickname}${hostBadge}${targetInfo}</div>`;
+            });
+
+            lobbyPlayers.innerHTML = html;
+
+            // Update start button for host
+            if (this.isHost) {
+                const startBtn = document.getElementById('multiplayerStartBtn');
+                if (startBtn) {
+                    startBtn.style.display = this.players.size >= 2 ? 'inline-block' : 'none';
+                }
+            }
+        }
+
+        // Update lobby info
+        updateLobbyInfo(gameInfo) {
+            document.getElementById('lobbyGameMode').textContent = `Mode: ${gameInfo.mode || this.gameMode}`;
+            document.getElementById('lobbyDifficulty').textContent = `Difficulty: ${gameInfo.difficulty || 'normal'}`;
+        }
+
+        // Show current lobby
+        showCurrentLobby() {
+            document.getElementById('gameCreation').style.display = 'none';
+            document.getElementById('gameList').style.display = 'none';
+            document.getElementById('currentLobby').style.display = 'block';
 
             // Update lobby info
-            updateLobbyInfo(gameInfo) {
-                document.getElementById('lobbyGameMode').textContent = `Mode: ${gameInfo.mode || this.gameMode}`;
-                document.getElementById('lobbyDifficulty').textContent = `Difficulty: ${gameInfo.difficulty || 'normal'}`;
-            }
+            this.updateLobbyInfo({
+                mode: this.gameMode,
+                difficulty: 'normal'
+            });
 
-            // Show current lobby
-            showCurrentLobby() {
-                document.getElementById('gameCreation').style.display = 'none';
-                document.getElementById('gameList').style.display = 'none';
-                document.getElementById('currentLobby').style.display = 'block';
+            this.updateLobbyDisplay();
 
-                // Update lobby info
-                this.updateLobbyInfo({
-                    mode: this.gameMode,
-                    difficulty: 'normal'
-                });
-
-                this.updateLobbyDisplay();
-
-                // Show the full peer ID as the game code for now (we can optimize later)
-                const gameCode = this.gameId || 'LOADING';
-                const lobbyStatus = document.getElementById('lobbyStatus');
-                if (lobbyStatus) {
-                    lobbyStatus.innerHTML = `
+            // Show the full peer ID as the game code for now (we can optimize later)
+            const gameCode = this.gameId || 'LOADING';
+            const lobbyStatus = document.getElementById('lobbyStatus');
+            if (lobbyStatus) {
+                lobbyStatus.innerHTML = `
                         <div style="background: rgba(0,255,0,0.1); padding: 10px; border-radius: 5px; border: 1px solid #00ff00;">
                             <div style="font-size: 16px; color: #00ff00; margin-bottom: 5px;">🎮 Game Created!</div>
                             <div style="font-size: 12px;">Game Code:</div>
@@ -1762,55 +1877,54 @@
                             </button>
                         </div>
                     `;
-                }
-                
-                console.log('🎯 Game lobby created with code:', gameCode);
             }
 
-            // Update competitive mode UI
-            updateCompetitiveUI() {
-                if (this.gameMode !== 'competitive') return;
+            console.log('🎯 Game lobby created with code:', gameCode);
+        }
 
-                const competitiveUI = document.getElementById('multiplayerCompetitiveUI');
-                const playerScoreEl = document.getElementById('playerCompetitiveScore');
-                const playerTargetEl = document.getElementById('playerCompetitiveTarget');
+        // Update competitive mode UI
+        updateCompetitiveUI() {
+            if (this.gameMode !== 'competitive') return;
 
-                if (competitiveUI && this.gameState && this.gameState.players.has(this.playerId)) {
-                    competitiveUI.style.display = 'block';
-                    const playerData = this.gameState.players.get(this.playerId);
-                    
-                    if (playerScoreEl) playerScoreEl.textContent = playerData.score || 0;
-                    if (playerTargetEl) playerTargetEl.textContent = playerData.targetType || '-';
-                }
+            const competitiveUI = document.getElementById('multiplayerCompetitiveUI');
+            const playerScoreEl = document.getElementById('playerCompetitiveScore');
+            const playerTargetEl = document.getElementById('playerCompetitiveTarget');
+
+            if (competitiveUI && this.gameState && this.gameState.players.has(this.playerId)) {
+                competitiveUI.style.display = 'block';
+                const playerData = this.gameState.players.get(this.playerId);
+
+                if (playerScoreEl) playerScoreEl.textContent = playerData.score || 0;
+                if (playerTargetEl) playerTargetEl.textContent = playerData.targetType || '-';
             }
+        }
 
-            // Get network statistics
-            getNetworkStats() {
-                return this.networkStats;
-            }
+        // Get network statistics
+        getNetworkStats() {
+            return this.networkStats;
+        }
 
-            // Cleanup
-            destroy() {
-                this.leaveGame();
-                if (this.peer) {
-                    this.peer.destroy();
-                }
+        // Cleanup
+        destroy() {
+            this.leaveGame();
+            if (this.peer) {
+                this.peer.destroy();
             }
         }
 
         // Initialize PeerJS multiplayer manager with delay
         console.log('🔧 Starting PeerJS initialization process...');
-        
+
         // Wait for everything to be ready before initializing
         window.addEventListener('load', () => {
             console.log('📄 Page loaded, checking PeerJS availability...');
-            
+
             if (typeof Peer === 'undefined') {
                 console.error('❌ PeerJS library not found! CDN may have failed to load.');
                 alert('WebRTC multiplayer unavailable: PeerJS library failed to load. Please refresh the page.');
                 return;
             }
-            
+
             console.log('✅ PeerJS library available, creating manager...');
             setTimeout(() => {
                 try {
@@ -1841,7 +1955,7 @@
             generatePlayerId() {
                 return 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             },
-            
+
             // Create a new multiplayer game
             async createGame(settings) {
                 try {
@@ -1859,7 +1973,7 @@
                             checkFirebase();
                         });
                     }
-                    
+
                     console.log('Starting game creation with settings:', settings);
                     console.log('Firebase functions available:', {
                         database: typeof window.firebaseDatabase,
@@ -1867,7 +1981,7 @@
                         push: typeof window.firebasePush,
                         set: typeof window.firebaseSet
                     });
-                    
+
                     this.playerId = this.generatePlayerId();
                     this.playerNickname = document.getElementById('playerNickname').value.trim() || 'Player';
                     this.isHost = true;
@@ -1888,15 +2002,15 @@
                         gameMode: this.gameMode,
                         targetType: this.targetType
                     });
-                    
+
                     console.log('Creating Firebase reference...');
                     const gamesRef = window.firebaseRef(window.firebaseDatabase, 'games');
                     console.log('Games reference created:', gamesRef);
-                    
+
                     const gameRef = window.firebasePush(gamesRef);
                     this.gameId = gameRef.key;
                     console.log('Game reference created with ID:', this.gameId);
-                    
+
                     const gameData = {
                         gameInfo: {
                             mode: settings.mode || 'cooperative',
@@ -1936,16 +2050,16 @@
                             winScore: 100 // First to reach 100 points wins
                         }
                     };
-                    
+
                     console.log('Game data prepared:', gameData);
                     console.log('Setting game data to Firebase...');
-                    
+
                     await window.firebaseSet(gameRef, gameData);
                     console.log('Game data set successfully');
-                    
+
                     this.setupGameListeners();
                     this.showCurrentLobby();
-                    
+
                     console.log('Game created successfully with ID:', this.gameId);
                     return true;
                 } catch (error) {
@@ -1957,7 +2071,7 @@
                     return false;
                 }
             },
-            
+
             // Join an existing game
             async joinGame(gameId) {
                 try {
@@ -2000,7 +2114,7 @@
                         }
                         this.playerScore = 0;
                     }
-                    
+
                     // Add player to game
                     const playerRef = window.firebaseRef(window.firebaseDatabase, `games/${gameId}/players/${this.playerId}`);
                     await window.firebaseSet(playerRef, {
@@ -2013,7 +2127,7 @@
                         lastUpdate: Date.now(),
                         isHost: false
                     });
-                    
+
                     // Update player count
                     const currentPlayersRef = window.firebaseRef(window.firebaseDatabase, `games/${gameId}/gameInfo/currentPlayers`);
                     await window.firebaseSet(currentPlayersRef, gameData.gameInfo.currentPlayers + 1);
@@ -2029,7 +2143,7 @@
 
                     this.setupGameListeners();
                     this.showCurrentLobby();
-                    
+
                     console.log('Joined game:', gameId);
                     return true;
                 } catch (error) {
@@ -2038,11 +2152,11 @@
                     return false;
                 }
             },
-            
+
             // Setup real-time listeners
             setupGameListeners() {
                 if (!this.gameId) return;
-                
+
                 // Listen to players changes
                 const playersRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/players`);
                 const playersUnsubscribe = window.firebaseOnValue(playersRef, (snapshot) => {
@@ -2053,7 +2167,7 @@
                             this.players.set(id, playerData);
                         });
                         this.updateLobbyDisplay();
-                        
+
                         // Update start button visibility after player data changes
                         if (this.isHost) {
                             const startBtn = document.getElementById('multiplayerStartBtn');
@@ -2064,7 +2178,7 @@
                     }
                 });
                 this.gameListeners.push(playersUnsubscribe);
-                
+
                 // Listen to game state changes
                 const gameStateRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/gameState`);
                 const gameStateUnsubscribe = window.firebaseOnValue(gameStateRef, (snapshot) => {
@@ -2075,7 +2189,7 @@
                     }
                 });
                 this.gameListeners.push(gameStateUnsubscribe);
-                
+
                 // Listen to game info changes
                 const gameInfoRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/gameInfo`);
                 const gameInfoUnsubscribe = window.firebaseOnValue(gameInfoRef, (snapshot) => {
@@ -2130,32 +2244,32 @@
                     this.gameListeners.push(winnerUnsubscribe);
                 }
             },
-            
+
             // Update player position
             async updatePlayerPosition(x, y, rotation) {
                 if (!this.gameId || !this.playerId) return;
-                
+
                 try {
                     const playerRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/players/${this.playerId}`);
-                    await window.firebaseUpdate(playerRef, { 
-                        x: Math.round(x), 
-                        y: Math.round(y), 
-                        rotation: rotation, 
-                        lastUpdate: Date.now() 
+                    await window.firebaseUpdate(playerRef, {
+                        x: Math.round(x),
+                        y: Math.round(y),
+                        rotation: rotation,
+                        lastUpdate: Date.now()
                     });
                 } catch (error) {
                     console.error('Error updating player position:', error);
                 }
             },
-            
+
             // Sync bullets fired
             async fireBullet(bulletData) {
                 if (!this.gameId || !this.playerId) return;
-                
+
                 try {
                     const bulletRef = window.firebasePush(window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/gameState/bullets`));
-                    await window.firebaseSet(bulletRef, { 
-                        ...bulletData, 
+                    await window.firebaseSet(bulletRef, {
+                        ...bulletData,
                         playerId: this.playerId,
                         timestamp: Date.now()
                     });
@@ -2163,7 +2277,7 @@
                     console.error('Error firing bullet:', error);
                 }
             },
-            
+
             // Sync local game state with server
             syncLocalGameState(gameStateData) {
                 if (!gameStateData) return;
@@ -2328,16 +2442,16 @@
                     bossSpawned = true;
                 }
             },
-            
+
             // Leave current game
             async leaveGame() {
                 if (!this.gameId || !this.playerId) return;
-                
+
                 try {
                     // Remove player from game
                     const playerRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/players/${this.playerId}`);
                     await window.firebaseRemove(playerRef);
-                    
+
                     // Update player count
                     const gameRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}`);
                     const snapshot = await window.firebaseGet(gameRef);
@@ -2347,13 +2461,13 @@
                         await window.firebaseUpdate(window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/gameInfo`), {
                             currentPlayers: newPlayerCount
                         });
-                        
+
                         // If no players left, delete the game
                         if (newPlayerCount === 0) {
                             await window.firebaseRemove(gameRef);
                         }
                     }
-                    
+
                     // Clean up listeners safely
                     this.gameListeners.forEach(listener => {
                         try {
@@ -2375,52 +2489,52 @@
                     this.isHost = false;
                     this.isMultiplayer = false;
                     this.players.clear();
-                    
+
                     console.log('Left game successfully');
                 } catch (error) {
                     console.error('Error leaving game:', error);
                 }
             },
-            
+
             // Show current lobby
             showCurrentLobby() {
                 document.getElementById('gameCreation').style.display = 'none';
                 document.getElementById('gameList').style.display = 'none';
                 document.getElementById('currentLobby').style.display = 'block';
-                
+
                 if (this.isHost) {
                     document.getElementById('multiplayerStartBtn').style.display = 'inline-block';
                 }
             },
-            
+
             // Update lobby display
             updateLobbyDisplay() {
                 const playersDiv = document.getElementById('lobbyPlayers');
                 let html = '<h4>Players in Lobby:</h4>';
-                
+
                 this.players.forEach((playerData, playerId) => {
                     const isCurrentPlayer = playerId === this.playerId;
                     const hostBadge = playerData.isHost ? ' 👑' : '';
                     const connectionStatus = playerData.connected ? '🟢' : '🔴';
-                    
+
                     html += `<div style="margin: 5px 0; padding: 8px; background: ${isCurrentPlayer ? 'rgba(0,255,255,0.2)' : 'rgba(255,255,255,0.1)'}; border-radius: 5px;">
                         ${connectionStatus} ${playerData.nickname}${hostBadge}
                         ${isCurrentPlayer ? ' (You)' : ''}
                     </div>`;
                 });
-                
+
                 playersDiv.innerHTML = html;
             },
-            
+
             // Update lobby info
             updateLobbyInfo(gameInfo) {
                 document.getElementById('lobbyGameMode').textContent = `Mode: ${gameInfo.mode}`;
                 document.getElementById('lobbyDifficulty').textContent = `Difficulty: ${gameInfo.difficulty}`;
-                
+
                 const statusDiv = document.getElementById('lobbyStatus');
                 statusDiv.textContent = `Players: ${gameInfo.currentPlayers}/${gameInfo.maxPlayers} | Status: ${gameInfo.status}`;
             },
-            
+
             // Start multiplayer gameplay
             async startMultiplayerGameplay() {
                 if (!this.isHost) return;
@@ -2561,21 +2675,21 @@
         // Make functions globally available
         window.sendDamageEvent = sendDamageEvent;
     </script>
-    
+
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const saturnCanvas = document.getElementById('saturnCanvas');
         const saturnCtx = saturnCanvas.getContext('2d');
-        
+
         canvas.width = 800;
         canvas.height = 600;
         saturnCanvas.width = 800;
         saturnCanvas.height = 600;
-        
+
         // Global variable to check competitive mode - declared once to avoid redeclaration errors
         let isCompetitive = false;
-        
+
         // Game translations
         const translations = {
             en: {
@@ -2654,15 +2768,15 @@
                 skip: '跳过'
             }
         };
-        
+
         let currentLanguage = 'en';
         // Make currentLanguage globally accessible
         window.currentLanguage = currentLanguage;
-        
+
         function t(key) {
             return translations[currentLanguage][key] || key;
         }
-        
+
         // Waste data from emoji_selected.md
         const wasteData = [
             { en: 'Batteries', nl: 'Batterijen', zh: '电池', type: 'grofvuil', emoji: '🔋' },
@@ -2738,10 +2852,10 @@
             { en: 'Dairy Remnant', nl: 'Zuivel Restant', zh: '乳制品残余', type: 'gft', emoji: '🍦' },
             { en: 'Bicycle', nl: 'Fiets', zh: '自行车', type: 'grofvuil', emoji: '🚲' }
         ];
-        
+
         // Get unique waste types
         const wasteTypes = [...new Set(wasteData.map(w => w.type))];
-        
+
         // Game state
         const gameState = {
             score: 0,
@@ -2768,19 +2882,19 @@
             totalKills: 0,    // Track all kills
             lastTime: 0
         };
-        
+
         // Mobile scale factor for better visibility on small screens
         function getMobileScaleFactor() {
             const isMobile = window.innerWidth <= 768;
             return isMobile ? 1.4 : 1.0;
         }
-        
+
         // Mobile speed modifier for falling waste items (0.75x speed on mobile)
         function getMobileSpeedModifier() {
             const isMobile = window.innerWidth <= 768;
             return isMobile ? 0.75 : 1.0;
         }
-        
+
         // Player with mobile scaling
         function getPlayerSize() {
             const baseSize = 40;
@@ -2790,7 +2904,7 @@
                 height: Math.round(baseSize * scaleFactor)
             };
         }
-        
+
         const playerSize = getPlayerSize();
         const player = {
             x: canvas.width / 2 - playerSize.width / 2,
@@ -2805,19 +2919,19 @@
             rollAngle: 0, // For body roll effect
             horizontalVelocity: 0 // Track horizontal movement for roll effect
         };
-        
+
         // Enemies
         let enemies = [];
         let boss = null;
         let bossSpawned = false;
         let bossDefeated = false;
-        
+
         // Power-ups
         let powerUps = [];
-        
+
         // Particles
         let particles = [];
-        
+
         // Input
         const keys = {};
         const mousePos = { x: 0, y: 0 };
@@ -2825,31 +2939,31 @@
         let lastShootTime = 0;
         let continuousShootStart = 0;
         let animationFrameId;
-        
+
         // Language selection
         function selectLanguage(lang) {
             currentLanguage = lang;
             window.currentLanguage = lang;
-            
+
             // Update UI text
             updateUIText();
-            
+
             // Show game mode selection instead of starting game immediately
             document.getElementById('languageSelect').style.display = 'none';
             document.getElementById('gameModeSelect').style.display = 'block';
         }
-        
+
         function showLanguageSelect() {
             document.getElementById('gameModeSelect').style.display = 'none';
             document.getElementById('languageSelect').style.display = 'block';
         }
-        
+
         function startSinglePlayer() {
             // Start single player game - show waste type preview
             document.getElementById('gameModeSelect').style.display = 'none';
             showWasteTypePreview();
         }
-        
+
         function updateUIText() {
             // Update UI elements with current language
             document.getElementById('previewTitle').textContent = t('previewTitle');
@@ -2864,13 +2978,13 @@
             document.getElementById('victoryRestartBtn').textContent = t('playAgain');
             document.getElementById('victoryChangeBtn').textContent = t('changeLanguage');
         }
-        
+
         function showMainMenu() {
             // Reset to main menu
             document.getElementById('multiplayerLobby').style.display = 'none';
             document.getElementById('gameModeSelect').style.display = 'block';
         }
-        
+
         // Initialize Firebase first, then make functions globally available
         console.log('Initializing Firebase...');
         console.log('Database:', window.firebaseDatabase);
@@ -2882,7 +2996,7 @@
             update: typeof update,
             onValue: typeof onValue
         });
-        
+
         // Firebase functions are already initialized in the module script above
         console.log('Game script loaded, Firebase should be available');
 
@@ -2946,22 +3060,22 @@
                         checkFirebase();
                     });
                 }
-                
+
                 console.log('Refreshing game list...');
                 console.log('Current language:', window.currentLanguage);
                 console.log('Firebase database:', window.firebaseDatabase);
-                
+
                 const gamesRef = window.firebaseRef(window.firebaseDatabase, 'games');
                 const snapshot = await window.firebaseGet(window.firebaseQuery(gamesRef, window.firebaseOrderByChild('gameInfo/status'), window.firebaseEqualTo('waiting')));
-                
+
                 const gamesList = document.getElementById('gamesList');
                 gamesList.innerHTML = '';
-                
+
                 if (snapshot.exists()) {
                     const games = snapshot.val();
                     Object.entries(games).forEach(([gameId, gameData]) => {
                         const gameInfo = gameData.gameInfo;
-                        
+
                         // Filter by language (optional - currently showing all)
                         if (gameInfo.language === window.currentLanguage || true) { // Temporarily show all games
                             const gameElement = document.createElement('div');
@@ -2976,7 +3090,7 @@
                         }
                     });
                 }
-                
+
                 if (gamesList.innerHTML === '') {
                     gamesList.innerHTML = '<p>No games available. Create a new game!</p>';
                 }
@@ -3025,15 +3139,15 @@
             try {
                 const gamesRef = window.firebaseRef(window.firebaseDatabase, 'games');
                 const snapshot = await window.firebaseGet(gamesRef);
-                
+
                 if (snapshot.exists()) {
                     const games = snapshot.val();
                     const now = Date.now();
                     const oneHourAgo = now - (60 * 60 * 1000); // 1 hour ago
-                    
+
                     for (const [gameId, gameData] of Object.entries(games)) {
                         // Remove games older than 1 hour or with 0 players
-                        if (gameData.gameInfo.createdAt < oneHourAgo || 
+                        if (gameData.gameInfo.createdAt < oneHourAgo ||
                             gameData.gameInfo.currentPlayers === 0) {
                             console.log('Cleaning up old game:', gameId);
                             await window.firebaseRemove(window.firebaseRef(window.firebaseDatabase, `games/${gameId}`));
@@ -3054,7 +3168,7 @@
             } else if (window.multiplayerManager && window.multiplayerManager.isMultiplayer) {
                 multiplayerMgr = window.multiplayerManager;
             }
-            
+
             if (!multiplayerMgr || !multiplayerMgr.players) return;
 
             multiplayerMgr.players.forEach((playerData, playerId) => {
@@ -3183,15 +3297,15 @@
             try {
                 const gamesRef = window.firebaseRef(window.firebaseDatabase, 'games');
                 const snapshot = await window.firebaseGet(gamesRef);
-                
+
                 if (snapshot.exists()) {
                     const games = snapshot.val();
                     const now = Date.now();
                     const oneHourAgo = now - (60 * 60 * 1000); // 1 hour ago
-                    
+
                     for (const [gameId, gameData] of Object.entries(games)) {
                         // Remove games older than 1 hour or with 0 players
-                        if (gameData.gameInfo.createdAt < oneHourAgo || 
+                        if (gameData.gameInfo.createdAt < oneHourAgo ||
                             gameData.gameInfo.currentPlayers === 0) {
                             console.log('Cleaning up old game:', gameId);
                             await window.firebaseRemove(window.firebaseRef(window.firebaseDatabase, `games/${gameId}`));
@@ -3247,7 +3361,7 @@
                         };
                     });
                 }
-                
+
                 // Add bullets to sync
                 if (typeof player !== 'undefined' && player.bullets) {
                     player.bullets.forEach((bullet, index) => {
@@ -3260,7 +3374,7 @@
                         }
                     });
                 }
-                
+
                 // Add power-ups to sync
                 if (typeof powerUps !== 'undefined') {
                     powerUps.forEach((powerUp, index) => {
@@ -3270,7 +3384,7 @@
                         };
                     });
                 }
-                
+
                 await window.firebaseUpdate(gameStateRef, gameStateData);
             } catch (error) {
                 console.error('Error updating server game state:', error);
@@ -3279,7 +3393,7 @@
 
         // Override startGameFromPreview to hide gameModeSelect
         const originalStartGameFromPreview = window.startGameFromPreview;
-        window.startGameFromPreview = function() {
+        window.startGameFromPreview = function () {
             // Hide all menu screens
             document.getElementById('languageSelect').style.display = 'none';
             document.getElementById('gameModeSelect').style.display = 'none';
@@ -3344,9 +3458,9 @@
         window.showMainMenu = showMainMenu;
         window.leaveLobby = leaveLobby;
         window.startMultiplayerGame = startMultiplayerGame;
-        
+
         // Global multiplayer functions - already defined above
-        
+
         function showMainMenu() {
             // Hide all menus
             document.getElementById('multiplayerLobby').style.display = 'none';
@@ -3361,18 +3475,18 @@
                 window.multiplayerManager.leaveGame();
             }
         }
-        
+
         async function createMultiplayerGame() {
             const nickname = document.getElementById('playerNickname').value.trim();
             if (!nickname) {
                 alert('Please enter a nickname');
                 return;
             }
-            
+
             console.log('Creating multiplayer game...');
             console.log('Current language:', window.currentLanguage);
             console.log('Firebase database available:', typeof window.firebaseDatabase);
-            
+
             // Check if Firebase is properly initialized
             if (!window.firebaseInitialized || typeof window.firebaseDatabase === 'undefined') {
                 console.error('Firebase not initialized. Available functions:', {
@@ -3385,15 +3499,15 @@
                 alert('Firebase is not properly initialized. Please refresh the page and try again.');
                 return;
             }
-            
+
             const settings = {
                 mode: document.getElementById('gameMode').value,
                 maxPlayers: document.getElementById('maxPlayers').value,
                 difficulty: document.getElementById('gameDifficulty').value
             };
-            
+
             console.log('Game settings:', settings);
-            
+
             try {
                 const success = await multiplayerManager.createGame(settings);
                 if (!success) {
@@ -3404,36 +3518,36 @@
                 alert('Failed to create game: ' + error.message);
             }
         }
-        
+
         async function refreshGameList() {
             const gamesListDiv = document.getElementById('availableGames');
             gamesListDiv.innerHTML = '<div class="loading">Looking for games...</div>';
-            
+
             try {
                 console.log('Refreshing game list...');
                 console.log('Current language:', window.currentLanguage);
                 console.log('Firebase database:', window.firebaseDatabase);
-                
+
                 const gamesRef = window.firebaseRef(window.firebaseDatabase, 'games');
                 const snapshot = await window.firebaseGet(window.firebaseQuery(gamesRef, window.firebaseOrderByChild('gameInfo/status'), window.firebaseEqualTo('waiting')));
-                
+
                 console.log('Snapshot exists:', snapshot.exists());
-                
+
                 if (!snapshot.exists()) {
                     gamesListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No games available. Create one!</div>';
                     return;
                 }
-                
+
                 let html = '';
                 let gamesFound = 0;
                 snapshot.forEach((childSnapshot) => {
                     const gameId = childSnapshot.key;
                     const gameData = childSnapshot.val();
                     const gameInfo = gameData.gameInfo;
-                    
+
                     console.log('Found game:', gameId, gameInfo);
                     gamesFound++;
-                    
+
                     // Filter by language (show all languages for now to debug)
                     if (gameInfo.language === window.currentLanguage || true) { // Temporarily show all games
                         html += `
@@ -3449,9 +3563,9 @@
                         `;
                     }
                 });
-                
+
                 console.log('Games found:', gamesFound, 'HTML length:', html.length);
-                
+
                 if (html === '') {
                     gamesListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No games available. Create one!</div>';
                 } else {
@@ -3467,30 +3581,30 @@
                 gamesListDiv.innerHTML = `<div style="padding: 20px; text-align: center; color: #ff0000;">Error loading games: ${errorMsg}<br>Error code: ${errorCode}<br>Please check console for details.</div>`;
             }
         }
-        
+
         async function joinGame(gameId) {
             const nickname = document.getElementById('playerNickname').value.trim();
             if (!nickname) {
                 alert('Please enter a nickname');
                 return;
             }
-            
+
             await multiplayerManager.joinGame(gameId);
         }
-        
+
         async function startMultiplayerGame() {
             if (multiplayerManager.isHost) {
                 await multiplayerManager.startMultiplayerGameplay();
             }
         }
-        
+
         function leaveLobby() {
             if (confirm('Are you sure you want to leave the lobby?')) {
                 multiplayerManager.leaveGame();
                 showMainMenu();
             }
         }
-        
+
         // Expose multiplayer functions globally (AFTER they are defined)
         window.showMultiplayerLobby = showMultiplayerLobby;
         window.createMultiplayerGame = createMultiplayerGame;
@@ -3498,18 +3612,18 @@
         window.showMainMenu = showMainMenu;
         window.leaveLobby = leaveLobby;
         window.startMultiplayerGame = startMultiplayerGame;
-        
+
         // Show waste type preview screen
         function showWasteTypePreview() {
             const previewDiv = document.getElementById('wasteTypePreview');
             const gridDiv = document.getElementById('wasteTypeGrid');
-            
+
             // Update preview text with translations
             document.getElementById('previewTitle').textContent = t('previewTitle');
             document.getElementById('previewSubtitle').textContent = t('previewSubtitle');
             document.getElementById('startGameBtn').textContent = t('startGame');
             document.getElementById('skipBtn').textContent = t('skip');
-            
+
             // Group waste by type
             const wasteByType = {};
             wasteData.forEach(item => {
@@ -3518,7 +3632,7 @@
                 }
                 wasteByType[item.type].push(item);
             });
-            
+
             // Create waste type cards
             let html = '';
             const typeNames = {
@@ -3532,11 +3646,11 @@
                 'kca': { en: 'Hazardous', nl: 'KCA', zh: '有害垃圾' },
                 'grofvuil': { en: 'Bulky', nl: 'Grofvuil', zh: '大件垃圾' }
             };
-            
+
             Object.keys(wasteByType).forEach(type => {
                 const typeName = typeNames[type] ? typeNames[type][currentLanguage] : type;
                 const items = wasteByType[type];
-                
+
                 const colorMap = {
                     'gft': '#8B4513',
                     'papier': '#4169E1',
@@ -3548,9 +3662,9 @@
                     'kca': '#FF1493',
                     'grofvuil': '#556B2F'
                 };
-                
+
                 const bgColor = colorMap[type] || '#666666';
-                
+
                 // Create HTML for items with emoji and names (show all items, no limit)
                 let itemsHtml = '';
                 items.forEach(item => {
@@ -3560,7 +3674,7 @@
                         <span style="font-size: 9px; line-height: 1.2; margin-top: 2px; word-wrap: break-word; text-align: center;">${itemName}</span>
                     </div>`;
                 });
-                
+
                 html += `
                     <div style="background: ${bgColor}; color: white; padding: 10px; border-radius: 8px; text-align: center;">
                         <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${typeName}</div>
@@ -3569,18 +3683,18 @@
                     </div>
                 `;
             });
-            
+
             gridDiv.innerHTML = html;
             previewDiv.style.display = 'block';
         }
-        
+
         // Start game from preview
         function startGameFromPreview() {
             document.getElementById('wasteTypePreview').style.display = 'none';
             startNewSession();
             gameState.lastTime = 0; // Reset lastTime
             animationFrameId = requestAnimationFrame(gameLoop);
-            
+
             // Start background music
             playBackgroundMusic();
             updateWeaponDisplay(); // Initialize weapon display
@@ -3588,7 +3702,7 @@
 
         // Audio Context for sound effects and background music
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
+
         // Sound effects function
         function playSound(type) {
             try {
@@ -3636,7 +3750,7 @@
                 console.log('Sound error:', e);
             }
         }
-        
+
         // Background music system
         let currentMusicIndex = 0;
         let shortMusicPlayCount = 0;
@@ -3647,57 +3761,57 @@
         let currentPatternIndex = 0;
         let currentPatternPlays = 0;
         let bgMusicAudio = null;
-        
+
         function playBackgroundMusic() {
             if (!bgMusicAudio) {
                 bgMusicAudio = new Audio();
                 bgMusicAudio.volume = 0.3;
-                
+
                 bgMusicAudio.addEventListener('ended', () => {
                     playNextInPattern();
                 });
             }
-            
+
             playNextInPattern();
         }
-        
+
         function playNextInPattern() {
             const pattern = musicPattern[currentPatternIndex];
             currentPatternPlays++;
-            
+
             if (currentPatternPlays > pattern.plays) {
                 // Move to next pattern
                 currentPatternIndex = (currentPatternIndex + 1) % musicPattern.length;
                 currentPatternPlays = 1;
             }
-            
+
             const nextPattern = musicPattern[currentPatternIndex];
             bgMusicAudio.src = nextPattern.file;
             bgMusicAudio.play().catch(e => console.log('Music play error:', e));
         }
-        
+
         // Session management
         function startNewSession() {
             gameState.targetType = wasteTypes[Math.floor(Math.random() * wasteTypes.length)];
             gameState.sessionTime = 30;
             updateTargetInfo();
-            
+
             if (gameState.sessionTimer) {
                 clearInterval(gameState.sessionTimer);
             }
-            
+
             gameState.sessionTimer = setInterval(() => {
                 if (!gameState.paused && !gameState.gameOver && !gameState.victory) {
                     gameState.sessionTime--;
                     updateTargetInfo();
-                    
+
                     if (gameState.sessionTime <= 0) {
                         startNewSession();
                     }
                 }
             }, 1000);
         }
-        
+
         function updateTargetInfo() {
             const targetInfo = document.getElementById('targetInfo');
             const sessionTimer = document.getElementById('sessionTimer');
@@ -3715,7 +3829,7 @@
             targetInfo.textContent = `${t('targetWaste')} ${currentTarget}`;
             sessionTimer.textContent = `${t('sessionTime')} ${gameState.sessionTime}s`;
         }
-        
+
         // Event listeners
         document.addEventListener('keydown', (e) => {
             keys[e.key] = true;
@@ -3739,7 +3853,7 @@
                 updateUI();
             }
         });
-        
+
         document.addEventListener('keyup', (e) => {
             keys[e.key] = false;
             if (e.key === ' ') {
@@ -3747,22 +3861,22 @@
                 continuousShootStart = 0;
             }
         });
-        
+
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
             mousePos.x = (e.clientX - rect.left) * (canvas.width / rect.width);
             mousePos.y = (e.clientY - rect.top) * (canvas.height / rect.height);
         });
-        
+
         canvas.addEventListener('mousedown', () => {
             isShooting = true;
         });
-        
+
         canvas.addEventListener('mouseup', () => {
             isShooting = false;
             continuousShootStart = 0;
         });
-        
+
         document.getElementById('exitBtn').addEventListener('click', () => {
             if (confirm('Exit game?')) {
                 location.reload();
@@ -3770,7 +3884,7 @@
         });
 
         document.getElementById('pauseBtn').addEventListener('click', togglePause);
-        
+
         // Mobile controls
         const mobileButtons = document.querySelectorAll('.control-btn[data-dir]');
         mobileButtons.forEach(btn => {
@@ -3791,12 +3905,12 @@
                 if (dir === 'right') keys['ArrowRight'] = false;
             });
         });
-        
+
         document.getElementById('shootBtn').addEventListener('touchstart', (e) => {
             e.preventDefault();
             isShooting = true;
         });
-        
+
         document.getElementById('shootBtn').addEventListener('touchend', (e) => {
             e.preventDefault();
             isShooting = false;
@@ -3812,25 +3926,25 @@
             }
             updateWeaponDisplay();
         });
-        
+
         function updateWeaponDisplay() {
             document.getElementById('currentWeapon').textContent = player.weaponType.charAt(0).toUpperCase() + player.weaponType.slice(1);
             document.getElementById('weaponToggleBtn').textContent = player.weaponType.charAt(0).toUpperCase() + player.weaponType.slice(1);
         }
-        
+
         function togglePause() {
             if (gameState.gameOver || gameState.victory) return;
             gameState.paused = !gameState.paused;
             document.getElementById('pauseMenu').style.display = gameState.paused ? 'block' : 'none';
             document.getElementById('pauseBtn').textContent = gameState.paused ? 'Resume' : 'Pause';
         }
-        
+
         // Get dynamic enemy size based on item type for more natural shapes
         function getEnemySize(wasteItem) {
             const baseSizeMobile = 40 * getMobileScaleFactor();
             const baseSizeDesktop = 40;
             const baseSize = window.innerWidth <= 768 ? baseSizeMobile : baseSizeDesktop;
-            
+
             // Different size ratios for different waste types to make them more recognizable
             const sizeModifiers = {
                 'grofvuil': { width: 1.4, height: 1.2 }, // Bulky items - wider and taller
@@ -3843,14 +3957,14 @@
                 'kca': { width: 0.8, height: 1.0 },      // Hazardous - smaller, more compact
                 'rest': { width: 1.0, height: 1.0 }      // Residual - standard
             };
-            
+
             const modifier = sizeModifiers[wasteItem.type] || sizeModifiers['rest'];
             return {
                 width: Math.round(baseSize * modifier.width),
                 height: Math.round(baseSize * modifier.height)
             };
         }
-        
+
         // Spawn enemy
         function spawnEnemy() {
             if (bossSpawned || enemies.length > 15) return;
@@ -3901,9 +4015,9 @@
             enemy.localId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
             enemies.push(enemy);
-            
+
             // Broadcast enemy spawn to clients in PeerJS cooperative mode
-            if (window.peerManager && window.peerManager.isHost && window.peerManager.isMultiplayer && 
+            if (window.peerManager && window.peerManager.isHost && window.peerManager.isMultiplayer &&
                 window.peerManager.gameMode === 'cooperative') {
                 console.log('🏠 Host spawning and broadcasting enemy:', enemy.emoji, enemy.wasteType);
                 window.peerManager.broadcastToAll({
@@ -3926,15 +4040,15 @@
                 });
             }
         }
-        
+
         // Spawn boss
         function spawnBoss() {
             if (bossSpawned) return;
             bossSpawned = true;
-            
+
             document.getElementById('bossLabel').style.display = 'block';
             document.getElementById('bossHealthBar').style.display = 'block';
-            
+
             boss = {
                 x: canvas.width / 2 - 60,
                 y: 50,
@@ -3955,52 +4069,52 @@
                 consecutiveHits: 0,           // Counter for consecutive hits
                 lastHitTime: 0                // Timestamp of last hit
             };
-            
+
             // Broadcast boss spawn to clients in multiplayer cooperative mode
-            if (window.peerManager && window.peerManager.isHost && window.peerManager.isMultiplayer && 
+            if (window.peerManager && window.peerManager.isHost && window.peerManager.isMultiplayer &&
                 window.peerManager.gameMode === 'cooperative') {
                 window.peerManager.broadcastBossSpawn();
             }
         }
-        
+
         // Update boss
         function updateBoss() {
             if (!boss) return;
-            
+
             const now = Date.now();
-            
+
             // Check if immunity period has ended
             if (boss.isImmune && now >= boss.immuneUntil) {
                 boss.isImmune = false;
                 showBossStatusText('Boss vulnerable!');
             }
-            
+
             // Check if stealth period has ended
             if (boss.isInStealth && now >= boss.stealthUntil) {
                 boss.isInStealth = false;
                 showBossStatusText('Boss visible!');
             }
-            
+
             // Reset consecutive hits if too much time has passed (1 second)
             if (now - boss.lastHitTime > 1000) {
                 boss.consecutiveHits = 0;
             }
-            
+
             boss.x += boss.moveDirection * boss.speed;
             if (boss.x <= 0 || boss.x >= canvas.width - boss.width) {
                 boss.moveDirection *= -1;
             }
-            
+
             boss.shootTimer++;
             if (boss.shootTimer >= boss.shootInterval) {
                 boss.shootTimer = 0;
                 throwWasteFromBoss();
             }
-            
+
             // Update boss health bar
             const healthPercent = (boss.health / boss.maxHealth) * 100;
             document.getElementById('bossHealth').style.width = healthPercent + '%';
-            
+
             // Update boss health bar color based on state
             const healthBar = document.getElementById('bossHealth');
             if (boss.isImmune) {
@@ -4010,17 +4124,17 @@
             } else {
                 healthBar.style.background = 'linear-gradient(to right, #ff0000, #ff6600)'; // Normal red
             }
-            
+
             if (boss.health <= 0) {
                 bossDefeated = true;
-                
+
                 // Broadcast boss defeat in PeerJS cooperative mode
-                if (window.peerManager && window.peerManager.isHost && window.peerManager.isMultiplayer && 
+                if (window.peerManager && window.peerManager.isHost && window.peerManager.isMultiplayer &&
                     window.peerManager.gameMode === 'cooperative') {
                     window.peerManager.broadcastBossDefeated();
                 }
                 gameState.victory = true;
-                const accuracy = gameState.totalKills > 0 
+                const accuracy = gameState.totalKills > 0
                     ? (gameState.correctKills / gameState.totalKills)
                     : 0;
                 const finalScore = Math.round(gameState.score * accuracy * accuracy);
@@ -4035,7 +4149,7 @@
                 setTimeout(() => promptNicknameAndSave(finalScore), 500);
             }
         }
-        
+
         function throwWasteFromBoss() {
             let wasteItem;
             // 80% chance to spawn target waste type (same as regular enemies)
@@ -4050,7 +4164,7 @@
                 // 20% chance for random waste
                 wasteItem = wasteData[Math.floor(Math.random() * wasteData.length)];
             }
-            
+
             const enemy = {
                 x: boss.x + boss.width / 2 - 20,
                 y: boss.y + boss.height,
@@ -4067,7 +4181,7 @@
             };
             enemies.push(enemy);
         }
-        
+
         // Spawn power-up
         function spawnPowerUp(x, y) {
             const types = ['missile', 'laser', 'cooling'];
@@ -4081,22 +4195,22 @@
                 speed: 2 * getMobileSpeedModifier()
             });
         }
-        
+
         // Shooting
         function shoot() {
             if (gameState.overheated) return;
-            
+
             const now = Date.now();
-            const shootDelay = player.weaponType === 'missile' ? 
+            const shootDelay = player.weaponType === 'missile' ?
                 (gameState.missilePowerUp ? 150 : 300) : 200;
-            
+
             if (now - lastShootTime < shootDelay) return;
             lastShootTime = now;
-            
+
             if (continuousShootStart === 0) {
                 continuousShootStart = now;
             }
-            
+
             // Check for overheating
             const shootDuration = (now - continuousShootStart) / 1000;
             if (shootDuration >= 5) {
@@ -4110,20 +4224,20 @@
             } else {
                 gameState.weaponHeat = (shootDuration / 5) * 100;
             }
-            
+
             // Calculate tip position based on rotation
             const tipX = player.x + player.width / 2 + Math.sin(player.rotation) * (player.height / 2);
             const tipY = player.y + player.height / 2 - Math.cos(player.rotation) * (player.height / 2);
-            
+
             if (player.weaponType === 'missile') {
                 // Fire 2 missiles from the tip
                 const offsetLeft = -5; // Offset to left
                 const offsetRight = 5; // Offset to right
-                
+
                 // Left missile
                 const leftX = tipX + Math.cos(player.rotation) * offsetLeft;
                 const leftY = tipY + Math.sin(player.rotation) * offsetLeft;
-                
+
                 const bulletScale = getMobileScaleFactor();
                 player.bullets.push({
                     x: leftX,
@@ -4136,11 +4250,11 @@
                     type: 'missile',
                     rotation: player.rotation
                 });
-                
+
                 // Right missile
                 const rightX = tipX + Math.cos(player.rotation) * offsetRight;
                 const rightY = tipY + Math.sin(player.rotation) * offsetRight;
-                
+
                 player.bullets.push({
                     x: rightX,
                     y: rightY,
@@ -4169,20 +4283,20 @@
                     rotation: player.rotation
                 });
             }
-            
+
             playSound('shoot');
         }
-        
+
         // Sound effects using Web Audio API
         function playSound(type) {
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
-            
+
             oscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);
-            
+
             const now = audioCtx.currentTime;
-            
+
             if (type === 'shoot') {
                 oscillator.type = 'square';
                 oscillator.frequency.setValueAtTime(400, now);
@@ -4217,15 +4331,15 @@
                 oscillator.stop(now + 0.2);
             }
         }
-        
+
         // Update game
         function update(deltaTime) {
             if (gameState.paused || gameState.gameOver || gameState.victory) return;
-            
+
             // Update player movement (arrow keys only move, don't rotate)
             let movingLeft = false;
             let movingRight = false;
-            
+
             // Track horizontal movement for body roll effect
             let previousX = player.x;
 
@@ -4243,18 +4357,18 @@
             if (keys['ArrowDown'] && player.y < canvas.height - player.height) {
                 player.y += player.speed;
             }
-            
+
             // Calculate horizontal velocity for body roll effect
             player.horizontalVelocity = player.x - previousX;
-            
+
             // Update roll angle based on horizontal movement
             const maxRoll = 0.3; // Maximum roll angle in radians
             const rollSpeed = 0.15; // How fast the roll responds to movement
             const targetRoll = -player.horizontalVelocity * maxRoll / player.speed; // Negative for correct roll direction
-            
+
             // Smoothly interpolate to target roll angle
             player.rollAngle += (targetRoll - player.rollAngle) * rollSpeed;
-            
+
             // Rotation controlled by A and D keys (like spaceshooter.html)
             if ((keys['a'] || keys['A']) && !(keys['d'] || keys['D'])) {
                 player.rotation -= player.rotationSpeed;
@@ -4268,7 +4382,7 @@
                     player.rotation = Math.min(0, player.rotation + player.rotationSpeed / 2);
                 }
             }
-            
+
             // Keep rotation within -PI to PI range for consistency
             if (player.rotation > Math.PI) player.rotation -= Math.PI * 2;
             if (player.rotation < -Math.PI) player.rotation += Math.PI * 2;
@@ -4286,23 +4400,23 @@
             if (isShooting) {
                 shoot();
             }
-            
+
             // Cool down weapon heat when not shooting
             if (!isShooting && !gameState.overheated) {
                 gameState.weaponHeat = Math.max(0, gameState.weaponHeat - 2);
                 continuousShootStart = 0;
             }
-            
+
             // Update bullets
             for (let i = player.bullets.length - 1; i >= 0; i--) {
                 const bullet = player.bullets[i];
-                
+
                 if (bullet.type === 'missile') {
                     bullet.x += bullet.dx;
                     bullet.y += bullet.dy;
-                    
+
                     // Remove if out of bounds
-                    if (bullet.y < -20 || bullet.y > canvas.height + 20 || 
+                    if (bullet.y < -20 || bullet.y > canvas.height + 20 ||
                         bullet.x < -20 || bullet.x > canvas.width + 20) {
                         player.bullets.splice(i, 1);
                     }
@@ -4313,22 +4427,22 @@
                     }
                 }
             }
-            
+
             // Update enemies
             for (let i = enemies.length - 1; i >= 0; i--) {
                 const enemy = enemies[i];
                 enemy.y += enemy.speed;
                 enemy.rotation += enemy.rotationSpeed;
-                
+
                 if (enemy.y > canvas.height) {
                     enemies.splice(i, 1);
                     continue;
                 }
-                
+
                 // Check collision with bullets
                 for (let j = player.bullets.length - 1; j >= 0; j--) {
                     const bullet = player.bullets[j];
-                    
+
                     let hit = false;
                     if (bullet.type === 'missile') {
                         // Simple collision for missiles
@@ -4342,40 +4456,38 @@
                         const length = Math.max(canvas.width, canvas.height) * 1.5;
                         const laserEndX = laserTipX + Math.sin(bullet.rotation) * (-length);
                         const laserEndY = laserTipY - Math.cos(bullet.rotation) * length;
-                        
+
                         // Check distance from enemy center to laser line
                         const ex = enemy.x + enemy.width / 2;
                         const ey = enemy.y + enemy.height / 2;
                         const dist = pointToSegmentDistance(ex, ey, laserTipX, laserTipY, laserEndX, laserEndY);
-                        
+
                         // Increased collision detection range for laser
                         if (dist < enemy.width) {
                             hit = true;
                         }
                     }
-                    
+
                     if (hit) {
-                        // Check if this is multiplayer cooperative mode
-                        const isMultiplayerCooperative = window.multiplayerManager &&
-                            window.multiplayerManager.isMultiplayer &&
-                            window.multiplayerManager.gameMode === 'cooperative';
+                        // Check if this is PeerJS multiplayer cooperative mode
+                        const isPeerJSCooperative = window.peerManager &&
+                            window.peerManager.isMultiplayer &&
+                            window.peerManager.gameMode === 'cooperative';
 
-                        // Check if this is multiplayer competitive mode
-                        const isMultiplayerCompetitive = window.multiplayerManager &&
-                            window.multiplayerManager.isMultiplayer &&
-                            window.multiplayerManager.gameMode === 'competitive';
-
-                        // In cooperative multiplayer, send damage event instead of applying locally
-                        if (isMultiplayerCooperative && !window.multiplayerManager.isHost) {
-                            // Send damage event to host via Firebase
-                            if (enemy.localId || enemy.multiplayerId) {
-                                const enemyId = enemy.localId || enemy.multiplayerId;
-                                sendDamageEvent(enemyId, bullet.damage, player.weaponType);
+                        if (isPeerJSCooperative) {
+                            if (!window.peerManager.isHost) {
+                                // Client: Send damage event to host
+                                if (enemy.localId) {
+                                    window.peerManager.sendDamageEvent(enemy.localId, bullet.damage, player.weaponType);
+                                    // Visual feedback only - do NOT reduce health locally until update received
+                                    createExplosion(bullet.x, bullet.y);
+                                }
+                            } else {
+                                // Host: Apply damage directly
+                                enemy.health -= bullet.damage;
                             }
-                            // Also apply local damage for immediate visual feedback
-                            enemy.health -= bullet.damage;
                         } else {
-                            // Host or single player: apply damage directly
+                            // Single player or legacy modes: apply damage directly
                             enemy.health -= bullet.damage;
                         }
 
@@ -4465,7 +4577,7 @@
                             }
 
                             // Broadcast enemy destruction in PeerJS cooperative mode
-                            if (window.peerManager && window.peerManager.isMultiplayer && 
+                            if (window.peerManager && window.peerManager.isMultiplayer &&
                                 window.peerManager.gameMode === 'cooperative' && enemy.localId) {
                                 if (window.peerManager.isHost) {
                                     window.peerManager.broadcastEnemyDestroyed(enemy.localId);
@@ -4487,23 +4599,23 @@
                         break;
                     }
                 }
-                
+
                 // Check collision with player
                 if (checkCollision(player, enemy)) {
                     gameState.lives--;
                     enemies.splice(i, 1);
                     createExplosion(player.x + player.width / 2, player.y + player.height / 2);
                     playSound('hit');
-                    
+
                     if (gameState.lives <= 0) {
                         gameState.gameOver = true;
-                        
+
                         // Broadcast game over in PeerJS cooperative mode if host dies
-                        if (window.peerManager && window.peerManager.isHost && window.peerManager.isMultiplayer && 
+                        if (window.peerManager && window.peerManager.isHost && window.peerManager.isMultiplayer &&
                             window.peerManager.gameMode === 'cooperative') {
                             window.peerManager.broadcastGameOver();
                         }
-                        const accuracy = gameState.totalKills > 0 
+                        const accuracy = gameState.totalKills > 0
                             ? (gameState.correctKills / gameState.totalKills)
                             : 0;
                         const finalScore = Math.round(gameState.score * accuracy * accuracy);
@@ -4517,20 +4629,20 @@
                     }
                 }
             }
-            
+
             // Update boss
             if (boss) {
                 updateBoss();
-                
+
                 // Check collision with bullets
                 for (let j = player.bullets.length - 1; j >= 0; j--) {
                     const bullet = player.bullets[j];
-                    
+
                     // Skip collision check if boss is in stealth mode
                     if (boss.isInStealth) {
                         continue;
                     }
-                    
+
                     let hit = false;
                     if (bullet.type === 'missile') {
                         if (checkCollision(bullet, boss)) {
@@ -4543,28 +4655,28 @@
                         const length = Math.max(canvas.width, canvas.height) * 1.5;
                         const laserEndX = laserTipX + Math.sin(bullet.rotation) * (-length);
                         const laserEndY = laserTipY - Math.cos(bullet.rotation) * length;
-                        
+
                         const bx = boss.x + boss.width / 2;
                         const by = boss.y + boss.height / 2;
                         const dist = pointToSegmentDistance(bx, by, laserTipX, laserTipY, laserEndX, laserEndY);
-                        
+
                         // Increased collision detection range for laser
                         if (dist < boss.width / 2) {
                             hit = true;
                         }
                     }
-                    
+
                     if (hit) {
                         const now = Date.now();
-                        
+
                         // Only apply damage if boss is not immune
                         if (!boss.isImmune) {
                             boss.health -= bullet.damage;
-                            
+
                             // Track consecutive hits
                             boss.consecutiveHits++;
                             boss.lastHitTime = now;
-                            
+
                             // Check for 50% health immunity trigger
                             if (!boss.halfHealthImmunityUsed && boss.health <= boss.maxHealth * 0.5) {
                                 boss.isImmune = true;
@@ -4573,7 +4685,7 @@
                                 showBossStatusText('Boss immune for 10s!');
                                 console.log('Boss triggered 50% health immunity');
                             }
-                            
+
                             // Check for stealth mode trigger (5 consecutive hits)
                             if (boss.consecutiveHits >= 5 && !boss.isInStealth) {
                                 boss.isInStealth = true;
@@ -4588,26 +4700,26 @@
                                 showBossStatusText('Boss immune!');
                             }
                         }
-                        
+
                         if (bullet.type === 'missile') {
                             player.bullets.splice(j, 1);
                         }
-                        
+
                         createExplosion(boss.x + boss.width / 2, boss.y + boss.height / 2);
                     }
                 }
             }
-            
+
             // Update power-ups
             for (let i = powerUps.length - 1; i >= 0; i--) {
                 const powerUp = powerUps[i];
                 powerUp.y += powerUp.speed;
-                
+
                 if (powerUp.y > canvas.height) {
                     powerUps.splice(i, 1);
                     continue;
                 }
-                
+
                 if (checkCollision(player, powerUp)) {
                     if (powerUp.type === 'missile') {
                         gameState.missilePowerUp = true;
@@ -4623,44 +4735,44 @@
                     playSound('powerup');
                 }
             }
-            
+
             // Update power-up timers
             if (gameState.missilePowerUpTime > 0) {
-                gameState.missilePowerUpTime -= 1/60;
+                gameState.missilePowerUpTime -= 1 / 60;
                 if (gameState.missilePowerUpTime <= 0) {
                     gameState.missilePowerUp = false;
                 }
             }
             if (gameState.laserPowerUpTime > 0) {
-                gameState.laserPowerUpTime -= 1/60;
+                gameState.laserPowerUpTime -= 1 / 60;
                 if (gameState.laserPowerUpTime <= 0) {
                     gameState.laserPowerUp = false;
                 }
             }
             if (gameState.coolingPowerUpTime > 0) {
-                gameState.coolingPowerUpTime -= 1/60;
+                gameState.coolingPowerUpTime -= 1 / 60;
                 if (gameState.coolingPowerUpTime <= 0) {
                     gameState.coolingPowerUp = false;
                 }
             }
-            
+
             // Update particles
             for (let i = particles.length - 1; i >= 0; i--) {
                 const p = particles[i];
                 p.x += p.vx;
                 p.y += p.vy;
                 p.life--;
-                
+
                 if (p.life <= 0) {
                     particles.splice(i, 1);
                 }
             }
-            
+
             // Spawn enemies
             // Check if this is competitive mode (PeerJS first, then Firebase fallback)
             let isMultiplayer = false;
             let gameMode = 'cooperative';
-            
+
             if (window.peerManager && window.peerManager.isMultiplayer) {
                 isMultiplayer = true;
                 gameMode = window.peerManager.gameMode || 'cooperative';
@@ -4668,7 +4780,7 @@
                 isMultiplayer = true;
                 gameMode = window.multiplayerManager.gameMode || 'cooperative';
             }
-            
+
             isCompetitive = isMultiplayer && gameMode === 'competitive';
 
             if (isMultiplayer) {
@@ -4680,8 +4792,8 @@
                     }
                 } else {
                     // In cooperative mode, only host spawns enemies to avoid desync
-                    const isHost = (window.peerManager && window.peerManager.isHost) || 
-                                  (window.multiplayerManager && window.multiplayerManager.isHost);
+                    const isHost = (window.peerManager && window.peerManager.isHost) ||
+                        (window.multiplayerManager && window.multiplayerManager.isHost);
                     if (isHost && Math.random() < 0.02 && !bossSpawned) {
                         spawnEnemy();
                     }
@@ -4725,7 +4837,7 @@
 
             updateUI();
         }
-        
+
         // Saturn and Ring properties with mobile scaling
         function getSaturnProperties() {
             const scaleFactor = getMobileScaleFactor();
@@ -4739,9 +4851,9 @@
                 speed: 0.1
             };
         }
-        
+
         let saturn = getSaturnProperties();
-        
+
         // Satellites orbiting Saturn with mobile scaling
         let satellites = [];
         const numSatellites = 3;
@@ -4755,7 +4867,7 @@
                 color: `hsl(${Math.random() * 360}, 70%, 70%)`
             });
         }
-        
+
         // Meteors in Saturn's ring with mobile scaling
         let ringMeteors = [];
         const numRingMeteors = 50;
@@ -4769,7 +4881,7 @@
                 color: `rgba(180, 180, 180, ${0.5 + Math.random() * 0.5})`
             });
         }
-        
+
         // Stars for background (copied from spaceshooter.html)
         let stars = [];
         for (let i = 0; i < 100; i++) {
@@ -4780,11 +4892,11 @@
                 brightness: Math.random()
             });
         }
-        
+
         // Initialize Saturn position - positioned on right side
         saturn.x = saturnCanvas.width - saturn.radius / 2;
         saturn.y = saturnCanvas.height / 2;
-        
+
         // Draw stars (copied from spaceshooter.html)
         function drawStars() {
             stars.forEach(star => {
@@ -4797,7 +4909,7 @@
                 }
             });
         }
-        
+
         // Draw Saturn with fixed rings
         function drawSaturn() {
             // Saturn body
@@ -4805,74 +4917,74 @@
             saturnCtx.arc(saturn.x, saturn.y, saturn.radius, 0, Math.PI * 2);
             saturnCtx.fillStyle = '#8B7355';
             saturnCtx.fill();
-            
+
             // Draw Saturn rings - fixed size, no shrinking
             saturnCtx.save();
             saturnCtx.translate(saturn.x, saturn.y);
-            
+
             // Draw the outer ring - keep constant size
             saturnCtx.beginPath();
             saturnCtx.ellipse(0, 0, saturn.ringOuterRadius, saturn.ringOuterRadius * 0.2, 0, 0, Math.PI * 2);
             saturnCtx.strokeStyle = '#A0826D';
             saturnCtx.lineWidth = 10;
             saturnCtx.stroke();
-            
+
             // Draw the inner ring - keep constant size
             saturnCtx.beginPath();
             saturnCtx.ellipse(0, 0, saturn.ringInnerRadius, saturn.ringInnerRadius * 0.2, 0, 0, Math.PI * 2);
             saturnCtx.strokeStyle = '#C9B89A';
             saturnCtx.lineWidth = 8;
             saturnCtx.stroke();
-            
+
             saturnCtx.restore();
-            
+
             // Update Saturn rotation for meteor calculations
             saturn.rotation += saturn.speed * 0.01;
         }
-        
+
         // Draw satellite (copied from spaceshooter.html)
         function drawSatellite(satellite) {
             const x = saturn.x + Math.cos(satellite.angle) * satelliteOrbitRadius;
             const y = saturn.y + Math.sin(satellite.angle) * satelliteOrbitRadius;
-            
+
             saturnCtx.beginPath();
             saturnCtx.arc(x, y, satellite.radius, 0, Math.PI * 2);
             saturnCtx.fillStyle = satellite.color;
             saturnCtx.fill();
-            
+
             satellite.angle += satellite.speed;
         }
-        
+
         // Draw ring meteor - fixed orbit, no shrinking
         function drawRingMeteor(meteor) {
             // Keep the orbit size constant by not multiplying by rotation cosine
             const x = saturn.x + Math.cos(meteor.angle) * meteor.distance;
             const y = saturn.y + Math.sin(meteor.angle) * meteor.distance * 0.2; // Keep elliptical shape
-            
+
             saturnCtx.beginPath();
             saturnCtx.arc(x, y, meteor.radius, 0, Math.PI * 2);
             saturnCtx.fillStyle = meteor.color;
             saturnCtx.fill();
-            
+
             meteor.angle += meteor.speed; // Rotate around Saturn
         }
-        
+
         // Draw Saturn background
         function drawSaturnBackground() {
             saturnCtx.fillStyle = '#000011';
             saturnCtx.fillRect(0, 0, saturnCanvas.width, saturnCanvas.height);
-            
+
             // Draw stars
             drawStars();
-            
+
             // Draw Saturn and its rings
             drawSaturn();
-            
+
             // Draw satellites
             satellites.forEach(satellite => {
                 drawSatellite(satellite);
             });
-            
+
             // Draw ring meteors
             ringMeteors.forEach(meteor => {
                 drawRingMeteor(meteor);
@@ -4886,6 +4998,17 @@
             const deltaTime = timestamp - gameState.lastTime;
 
             update(deltaTime);
+
+            // Periodic game state broadcast for host
+            if (window.peerManager && window.peerManager.isHost && window.peerManager.isMultiplayer) {
+                const now = Date.now();
+                // Broadcast every 100ms (10 times per second)
+                if (!window.peerManager.lastBroadcastTime || now - window.peerManager.lastBroadcastTime > 100) {
+                    window.peerManager.broadcastGameState();
+                    window.peerManager.lastBroadcastTime = now;
+                }
+            }
+
             draw();
             drawSaturnBackground();
 
@@ -4894,12 +5017,12 @@
                 animationFrameId = requestAnimationFrame(gameLoop);
             }
         }
-        
+
         // Draw game
         function draw() {
             // Clear main canvas with minimal transparency for trail effect
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
+
             // Draw enemies
             enemies.forEach(enemy => {
                 ctx.save();
@@ -4910,27 +5033,27 @@
                 ctx.textBaseline = 'middle';
                 ctx.fillText(enemy.emoji, 0, 0);
                 ctx.restore();
-                
+
                 // Draw health bar
                 ctx.fillStyle = '#ff0000';
                 ctx.fillRect(enemy.x, enemy.y - 10, enemy.width, 5);
                 ctx.fillStyle = '#00ff00';
                 ctx.fillRect(enemy.x, enemy.y - 10, enemy.width * (enemy.health / enemy.maxHealth), 5);
             });
-            
+
             // Draw boss as UFO
             if (boss) {
                 ctx.save();
-                
+
                 // Apply transparency if in stealth mode
                 if (boss.isInStealth) {
                     ctx.globalAlpha = 0.0; // 30% opacity in stealth
                 }
-                
+
                 // UFO main disc
                 let discColor = '#888888';
                 let glowColor = '#00ff00';
-                
+
                 // Change colors based on boss state
                 if (boss.isImmune) {
                     discColor = '#9900ff'; // Purple when immune
@@ -4939,27 +5062,27 @@
                     discColor = '#444444'; // Darker when in stealth
                     glowColor = '#666666';
                 }
-                
+
                 ctx.fillStyle = discColor;
                 ctx.shadowColor = glowColor;
                 ctx.shadowBlur = boss.isImmune ? 25 : 15; // Stronger glow when immune
                 ctx.beginPath();
                 ctx.ellipse(boss.x + boss.width / 2, boss.y + boss.height / 2, boss.width * 0.45, boss.height * 0.25, 0, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 // UFO dome
                 ctx.fillStyle = boss.isImmune ? '#cc66ff' : (boss.isInStealth ? '#666666' : '#aaaaaa');
                 ctx.beginPath();
                 ctx.ellipse(boss.x + boss.width / 2, boss.y + boss.height * 0.35, boss.width * 0.25, boss.height * 0.2, 0, 0, Math.PI);
                 ctx.fill();
-                
+
                 // UFO lights (blinking)
                 const lightCount = 6;
                 for (let i = 0; i < lightCount; i++) {
                     const angle = (i / lightCount) * Math.PI * 2;
                     const lightX = boss.x + boss.width / 2 + Math.cos(angle) * boss.width * 0.35;
                     const lightY = boss.y + boss.height / 2 + Math.sin(angle) * boss.height * 0.15;
-                    
+
                     let lightColor;
                     if (boss.isImmune) {
                         lightColor = (Date.now() / 200 + i) % 2 < 1 ? '#ff00ff' : '#9900ff';
@@ -4968,7 +5091,7 @@
                     } else {
                         lightColor = (Date.now() / 200 + i) % 2 < 1 ? '#00ff00' : '#ff0000';
                     }
-                    
+
                     ctx.fillStyle = lightColor;
                     ctx.shadowColor = lightColor;
                     ctx.shadowBlur = 8;
@@ -4976,7 +5099,7 @@
                     ctx.arc(lightX, lightY, 3, 0, Math.PI * 2);
                     ctx.fill();
                 }
-                
+
                 // Draw immunity shield effect
                 if (boss.isImmune) {
                     ctx.strokeStyle = '#ff00ff';
@@ -4987,54 +5110,54 @@
                     ctx.arc(boss.x + boss.width / 2, boss.y + boss.height / 2, boss.width * 0.6, 0, Math.PI * 2);
                     ctx.stroke();
                 }
-                
+
                 ctx.shadowBlur = 0;
                 ctx.globalAlpha = 1; // Reset alpha
                 ctx.restore();
             }
-            
+
             // Draw player (symmetrical spaceship - copied from spaceshooter.html)
             ctx.save();
             ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
             ctx.rotate(player.rotation);
-            
+
             // Calculate wing scale factors based on roll angle for body roll effect
             const baseWingScale = 1.0;
             const rollEffectStrength = 0.4; // How much the wings scale
             const leftWingScale = baseWingScale + (player.rollAngle * rollEffectStrength);
             const rightWingScale = baseWingScale - (player.rollAngle * rollEffectStrength);
-            
+
             ctx.fillStyle = '#00ffff';
             ctx.shadowColor = '#00ffff';
             ctx.shadowBlur = 10;
             ctx.beginPath();
             ctx.moveTo(0, -player.height / 2); // Top point (nose)
-            
+
             // Left wing (scaled based on roll)
             ctx.lineTo(-player.width / 2 * leftWingScale, player.height / 2); // Bottom-left wing tip
             ctx.lineTo(-player.width / 4, player.height / 2 * 0.6); // Inner-left wing root
-            
+
             // Right wing (scaled based on roll)  
             ctx.lineTo(player.width / 4, player.height / 2 * 0.6); // Inner-right wing root
             ctx.lineTo(player.width / 2 * rightWingScale, player.height / 2); // Bottom-right wing tip
-            
+
             ctx.closePath();
             ctx.fill();
-            
+
             // Engine glow (scaled based on roll angle)
             ctx.fillStyle = '#ff4400';
             const engineWidth = player.width / 2;
             const engineLeftScale = baseWingScale + (player.rollAngle * rollEffectStrength * 0.5); // Less effect than wings
             const engineRightScale = baseWingScale - (player.rollAngle * rollEffectStrength * 0.5);
-            
+
             // Left side of engine
             const leftEngineWidth = engineWidth / 2 * engineLeftScale;
             ctx.fillRect(-player.width / 4, player.height / 2 * 0.6, leftEngineWidth, player.height * 0.2);
-            
+
             // Right side of engine
             const rightEngineWidth = engineWidth / 2 * engineRightScale;
             ctx.fillRect(0, player.height / 2 * 0.6, rightEngineWidth, player.height * 0.2);
-            
+
             ctx.shadowBlur = 0;
             ctx.restore();
 
@@ -5057,39 +5180,39 @@
                     // Draw laser from tip position with rotation
                     const thickness = bullet.width;
                     const length = Math.max(canvas.width, canvas.height) * 1.5;
-                    
+
                     ctx.save();
                     ctx.translate(bullet.x, bullet.y);
                     ctx.rotate(bullet.rotation);
-                    
+
                     // Main laser beam
                     ctx.fillStyle = '#ff0000';
                     ctx.shadowColor = '#ff0000';
                     ctx.shadowBlur = thickness * 2;
-                    ctx.fillRect(-thickness/2, 0, thickness, -length);
-                    
+                    ctx.fillRect(-thickness / 2, 0, thickness, -length);
+
                     // Inner core
                     ctx.fillStyle = '#ffffff';
-                    ctx.fillRect(-thickness/4, 0, thickness/2, -length);
-                    
+                    ctx.fillRect(-thickness / 4, 0, thickness / 2, -length);
+
                     ctx.shadowBlur = 0;
                     ctx.restore();
                 }
             });
-            
+
             // Draw power-ups
             powerUps.forEach(powerUp => {
-                ctx.fillStyle = powerUp.type === 'missile' ? '#ffff00' : 
-                               powerUp.type === 'laser' ? '#ff0000' : '#00ffff';
+                ctx.fillStyle = powerUp.type === 'missile' ? '#ffff00' :
+                    powerUp.type === 'laser' ? '#ff0000' : '#00ffff';
                 ctx.fillRect(powerUp.x, powerUp.y, powerUp.width, powerUp.height);
                 ctx.fillStyle = '#000';
                 ctx.font = '12px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText(powerUp.type === 'missile' ? '🚀' : 
-                            powerUp.type === 'laser' ? '⚡' : '❄️', 
-                            powerUp.x + powerUp.width / 2, powerUp.y + powerUp.height / 2);
+                ctx.fillText(powerUp.type === 'missile' ? '🚀' :
+                    powerUp.type === 'laser' ? '⚡' : '❄️',
+                    powerUp.x + powerUp.width / 2, powerUp.y + powerUp.height / 2);
             });
-            
+
             // Draw particles
             particles.forEach(p => {
                 ctx.fillStyle = p.color;
@@ -5098,31 +5221,31 @@
                 ctx.globalAlpha = 1;
             });
         }
-        
+
         function checkCollision(obj1, obj2) {
             return obj1.x < obj2.x + obj2.width &&
-                   obj1.x + obj1.width > obj2.x &&
-                   obj1.y < obj2.y + obj2.height &&
-                   obj1.y + obj1.height > obj2.y;
+                obj1.x + obj1.width > obj2.x &&
+                obj1.y < obj2.y + obj2.height &&
+                obj1.y + obj1.height > obj2.y;
         }
-        
+
         // Helper function for laser collision detection
         function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
             const A = px - x1;
             const B = py - y1;
             const C = x2 - x1;
             const D = y2 - y1;
-            
+
             const dot = A * C + B * D;
             const lenSq = C * C + D * D;
             let param = -1;
-            
+
             if (lenSq !== 0) {
                 param = dot / lenSq;
             }
-            
+
             let xx, yy;
-            
+
             if (param < 0) {
                 xx = x1;
                 yy = y1;
@@ -5133,12 +5256,12 @@
                 xx = x1 + param * C;
                 yy = y1 + param * D;
             }
-            
+
             const dx = px - xx;
             const dy = py - yy;
             return Math.sqrt(dx * dx + dy * dy);
         }
-        
+
         function createExplosion(x, y) {
             const particleScale = getMobileScaleFactor();
             for (let i = 0; i < 20; i++) {
@@ -5153,7 +5276,7 @@
                 });
             }
         }
-        
+
         function showComboText(text) {
             // Show combo text on screen (centered)
             const comboDiv = document.createElement('div');
@@ -5168,12 +5291,12 @@
             comboDiv.style.zIndex = '200';
             comboDiv.textContent = text;
             document.getElementById('gameContainer').appendChild(comboDiv);
-            
+
             setTimeout(() => {
                 comboDiv.remove();
             }, 2000);
         }
-        
+
         function showBossStatusText(text) {
             // Show boss status text (top of screen, different position from combo)
             const statusDiv = document.createElement('div');
@@ -5188,29 +5311,29 @@
             statusDiv.style.zIndex = '200';
             statusDiv.textContent = text;
             document.getElementById('gameContainer').appendChild(statusDiv);
-            
+
             setTimeout(() => {
                 statusDiv.remove();
             }, 2000);
         }
-        
+
         function updateUI() {
             document.getElementById('score').textContent = gameState.score;
             document.getElementById('lives').textContent = gameState.lives;
-            
+
             // Calculate and display accuracy
-            const accuracy = gameState.totalKills > 0 
+            const accuracy = gameState.totalKills > 0
                 ? ((gameState.correctKills / gameState.totalKills) * 100).toFixed(1)
                 : 0;
             document.getElementById('accuracy').textContent = accuracy + '%';
-            
+
             // Update weapon display
             const weaponName = player.weaponType === 'missile' ? 'Missile' : 'Laser';
             document.getElementById('currentWeapon').textContent = weaponName;
-            
+
             // Update heat bar
             document.getElementById('heatBar').style.width = gameState.weaponHeat + '%';
-            
+
             // Update power-up display
             const powerUpDiv = document.getElementById('powerUps');
             let powerUpText = '';
@@ -5225,7 +5348,7 @@
             }
             powerUpDiv.innerHTML = powerUpText;
         }
-        
+
         // Handle URL parameters for language selection
         function handleUrlParameters() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -5237,19 +5360,19 @@
                 document.getElementById('languageSelect').style.display = 'block';
             }
         }
-        
+
         // Initialize URL parameter handling when page loads
         document.addEventListener('DOMContentLoaded', handleUrlParameters);
-        
+
         // Nickname and leaderboard functions
         function promptNicknameAndSave(finalScore) {
             const nicknamePrompt = document.getElementById('nicknamePrompt');
             const input = document.getElementById('nicknameInput');
             const submitBtn = document.getElementById('submitNicknameBtn');
-            
+
             nicknamePrompt.style.display = 'block';
             input.focus();
-            
+
             function submit() {
                 const nickname = input.value.trim();
                 if (nickname) {
@@ -5259,13 +5382,13 @@
                     alert('Please enter a nickname!');
                 }
             }
-            
+
             submitBtn.onclick = submit;
-            input.onkeydown = function(e) {
+            input.onkeydown = function (e) {
                 if (e.key === 'Enter') submit();
             };
         }
-        
+
         async function saveScoreAndShowLeaderboard(nickname, score) {
             try {
                 // Wait for Firebase to be initialized before saving score
@@ -5295,24 +5418,24 @@
                 showLeaderboard([], nickname, score);
             }
         }
-        
+
         function showLeaderboard(scores, playerName, playerScore) {
             const leaderboard = document.getElementById('leaderboard');
             const table = document.getElementById('leaderboardTable');
             const playerEntry = document.getElementById('playerEntry');
-            
+
             let html = '<table style="width: 100%; border-collapse: collapse;">';
             html += '<tr style="background: rgba(0,255,255,0.2);"><th style="padding: 8px; border: 1px solid #00ffff;">Rank</th><th style="padding: 8px; border: 1px solid #00ffff;">Name</th><th style="padding: 8px; border: 1px solid #00ffff;">Score</th></tr>';
-            
+
             scores.forEach((score, index) => {
                 const isPlayer = score.name === playerName && score.score === playerScore;
                 const rowStyle = isPlayer ? 'background: rgba(255,255,0,0.3);' : '';
                 html += `<tr style="${rowStyle}"><td style="padding: 8px; border: 1px solid #00ffff;">${index + 1}</td><td style="padding: 8px; border: 1px solid #00ffff;">${score.name}</td><td style="padding: 8px; border: 1px solid #00ffff;">${score.score}</td></tr>`;
             });
-            
+
             html += '</table>';
             table.innerHTML = html;
-            
+
             // Show player's entry if not in top 10
             const playerInTop10 = scores.some(score => score.name === playerName && score.score === playerScore);
             if (!playerInTop10) {
@@ -5320,10 +5443,10 @@
             } else {
                 playerEntry.textContent = '';
             }
-            
+
             leaderboard.style.display = 'block';
         }
-        
+
         function closeLeaderboard() {
             document.getElementById('leaderboard').style.display = 'none';
             if (gameState.gameOver) {
@@ -5342,7 +5465,7 @@
                     maxPlayers: parseInt(document.getElementById('maxPlayers').value),
                     difficulty: document.getElementById('gameDifficulty').value
                 };
-                
+
                 // Check if nickname is provided
                 const nickname = document.getElementById('playerNickname').value.trim();
                 if (!nickname) {
@@ -5350,14 +5473,14 @@
                     document.getElementById('playerNickname').focus();
                     return;
                 }
-                
+
                 // Check if PeerManager exists and is ready
                 if (!window.peerManager) {
                     console.error('❌ PeerManager not initialized');
                     alert('WebRTC multiplayer not ready. Please wait a moment and try again, or refresh the page.');
                     return;
                 }
-                
+
                 console.log('🎮 Attempting to create game with settings:', settings);
                 console.log('👤 Player nickname:', nickname);
                 console.log('🔍 PeerManager status:', {
@@ -5366,7 +5489,7 @@
                     hasPeer: !!window.peerManager?.peer,
                     peerOpen: window.peerManager?.peer?.open
                 });
-                
+
                 const success = await window.peerManager.createGame(settings);
                 if (!success) {
                     console.error('❌ Failed to create multiplayer game');
@@ -5458,12 +5581,12 @@
                     alert('Only the host can start the game');
                     return;
                 }
-                
+
                 if (window.peerManager.players.size < 2) {
                     alert('Need at least 2 players to start the game');
                     return;
                 }
-                
+
                 // Start the WebRTC multiplayer game
                 window.peerManager.startGame();
                 console.log('WebRTC multiplayer game started');
@@ -5479,7 +5602,7 @@
                 if (window.peerManager) {
                     window.peerManager.leaveGame();
                 }
-                
+
                 // Show main menu
                 showMainMenu();
             } catch (error) {
@@ -5493,7 +5616,7 @@
         window.addEventListener('load', () => {
             // Auto-refresh game list when lobby is shown
             const originalShowMultiplayerLobby = window.showMultiplayerLobby;
-            window.showMultiplayerLobby = function() {
+            window.showMultiplayerLobby = function () {
                 if (originalShowMultiplayerLobby) {
                     originalShowMultiplayerLobby();
                 }
@@ -5504,7 +5627,7 @@
         // Debug function for troubleshooting WebRTC issues
         function debugPeerJS() {
             console.log('🔍 === PeerJS Debug Information ===');
-            
+
             const debugInfo = {
                 'PeerJS Library': typeof Peer !== 'undefined' ? '✅ Loaded' : '❌ Not Found',
                 'PeerManager': window.peerManager ? '✅ Created' : '❌ Missing',
@@ -5516,17 +5639,17 @@
                 'Browser': navigator.userAgent.split(' ')[0],
                 'WebRTC Support': 'RTCPeerConnection' in window ? '✅ Supported' : '❌ Not Supported'
             };
-            
+
             console.table(debugInfo);
-            
+
             let alertMessage = '🔍 WebRTC Debug Info:\n\n';
             Object.entries(debugInfo).forEach(([key, value]) => {
                 alertMessage += `${key}: ${value}\n`;
             });
-            
+
             // Add suggestions
             alertMessage += '\n💡 Troubleshooting:\n';
-            
+
             if (!window.peerManager) {
                 alertMessage += '• Try refreshing the page\n';
             } else if (!window.peerManager.peer) {
@@ -5536,15 +5659,15 @@
             } else {
                 alertMessage += '• WebRTC appears to be working!\n• If you still have issues, try creating a game\n';
             }
-            
+
             alert(alertMessage);
         }
 
         // ============================================================================
         // WebRTC P2P Multiplayer Implementation Summary
         // ============================================================================
-        // 
-        // This implementation replaces Firebase real-time database with WebRTC 
+        //
+        // This implementation replaces Firebase real-time database with WebRTC
         // peer-to-peer communication using PeerJS for low-latency multiplayer.
         //
         // Key Features:
@@ -5566,4 +5689,5 @@
         // ============================================================================
     </script>
 </body>
+
 </html>
