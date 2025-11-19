@@ -1058,7 +1058,7 @@
                     }
 
                     this.playerNickname = document.getElementById('playerNickname').value.trim() || 'Player';
-                    this.gameId = gameCode.toUpperCase();
+                    this.gameId = gameCode; // Keep original case - PeerJS peer IDs are case-sensitive
                     this.isHost = false;
                     this.isMultiplayer = true;
 
@@ -1159,6 +1159,21 @@
                         break;
                     case 'join_response':
                         this.handleJoinResponse(message);
+                        break;
+                    case 'enemy_spawn':
+                        this.handleEnemySpawn(message);
+                        break;
+                    case 'enemy_destroyed':
+                        this.handleEnemyDestroyed(message);
+                        break;
+                    case 'boss_spawn':
+                        this.handleBossSpawn(message);
+                        break;
+                    case 'boss_defeated':
+                        this.handleBossDefeated(message);
+                        break;
+                    case 'game_over':
+                        this.handleGameOver(message);
                         break;
                 }
             }
@@ -1309,18 +1324,211 @@
 
                 // Update local game state
                 if (message.enemies) {
-                    // Sync enemies with local game
-                    // This would integrate with the existing game loop
+                    // Sync enemies with local game - replace local enemies array
+                    enemies = message.enemies.map(enemyData => ({
+                        x: enemyData.x,
+                        y: enemyData.y,
+                        width: enemyData.width || 40,
+                        height: enemyData.height || 40,
+                        speed: enemyData.speed || 1,
+                        health: enemyData.health,
+                        maxHealth: enemyData.maxHealth,
+                        rotation: enemyData.rotation || 0,
+                        rotationSpeed: enemyData.rotationSpeed || 0,
+                        wasteType: enemyData.wasteType,
+                        emoji: enemyData.emoji,
+                        localId: enemyData.localId,
+                        isRemote: true // Mark as synchronized from host
+                    }));
                 }
 
                 if (message.score !== undefined) {
                     gameState.score = message.score;
                     document.getElementById('score').textContent = message.score;
                 }
+            }
+
+            // Handle enemy spawn from host (clients only)
+            handleEnemySpawn(message) {
+                if (this.isHost) return; // Hosts don't receive enemy spawn messages
+
+                // Add the new enemy to the local enemies array
+                if (message.enemy) {
+                    const enemy = {
+                        x: message.enemy.x,
+                        y: message.enemy.y,
+                        width: message.enemy.width || 40,
+                        height: message.enemy.height || 40,
+                        speed: message.enemy.speed || 1,
+                        health: message.enemy.health,
+                        maxHealth: message.enemy.maxHealth,
+                        rotation: message.enemy.rotation || 0,
+                        rotationSpeed: message.enemy.rotationSpeed || 0,
+                        wasteType: message.enemy.wasteType,
+                        emoji: message.enemy.emoji,
+                        localId: message.enemy.localId,
+                        isRemote: true // Mark as synchronized from host
+                    };
+                    
+                    enemies.push(enemy);
+                    console.log('🎯 Received enemy spawn from host:', enemy.emoji, enemy.wasteType);
+                }
 
                 if (message.lives !== undefined) {
                     gameState.lives = message.lives;
                     document.getElementById('lives').textContent = message.lives;
+                }
+            }
+
+            // Handle enemy destruction from other players
+            handleEnemyDestroyed(message) {
+                if (message.enemyId) {
+                    // Find and remove enemy by localId
+                    const enemyIndex = enemies.findIndex(e => e.localId === message.enemyId);
+                    if (enemyIndex !== -1) {
+                        enemies.splice(enemyIndex, 1);
+                        console.log('🎯 Enemy destroyed by other player:', message.enemyId);
+                    }
+                }
+            }
+
+            // Handle boss spawn from host
+            handleBossSpawn(message) {
+                if (this.isHost) return; // Hosts don't receive boss spawn messages
+                
+                if (message.boss && !bossSpawned) {
+                    bossSpawned = true;
+                    document.getElementById('bossLabel').style.display = 'block';
+                    document.getElementById('bossHealthBar').style.display = 'block';
+                    
+                    boss = {
+                        x: message.boss.x,
+                        y: message.boss.y,
+                        width: message.boss.width || 120,
+                        height: message.boss.height || 120,
+                        health: message.boss.health,
+                        maxHealth: message.boss.maxHealth,
+                        phase: message.boss.phase || 1,
+                        moveDirection: message.boss.moveDirection || 1,
+                        speed: message.boss.speed || 2,
+                        shootTimer: 0,
+                        shootInterval: message.boss.shootInterval || 60,
+                        immuneUntil: 0,
+                        isImmune: false,
+                        halfHealthImmunityUsed: false,
+                        stealthUntil: 0,
+                        isInStealth: false,
+                        consecutiveHits: 0,
+                        lastHitTime: 0,
+                        isRemote: true
+                    };
+                    console.log('👹 Boss spawned by host');
+                }
+            }
+
+            // Handle boss defeat from host
+            handleBossDefeated(message) {
+                if (this.isHost) return; // Hosts don't receive boss defeat messages
+                
+                bossDefeated = true;
+                bossSpawned = true; // Keep true to prevent respawning
+                boss = null;
+                
+                // Hide boss UI
+                document.getElementById('bossLabel').style.display = 'none';
+                document.getElementById('bossHealthBar').style.display = 'none';
+                
+                // Show victory
+                gameState.victory = true;
+                gameState.gameOver = true;
+                
+                console.log('👹 Boss defeated by host - victory!');
+                
+                // Update UI
+                const finalScoreEl = document.getElementById('finalScore');
+                if (finalScoreEl) {
+                    finalScoreEl.textContent = `Final Score: ${gameState.score}`;
+                }
+                
+                document.getElementById('gameOver').style.display = 'block';
+            }
+
+            // Handle game over from host
+            handleGameOver(message) {
+                if (this.isHost) return; // Hosts don't receive game over messages
+                
+                gameState.gameOver = true;
+                gameState.lives = 0;
+                
+                // Update UI
+                document.getElementById('lives').textContent = '0';
+                
+                const finalScoreEl = document.getElementById('finalScore');
+                if (finalScoreEl) {
+                    finalScoreEl.textContent = `Final Score: ${gameState.score}`;
+                }
+                
+                document.getElementById('gameOver').style.display = 'block';
+                console.log('💀 Game over from host');
+            }
+
+            // Broadcast enemy destruction to all clients
+            broadcastEnemyDestroyed(enemyId) {
+                if (!this.isHost || !this.isMultiplayer) return;
+                
+                this.broadcastToAll({
+                    type: 'enemy_destroyed',
+                    enemyId: enemyId,
+                    timestamp: Date.now()
+                });
+            }
+
+            // Broadcast boss spawn to all clients
+            broadcastBossSpawn() {
+                if (!this.isHost || !this.isMultiplayer || !boss) return;
+                
+                this.broadcastToAll({
+                    type: 'boss_spawn',
+                    boss: {
+                        x: boss.x,
+                        y: boss.y,
+                        width: boss.width,
+                        height: boss.height,
+                        health: boss.health,
+                        maxHealth: boss.maxHealth,
+                        phase: boss.phase,
+                        moveDirection: boss.moveDirection,
+                        speed: boss.speed,
+                        shootInterval: boss.shootInterval
+                    },
+                    timestamp: Date.now()
+                });
+                console.log('👹 Broadcasting boss spawn to clients');
+            }
+
+            // Broadcast boss defeat to all clients
+            broadcastBossDefeated() {
+                if (!this.isHost || !this.isMultiplayer) return;
+                
+                this.broadcastToAll({
+                    type: 'boss_defeated',
+                    score: gameState.score,
+                    timestamp: Date.now()
+                });
+                console.log('👹 Broadcasting boss defeat to clients');
+            }
+
+            // Broadcast game over to all clients
+            broadcastGameOver() {
+                if (!this.isHost || !this.isMultiplayer) return;
+                
+                this.broadcastToAll({
+                    type: 'game_over',
+                    score: gameState.score,
+                    reason: 'host_died',
+                    timestamp: Date.now()
+                });
+                console.log('💀 Broadcasting game over to clients');
                 }
 
                 // Update competitive scores
@@ -2839,11 +3047,19 @@
 
         // Draw other multiplayer players' spaceships
         function drawMultiplayerSpaceships() {
-            if (!window.multiplayerManager || !window.multiplayerManager.isMultiplayer) return;
+            // Check PeerJS multiplayer first (primary), then Firebase fallback
+            let multiplayerMgr = null;
+            if (window.peerManager && window.peerManager.isMultiplayer && window.peerManager.players) {
+                multiplayerMgr = window.peerManager;
+            } else if (window.multiplayerManager && window.multiplayerManager.isMultiplayer) {
+                multiplayerMgr = window.multiplayerManager;
+            }
+            
+            if (!multiplayerMgr || !multiplayerMgr.players) return;
 
-            window.multiplayerManager.players.forEach((playerData, playerId) => {
+            multiplayerMgr.players.forEach((playerData, playerId) => {
                 // Don't draw our own spaceship again
-                if (playerId === window.multiplayerManager.playerId) return;
+                if (playerId === multiplayerMgr.playerId) return;
 
                 ctx.save();
                 ctx.translate(playerData.x + player.width / 2, playerData.y + player.height / 2);
@@ -2851,7 +3067,7 @@
 
                 // Different colors for different players
                 const playerColors = ['#ff6600', '#00ff66', '#6600ff', '#ffff00'];
-                const colorIndex = Array.from(window.multiplayerManager.players.keys()).indexOf(playerId) % playerColors.length;
+                const colorIndex = Array.from(multiplayerMgr.players.keys()).indexOf(playerId) % playerColors.length;
 
                 // Spaceship body - use same triangular shape as main player
                 ctx.fillStyle = playerColors[colorIndex];
@@ -3685,6 +3901,30 @@
             enemy.localId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
             enemies.push(enemy);
+            
+            // Broadcast enemy spawn to clients in PeerJS cooperative mode
+            if (window.peerManager && window.peerManager.isHost && window.peerManager.isMultiplayer && 
+                window.peerManager.gameMode === 'cooperative') {
+                console.log('🏠 Host spawning and broadcasting enemy:', enemy.emoji, enemy.wasteType);
+                window.peerManager.broadcastToAll({
+                    type: 'enemy_spawn',
+                    enemy: {
+                        x: enemy.x,
+                        y: enemy.y,
+                        width: enemy.width,
+                        height: enemy.height,
+                        speed: enemy.speed,
+                        health: enemy.health,
+                        maxHealth: enemy.maxHealth,
+                        rotation: enemy.rotation,
+                        rotationSpeed: enemy.rotationSpeed,
+                        wasteType: enemy.wasteType,
+                        emoji: enemy.emoji,
+                        localId: enemy.localId
+                    },
+                    timestamp: Date.now()
+                });
+            }
         }
         
         // Spawn boss
@@ -3715,6 +3955,12 @@
                 consecutiveHits: 0,           // Counter for consecutive hits
                 lastHitTime: 0                // Timestamp of last hit
             };
+            
+            // Broadcast boss spawn to clients in multiplayer cooperative mode
+            if (window.peerManager && window.peerManager.isHost && window.peerManager.isMultiplayer && 
+                window.peerManager.gameMode === 'cooperative') {
+                window.peerManager.broadcastBossSpawn();
+            }
         }
         
         // Update boss
@@ -3767,6 +4013,12 @@
             
             if (boss.health <= 0) {
                 bossDefeated = true;
+                
+                // Broadcast boss defeat in PeerJS cooperative mode
+                if (window.peerManager && window.peerManager.isHost && window.peerManager.isMultiplayer && 
+                    window.peerManager.gameMode === 'cooperative') {
+                    window.peerManager.broadcastBossDefeated();
+                }
                 gameState.victory = true;
                 const accuracy = gameState.totalKills > 0 
                     ? (gameState.correctKills / gameState.totalKills)
@@ -4212,6 +4464,24 @@
                                 }
                             }
 
+                            // Broadcast enemy destruction in PeerJS cooperative mode
+                            if (window.peerManager && window.peerManager.isMultiplayer && 
+                                window.peerManager.gameMode === 'cooperative' && enemy.localId) {
+                                if (window.peerManager.isHost) {
+                                    window.peerManager.broadcastEnemyDestroyed(enemy.localId);
+                                } else {
+                                    // Client killed enemy - send to host for broadcasting
+                                    const hostConn = window.peerManager.connections.get(window.peerManager.gameId);
+                                    if (hostConn && hostConn.open) {
+                                        hostConn.send({
+                                            type: 'enemy_destroyed',
+                                            enemyId: enemy.localId,
+                                            timestamp: Date.now()
+                                        });
+                                    }
+                                }
+                            }
+
                             enemies.splice(i, 1);
                         }
                         break;
@@ -4227,6 +4497,12 @@
                     
                     if (gameState.lives <= 0) {
                         gameState.gameOver = true;
+                        
+                        // Broadcast game over in PeerJS cooperative mode if host dies
+                        if (window.peerManager && window.peerManager.isHost && window.peerManager.isMultiplayer && 
+                            window.peerManager.gameMode === 'cooperative') {
+                            window.peerManager.broadcastGameOver();
+                        }
                         const accuracy = gameState.totalKills > 0 
                             ? (gameState.correctKills / gameState.totalKills)
                             : 0;
@@ -4381,12 +4657,21 @@
             }
             
             // Spawn enemies
-            // Check if this is competitive mode
-            isCompetitive = window.multiplayerManager &&
-                window.multiplayerManager.isMultiplayer &&
-                window.multiplayerManager.gameMode === 'competitive';
+            // Check if this is competitive mode (PeerJS first, then Firebase fallback)
+            let isMultiplayer = false;
+            let gameMode = 'cooperative';
+            
+            if (window.peerManager && window.peerManager.isMultiplayer) {
+                isMultiplayer = true;
+                gameMode = window.peerManager.gameMode || 'cooperative';
+            } else if (window.multiplayerManager && window.multiplayerManager.isMultiplayer) {
+                isMultiplayer = true;
+                gameMode = window.multiplayerManager.gameMode || 'cooperative';
+            }
+            
+            isCompetitive = isMultiplayer && gameMode === 'competitive';
 
-            if (window.multiplayerManager && window.multiplayerManager.isMultiplayer) {
+            if (isMultiplayer) {
                 if (isCompetitive) {
                     // In competitive mode, both players spawn their own enemies (50/50 split)
                     if (Math.random() < 0.02 && !bossSpawned) {
@@ -4395,7 +4680,9 @@
                     }
                 } else {
                     // In cooperative mode, only host spawns enemies to avoid desync
-                    if (window.multiplayerManager.isHost && Math.random() < 0.02 && !bossSpawned) {
+                    const isHost = (window.peerManager && window.peerManager.isHost) || 
+                                  (window.multiplayerManager && window.multiplayerManager.isHost);
+                    if (isHost && Math.random() < 0.02 && !bossSpawned) {
                         spawnEnemy();
                     }
                 }
