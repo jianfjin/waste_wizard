@@ -606,148 +606,8 @@
     <!-- PeerJS for WebRTC multiplayer -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
-    <!-- Firebase SDK (kept for leaderboards only) -->
-    <script type="module">
-        // Import Firebase modules
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js';
-        import { getDatabase, ref, push, set, query, orderByChild, limitToLast, get, onValue, update, remove, equalTo, off } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js';
-        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js';
-
-        // Firebase configuration using environment variables
-        // Placeholders will be replaced at build time by build.cjs script
-        const firebaseConfig = {
-            apiKey: "AIzaSyBeOfeGzsT9NzLqbFRajz_dbhJlEqRk82A",
-            authDomain: "game20250601.firebaseapp.com",
-            databaseURL: "https://game20250601-default-rtdb.firebaseio.com",
-            projectId: "game20250601",
-            storageBucket: "game20250601.firebasestorage.app",
-            messagingSenderId: "553578269459",
-            appId: "1:553578269459:web:75017156f8b91d9bc3e8e6"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-        const auth = getAuth(app);
-
-        // Anonymous authentication for secure database access
-        signInAnonymously(auth)
-            .then(() => {
-                console.log('Firebase Auth: Anonymous sign-in successful');
-                window.firebaseAuthenticated = true;
-                window.firebaseAuth = auth;
-            })
-            .catch((error) => {
-                console.error('Firebase Auth error:', error);
-                // Fallback for offline mode
-                window.firebaseAuthenticated = false;
-                alert('Authentication failed. Some features may not work properly.');
-            });
-
-        // Listen for auth state changes
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                console.log('User authenticated:', user.uid);
-                window.firebaseAuthenticated = true;
-            } else {
-                console.log('User not authenticated');
-                window.firebaseAuthenticated = false;
-            }
-        });
-
-        // Damage event tracking for multiplayer cooperative mode
-        window.damageEventListeners = [];
-
-        // Make Firebase database and functions available globally
-        window.firebaseDatabase = database;
-        window.firebaseRef = ref;
-        window.firebaseGet = get;
-        window.firebaseQuery = query;
-        window.firebaseOrderByChild = orderByChild;
-        window.firebaseEqualTo = equalTo;
-        window.firebaseUpdate = update;
-        window.firebaseSet = set;
-        window.firebasePush = push;
-        window.firebaseRemove = remove;
-        window.firebaseOnValue = onValue;
-        window.firebaseOff = off;
-        window.firebaseLimitToLast = limitToLast;
-
-        // Set Firebase initialization flag
-        window.firebaseInitialized = true;
-        console.log('Firebase functions made globally available successfully');
-
-        // Make Firebase functions available globally
-        window.firebaseDB = {
-            addScore: async (name, score) => {
-                try {
-                    // Wait for Firebase to be initialized
-                    if (!window.firebaseDatabase || !database) {
-                        console.log('Firebase not ready for addScore, waiting...');
-                        await new Promise(resolve => {
-                            const checkFirebase = () => {
-                                if (window.firebaseDatabase && database) {
-                                    resolve();
-                                } else {
-                                    setTimeout(checkFirebase, 100);
-                                }
-                            };
-                            checkFirebase();
-                        });
-                    }
-
-                    const scoresRef = ref(database, 'leaderboard/shooting');
-                    const newScoreRef = push(scoresRef);
-                    await set(newScoreRef, {
-                        name: name.trim() || 'Anonymous',
-                        score,
-                        timestamp: Date.now(),
-                        gameType: 'shooting'
-                    });
-                    return true;
-                } catch (error) {
-                    console.error('Error adding score to Firebase:', error);
-                    return false;
-                }
-            },
-            getTopScores: async (limit = 10) => {
-                try {
-                    // Wait for Firebase to be initialized
-                    if (!window.firebaseDatabase || !database) {
-                        console.log('Firebase not ready for getTopScores, waiting...');
-                        await new Promise(resolve => {
-                            const checkFirebase = () => {
-                                if (window.firebaseDatabase && database) {
-                                    resolve();
-                                } else {
-                                    setTimeout(checkFirebase, 100);
-                                }
-                            };
-                            checkFirebase();
-                        });
-                    }
-
-                    const scoresRef = ref(database, 'leaderboard/shooting');
-                    const topScoresQuery = query(scoresRef, orderByChild('score'), limitToLast(limit * 2));
-                    const snapshot = await get(topScoresQuery);
-
-                    if (!snapshot.exists()) {
-                        return [];
-                    }
-
-                    const scores = [];
-                    snapshot.forEach((childSnapshot) => {
-                        scores.push(childSnapshot.val());
-                    });
-
-                    return scores.sort((a, b) => b.score - a.score).slice(0, limit);
-                } catch (error) {
-                    console.error('Error getting scores from Firebase:', error);
-                    return [];
-                }
-            }
-        };
-
+    <!-- Firebase removed - using Supabase for leaderboards and PeerJS for multiplayer -->
+    <script>
         // PeerJS WebRTC Multiplayer Manager
         class PeerManager {
             constructor() {
@@ -1911,6 +1771,7 @@
                 this.peer.destroy();
             }
         }
+    }
 
         // Initialize PeerJS multiplayer manager with delay
         console.log('🔧 Starting PeerJS initialization process...');
@@ -3004,16 +2865,20 @@
         function showMultiplayerLobby() {
             console.log('Opening multiplayer lobby...');
 
-            // Wait for Firebase to be properly initialized
-            if (!window.firebaseInitialized || !window.firebaseDatabase || !window.firebaseAuthenticated) {
-                console.log('Firebase not ready yet, waiting...');
+            // Wait for PeerJS to be properly initialized
+            if (!window.peerManager || !window.peerManager.isReady) {
+                console.log('PeerJS not ready yet, waiting...');
+                console.log('PeerManager exists:', !!window.peerManager);
+                console.log('PeerManager isReady:', window.peerManager ? window.peerManager.isReady : 'N/A');
+
                 setTimeout(() => {
-                    if (window.firebaseInitialized && window.firebaseDatabase && window.firebaseAuthenticated) {
+                    if (window.peerManager && window.peerManager.isReady) {
                         showMultiplayerLobby();
                     } else {
-                        alert('Firebase is still initializing. Please wait a moment and try again.');
+                        console.error('PeerJS failed to initialize after waiting');
+                        alert('Multiplayer connection failed to initialize. This may be due to:\n• Network/firewall restrictions\n• Running from file:// protocol (try using a web server)\n• PeerJS cloud server issues\n\nPlease check the console for more details.');
                     }
-                }, 1000);
+                }, 5000); // Increased from 1000ms to 5000ms
                 return;
             }
 
@@ -3025,80 +2890,13 @@
 
             // Debug info
             console.log('Current language:', window.currentLanguage);
-            console.log('Firebase database available:', typeof window.firebaseDatabase);
+            console.log('PeerJS manager available:', typeof window.peerManager);
 
-            // Check Firebase availability
-            if (!window.firebaseInitialized || typeof window.firebaseDatabase === 'undefined') {
-                console.error('Firebase not initialized. Available functions:', {
-                    firebaseInitialized: window.firebaseInitialized,
-                    firebaseDatabase: typeof window.firebaseDatabase,
-                    firebaseRef: typeof window.firebaseRef,
-                    firebaseSet: typeof window.firebaseSet,
-                    firebasePush: typeof window.firebasePush
-                });
-                alert('Firebase is not available. Multiplayer features are disabled.');
-                return;
-            }
-
-            // Load and display available games
-            refreshGameList();
+            // Multiplayer lobby is now ready - PeerJS handles connections
+            console.log('Multiplayer lobby ready. PeerJS connection available.');
         }
 
-        async function refreshGameList() {
-            try {
-                // Wait for Firebase to be initialized and authenticated
-                if (!window.firebaseInitialized || !window.firebaseDatabase || !window.firebaseAuthenticated) {
-                    console.log('Waiting for Firebase initialization and authentication...');
-                    await new Promise(resolve => {
-                        const checkFirebase = () => {
-                            if (window.firebaseInitialized && window.firebaseDatabase && window.firebaseAuthenticated) {
-                                resolve();
-                            } else {
-                                setTimeout(checkFirebase, 100);
-                            }
-                        };
-                        checkFirebase();
-                    });
-                }
-
-                console.log('Refreshing game list...');
-                console.log('Current language:', window.currentLanguage);
-                console.log('Firebase database:', window.firebaseDatabase);
-
-                const gamesRef = window.firebaseRef(window.firebaseDatabase, 'games');
-                const snapshot = await window.firebaseGet(window.firebaseQuery(gamesRef, window.firebaseOrderByChild('gameInfo/status'), window.firebaseEqualTo('waiting')));
-
-                const gamesList = document.getElementById('gamesList');
-                gamesList.innerHTML = '';
-
-                if (snapshot.exists()) {
-                    const games = snapshot.val();
-                    Object.entries(games).forEach(([gameId, gameData]) => {
-                        const gameInfo = gameData.gameInfo;
-
-                        // Filter by language (optional - currently showing all)
-                        if (gameInfo.language === window.currentLanguage || true) { // Temporarily show all games
-                            const gameElement = document.createElement('div');
-                            gameElement.className = 'game-item';
-                            gameElement.innerHTML = `
-                                <h4>${gameInfo.name}</h4>
-                                <p>Players: ${gameInfo.currentPlayers}/${gameInfo.maxPlayers}</p>
-                                <p>Language: ${gameInfo.language}</p>
-                                <button onclick="joinGame('${gameId}')">Join Game</button>
-                            `;
-                            gamesList.appendChild(gameElement);
-                        }
-                    });
-                }
-
-                if (gamesList.innerHTML === '') {
-                    gamesList.innerHTML = '<p>No games available. Create a new game!</p>';
-                }
-            } catch (error) {
-                console.error('Error loading games:', error);
-                document.getElementById('gamesList').innerHTML = '<p>Error loading games. Please try again.</p>';
-            }
-        }
+        // Removed refreshGameList - using PeerJS direct connections instead
 
         function createMultiplayerGame() {
             console.log('Creating multiplayer game...');

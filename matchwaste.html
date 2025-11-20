@@ -2357,70 +2357,12 @@
             });
         }
 
-        // Show waste type preview screen
-        function showWasteTypePreview() {
-            const previewDiv = document.getElementById('wasteTypePreview');
-            const gridDiv = document.getElementById('wasteTypeGrid');
-
-            // Group waste by type
-            const wasteByType = {};
-            wasteEmojis.forEach(item => {
-                if (!wasteByType[item.type]) {
-                    wasteByType[item.type] = [];
-                }
-                wasteByType[item.type].push(item);
-            });
-
-            // Create waste type cards
-            let html = '';
-            const colorMap = {
-                0: '#DC143C',
-                1: '#FF6347',
-                2: '#FFA500',
-                3: '#00CED1',
-                4: '#FF1493',
-                5: '#00CED1',
-                6: '#4169E1',
-                7: '#FFA500',
-                8: '#9370DB',
-                9: '#8B4513'
-            };
-
-            Object.keys(wasteByType).forEach(type => {
-                // Use translation for type name
-                const typeName = t(`wasteType${type}`) || `Type ${type}`;
-                const items = wasteByType[type];
-                const bgColor = colorMap[type] || '#666666';
-
-                // Create HTML for items with emoji and names
-                let itemsHtml = '';
-                items.forEach(item => {
-                    itemsHtml += `<div style="display: inline-flex; flex-direction: column; align-items: center; margin: 5px; max-width: 70px;">
-                        <span style="font-size: 24px;">${item.emoji}</span>
-                        <span style="font-size: 9px; line-height: 1.2; margin-top: 2px; word-wrap: break-word; text-align: center;">${item.name}</span>
-                    </div>`;
-                });
-
-                html += `
-                    <div style="background: ${bgColor}; color: white; padding: 10px; border-radius: 8px; text-align: center;">
-                        <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${typeName}</div>
-                        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 3px;">${itemsHtml}</div>
-                        <div style="font-size: 12px; margin-top: 5px; opacity: 0.8;">${items.length} items</div>
-                    </div>
-                `;
-            });
-
-            gridDiv.innerHTML = html;
-            previewDiv.style.display = 'block';
-        }
-
         // Populate waste type guide
         function populateWasteTypeGuide() {
-            const gridDiv = document.getElementById('wasteTypeGridPreview');
-            if (!gridDiv) {
-                console.error('wasteTypeGridPreview not found');
-                return;
-            }
+            const grids = [
+                document.getElementById('wasteTypeGrid'),
+                document.getElementById('wasteTypeGridPreview')
+            ];
 
             // Group waste by type
             const wasteByType = {};
@@ -2470,7 +2412,12 @@
                 `;
             });
 
-            gridDiv.innerHTML = html;
+            // Populate all found grids
+            grids.forEach(grid => {
+                if (grid) {
+                    grid.innerHTML = html;
+                }
+            });
         }
 
         // Start game from preview
