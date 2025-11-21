@@ -16,11 +16,11 @@ const MatchWaste: React.FC = () => {
   }, [language]);
 
   return (
-    <div className="w-full h-[calc((100vh-200px)*3/4)] min-h-[450px] md:h-[calc(100vh-200px)] md:min-h-[600px] max-md:w-[110%] max-md:h-[calc((100vh-200px)*3/4*1.1)] max-md:-ml-[5%]">
+    <div className="w-full h-[calc(100vh-200px)] min-h-[600px] flex justify-center items-center">
       <iframe
         ref={iframeRef}
-        src={`/matchwaste.html?lang=${language}`}
-        className="w-full h-full border-0 rounded-lg"
+        src={`/matchwaste.html?lang=${language}&v=${Date.now()}`}
+        className="w-full h-full border-0 rounded-lg shadow-lg"
         title="Match Waste Game"
         allow="autoplay"
       />

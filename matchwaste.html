@@ -258,12 +258,11 @@
                 margin: 0 !important;
                 padding: 0 !important;
                 border-radius: 0 !important;
-                /* REMOVE overflow: hidden - this was hiding the scrollable content */
-                overflow: visible !important;
+                /* Changed to hidden to allow child scrolling */
+                overflow: hidden !important;
                 max-width: none !important;
                 box-shadow: none !important;
-                /* Make container invisible to touch events */
-                pointer-events: none !important;
+                /* REMOVED pointer-events: none - this was blocking all clicks! */
             }
 
             /* Modal header with title - target both h2 and h3 */
@@ -303,57 +302,70 @@
             #wasteTypeGridPreview {
                 flex: 1 !important;
                 overflow-y: auto !important;
+                overflow-x: hidden !important;
                 padding: 20px !important;
                 display: grid !important;
+                /* Default mobile layout: auto-fit */
                 grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
-                gap: 15px !important;
+                grid-auto-rows: auto !important;
+                gap: 20px !important;
+                row-gap: 25px !important;
                 align-content: start !important;
+                align-items: stretch !important;
                 background: transparent !important;
                 margin: 0 !important;
                 max-height: none !important;
                 height: auto !important;
                 order: 3 !important;
-                /* Add padding bottom to prevent content from being hidden behind button bar */
                 padding-bottom: 140px !important;
-                /* CRITICAL: Re-enable pointer events for scrollable content */
                 pointer-events: auto !important;
             }
 
-            /* Waste type items styling */
+            /* Ensure grid items (cards) behave correctly - CONSOLIDATED RULES */
             #wasteTypeGridPreview>div {
-                background: rgba(255, 255, 255, 0.9) !important;
+                /* Layout & Sizing */
+                height: auto !important;
+                min-height: min-content !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                overflow: visible !important;
+
+                /* Flexbox for internal layout */
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: flex-start !important;
+                /* Start from top */
+                align-items: stretch !important;
+                /* Stretch to fill width */
+
+                /* Visual Styling */
                 border-radius: 12px !important;
                 padding: 15px !important;
                 text-align: center !important;
                 box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
                 transition: transform 0.2s ease !important;
                 cursor: pointer !important;
-                min-height: 80px !important;
-                display: flex !important;
-                flex-direction: column !important;
-                justify-content: center !important;
-                align-items: center !important;
+
+                /* Let the waste type color classes (from JavaScript) define the background */
+                /* Background color is set inline by JS */
             }
 
             #wasteTypeGridPreview>div:active,
             #wasteTypeGridPreview>div:hover {
-                transform: scale(1.05) !important;
-                background: rgba(255, 255, 255, 1) !important;
+                transform: scale(1.02) !important;
+                /* Reduced scale to prevent overlap */
+                z-index: 10 !important;
+                /* Bring to front on hover */
             }
 
             /* PERMANENTLY DOCKED BUTTON BAR */
             #gameButtonContainer {
-                position: fixed !important;
-                bottom: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
-                width: 100% !important;
                 max-width: none !important;
-                z-index: 10001 !important;
+                z-index: 10002 !important;
+                /* Increased z-index to be above everything */
                 background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%) !important;
                 padding: 20px !important;
                 padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
-                /* Handle iPhone Home Indicator */
                 margin: 0 !important;
                 border-radius: 0 !important;
                 border-top: 3px solid rgba(255, 255, 255, 0.4) !important;
@@ -366,7 +378,6 @@
                 /* CRITICAL: Re-enable pointer events for buttons to be clickable */
                 pointer-events: auto !important;
                 box-sizing: border-box !important;
-                /* Prevent width + padding overflow */
             }
 
             /* Prominent Start Game button */
@@ -630,7 +641,7 @@
             <button id="startGameBtn" onclick="startGameFromPreview()"
                 style="background: #00ff00; color: #000; font-weight: bold; padding: 15px 30px; font-size: 18px; margin: 5px; border: 2px solid #00aa00; border-radius: 8px; cursor: pointer; min-width: 140px;">Start
                 Game</button>
-            <button id="skipBtn" onclick="startGameFromPreview()"
+            <button id="skipBtn"
                 style="background: #ffaa00; color: #000; padding: 12px 20px; border: 2px solid #cc7700; border-radius: 8px; cursor: pointer; margin: 5px;">Skip</button>
         </div>
     </div>
@@ -988,6 +999,7 @@
 
                     if (board[row][col]) {
                         gemDiv.className = `gem waste-type-${board[row][col].type % 10}`;
+                        gemDiv.setAttribute('data-type', board[row][col].type);
                         gemDiv.textContent = board[row][col].emoji;
                         gemDiv.title = board[row][col].name;
                     } else {
@@ -1279,14 +1291,14 @@
                             if (isBoardEmpty()) {
                                 gameActive = false;
                                 // Game finished - directly prompt for nickname and show leaderboard
-                                promptNicknameAndSave(score);
+                                promptNicknameAndSave(gameTime);
                             } else {
                                 // Check for VICTORY: less than 3 gems left
                                 const gemCount = countRemainingGems();
                                 if (gemCount < 3) {
                                     console.log(`Only ${gemCount} gem(s) left after cascade - game complete!`);
                                     gameActive = false;
-                                    promptNicknameAndSave(score);
+                                    promptNicknameAndSave(gameTime);
                                     return;
                                 }
 
@@ -1499,8 +1511,8 @@
                     gameActive = false;
                     // Show game over message
                     setTimeout(() => {
-                        alert('Game Over! Not enough matching items left to clear the board.');
-                        location.reload();
+                        console.log('Game Over - Unwinnable state. Prompting for score save.');
+                        promptNicknameAndSave(score);
                     }, 300);
                     return;
                 }
@@ -2195,6 +2207,20 @@
             populateWasteTypeGuide();
         }
 
+        function startGameFromPreview() {
+            // Hide the waste type preview
+            document.getElementById('wasteTypePreview').style.display = 'none';
+
+            // Show and activate the game
+            document.getElementById('gameContainer').style.display = 'block';
+            gameActive = true;
+
+            // Start the game timer
+            startGameTimer();
+
+            console.log('Game started from preview');
+        }
+
         function showMultiplayerLobby() {
             // For now, just show coming soon message
             alert('Multiplayer mode coming soon!');
@@ -2422,16 +2448,25 @@
 
         // Start game from preview
         function startGameFromPreview() {
+            console.log('startGameFromPreview called!');
+            console.log('wasteTypePreview element:', document.getElementById('wasteTypePreview'));
+            console.log('gameContainer element:', document.getElementById('gameContainer'));
+
             document.getElementById('wasteTypePreview').style.display = 'none';
             document.getElementById('gameModeSelect').style.display = 'none';
             document.getElementById('gameContainer').style.display = 'block';
             gameActive = true;
+
+            console.log('Game active set to:', gameActive);
+
             // Start the game timer
             startGameTimer();
             // Update hint button state
             updateHintButton();
             // Update UI text including instructions
             updateUIText();
+
+            console.log('startGameFromPreview completed');
         }
 
         // Initialize SQLite database
@@ -2602,8 +2637,52 @@
         `;
         document.head.appendChild(style);
 
-        // Initialize game
-        newGame();
+        // Initialize the game when the page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM Content Loaded');
+
+            // Attach event listeners to buttons
+            const startBtn = document.getElementById('startGameBtn');
+            const skipBtn = document.getElementById('skipBtn');
+
+            if (startBtn) {
+                console.log('Attaching click listener to START GAME button');
+                startBtn.addEventListener('click', function (e) {
+                    console.log('START GAME button clicked!');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    startGameFromPreview();
+                });
+            } else {
+                console.error('START GAME button not found!');
+            }
+
+            if (skipBtn) {
+                console.log('Attaching click listener to SKIP button');
+                skipBtn.addEventListener('click', function (e) {
+                    console.log('SKIP button clicked!');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    startGameFromPreview();
+                });
+            } else {
+                console.error('SKIP button not found!');
+            }
+
+            // Check for lang parameter to determine if we should show preview
+            const urlParams = new URLSearchParams(window.location.search);
+            const lang = urlParams.get('lang');
+
+            if (lang) {
+                // Embedded in iframe - show preview
+                console.log('Lang parameter detected:', lang);
+                showMainMenu();
+            } else {
+                // Standalone - start game directly
+                console.log('No lang parameter - starting game directly');
+                newGame();
+            }
+        });
     </script>
 </body>
 
