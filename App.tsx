@@ -34,8 +34,6 @@ const App: React.FC = () => {
         return <ChatAgent />;
       case 'game':
         return <WasteGame />;
-      case 'match':
-        return <MatchWaste />;
       case 'shoot':
         return <ShootWaste />;
       case 'info':

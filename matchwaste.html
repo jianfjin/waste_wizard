@@ -262,7 +262,8 @@
                 overflow: hidden !important;
                 max-width: none !important;
                 box-shadow: none !important;
-                /* REMOVED pointer-events: none - this was blocking all clicks! */
+                /* CRITICAL: Re-enable pointer events for modal content */
+                pointer-events: auto !important;
             }
 
             /* Modal header with title - target both h2 and h3 */
@@ -2442,6 +2443,7 @@
             grids.forEach(grid => {
                 if (grid) {
                     grid.innerHTML = html;
+                    console.log('Populated grid:', grid.id);
                 }
             });
         }
@@ -2646,25 +2648,29 @@
             const skipBtn = document.getElementById('skipBtn');
 
             if (startBtn) {
-                console.log('Attaching click listener to START GAME button');
-                startBtn.addEventListener('click', function (e) {
-                    console.log('START GAME button clicked!');
+                console.log('Attaching click/touch listeners to START GAME button');
+                const startHandler = function (e) {
+                    console.log('START GAME button activated!');
                     e.preventDefault();
                     e.stopPropagation();
                     startGameFromPreview();
-                });
+                };
+                startBtn.addEventListener('click', startHandler);
+                startBtn.addEventListener('touchstart', startHandler, { passive: false });
             } else {
                 console.error('START GAME button not found!');
             }
 
             if (skipBtn) {
-                console.log('Attaching click listener to SKIP button');
-                skipBtn.addEventListener('click', function (e) {
-                    console.log('SKIP button clicked!');
+                console.log('Attaching click/touch listeners to SKIP button');
+                const skipHandler = function (e) {
+                    console.log('SKIP button activated!');
                     e.preventDefault();
                     e.stopPropagation();
                     startGameFromPreview();
-                });
+                };
+                skipBtn.addEventListener('click', skipHandler);
+                skipBtn.addEventListener('touchstart', skipHandler, { passive: false });
             } else {
                 console.error('SKIP button not found!');
             }
