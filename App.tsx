@@ -63,13 +63,18 @@ const App: React.FC = () => {
         <Header />
         <main className="flex-grow p-4 sm:p-6 lg:p-8">
           <div className="max-w-4xl mx-auto bg-white rounded-b-lg shadow-2xl">
-            <nav className="flex bg-green-600 rounded-t-lg">
+            <nav className="flex bg-green-600 rounded-t-lg overflow-x-auto">
               <NavButton tab="chat" icon={<ChatBotIcon />} label={t('chatTab')} />
               <NavButton tab="game" icon={<GameIcon />} label={t('gameTab')} />
 
               <button
-                onClick={() => window.location.href = '/matchwaste.html'}
-                className={`flex-1 p-3 text-sm sm:text-base font-bold flex items-center justify-center gap-2 rounded-t-lg transition-all duration-300 bg-green-500 text-white hover:bg-green-600`}
+                type="button"
+                onClick={() => window.location.assign('/matchwaste.html')}
+                onTouchEnd={(e) => {
+                  e.preventDefault(); // Prevent ghost clicks
+                  window.location.assign('/matchwaste.html');
+                }}
+                className={`flex-1 p-3 text-sm sm:text-base font-bold flex items-center justify-center gap-2 rounded-t-lg transition-all duration-300 bg-green-500 text-white hover:bg-green-600 min-w-[120px]`}
               >
                 <span>♢</span>
                 Match Waste
