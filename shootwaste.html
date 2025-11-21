@@ -1249,6 +1249,16 @@
                     gameState.score = message.score;
                     document.getElementById('score').textContent = message.score;
                 }
+
+                // Update competitive scores
+                if (this.gameMode === 'competitive' && message.playerScores) {
+                    Object.entries(message.playerScores).forEach(([playerId, score]) => {
+                        if (this.gameState.players.has(playerId)) {
+                            this.gameState.players.get(playerId).score = score;
+                        }
+                    });
+                    this.updateCompetitiveUI();
+                }
             }
 
             // Handle enemy spawn from host (clients only)
@@ -1506,225 +1516,216 @@
                 }
             }
 
-            // Update competitive scores
-            if(this.gameMode === 'competitive' && message.playerScores) {
-            Object.entries(message.playerScores).forEach(([playerId, score]) => {
-                if (this.gameState.players.has(playerId)) {
-                    this.gameState.players.get(playerId).score = score;
-                }
-            });
-            this.updateCompetitiveUI();
-        }
+
+
+            // Handle game start
+            handleGameStart(message) {
+                document.getElementById('multiplayerLobby').style.display = 'none';
+                document.getElementById('multiplayerGameUI').style.display = 'block';
+                gameState.gameStarted = true;
+                startGameFromPreview();
             }
 
-        // Handle game start
-        handleGameStart(message) {
-            document.getElementById('multiplayerLobby').style.display = 'none';
-            document.getElementById('multiplayerGameUI').style.display = 'block';
-            gameState.gameStarted = true;
-            startGameFromPreview();
-        }
-
-        // Broadcast message to all connected players
-        broadcastToAll(message) {
-            this.connections.forEach((conn, peerId) => {
-                if (conn.open) {
-                    conn.send(message);
-                }
-            });
-        }
-
-        // Broadcast message to all players except one
-        broadcastToOthers(message, excludePeer) {
-            this.connections.forEach((conn, peerId) => {
-                if (conn.open && peerId !== excludePeer) {
-                    conn.send(message);
-                }
-            });
-        }
-
-        // Update player position (called from game loop)
-        updatePlayerPosition(x, y, rotation) {
-            if (!this.isMultiplayer) return;
-
-            // Send to host or broadcast to clients
-            const message = {
-                type: 'player_update',
-                playerId: this.playerId,
-                x: Math.round(x),
-                y: Math.round(y),
-                rotation: rotation,
-                timestamp: Date.now()
-            };
-
-            if (this.isHost) {
-                // Host broadcasts to all clients
-                this.broadcastToAll(message);
-            } else {
-                // Client sends to host only
-                const hostConn = this.connections.get(this.gameId);
-                if (hostConn && hostConn.open) {
-                    hostConn.send(message);
-                }
-            }
-
-            // Update local player position
-            if (this.gameState && this.gameState.players.has(this.playerId)) {
-                const player = this.gameState.players.get(this.playerId);
-                player.x = x;
-                player.y = y;
-                player.rotation = rotation;
-            }
-        }
-
-        // Fire bullet (called when player shoots)
-        fireBullet(weapon = 'bullet') {
-            if (!this.isMultiplayer) return;
-
-            const message = {
-                type: 'shoot',
-                playerId: this.playerId,
-                weapon: weapon,
-                timestamp: Date.now()
-            };
-
-            if (this.isHost) {
-                // Host processes shoot and broadcasts to clients
-                this.handleShootEvent(message, this.playerId);
-            } else {
-                // Client sends to host
-                const hostConn = this.connections.get(this.gameId);
-                if (hostConn && hostConn.open) {
-                    hostConn.send(message);
-                }
-            }
-        }
-
-        // Start multiplayer game (host only)
-        startGame() {
-            if (!this.isHost) return;
-
-            // Broadcast game start to all players
-            this.broadcastToAll({
-                type: 'game_start',
-                timestamp: Date.now()
-            });
-
-            // Start game locally
-            this.handleGameStart({});
-        }
-
-        // Handle player disconnect
-        handlePlayerDisconnect(peerId) {
-            console.log('Player disconnected:', peerId);
-
-            if (this.gameState && this.gameState.players.has(peerId)) {
-                this.gameState.players.delete(peerId);
-                this.players = this.gameState.players;
-            }
-
-            this.connections.delete(peerId);
-
-            // If host, broadcast updated player list
-            if (this.isHost) {
-                this.broadcastToAll({
-                    type: 'players_update',
-                    players: Array.from(this.gameState.players.entries()),
-                    timestamp: Date.now()
+            // Broadcast message to all connected players
+            broadcastToAll(message) {
+                this.connections.forEach((conn, peerId) => {
+                    if (conn.open) {
+                        conn.send(message);
+                    }
                 });
             }
 
-            this.updateLobbyDisplay();
-        }
-
-        // Handle connection errors
-        handleConnectionError(error) {
-            console.error('PeerJS connection error:', error);
-
-            if (error.type === 'peer-unavailable') {
-                alert('Game not found. Please check the game code.');
-            } else if (error.type === 'network') {
-                alert('Network error. Please check your connection.');
-            } else {
-                alert('Connection error: ' + error.message);
+            // Broadcast message to all players except one
+            broadcastToOthers(message, excludePeer) {
+                this.connections.forEach((conn, peerId) => {
+                    if (conn.open && peerId !== excludePeer) {
+                        conn.send(message);
+                    }
+                });
             }
-        }
 
-        // Leave current game
-        leaveGame() {
-            // Close all connections
-            this.connections.forEach((conn) => {
-                if (conn.open) {
-                    conn.close();
+            // Update player position (called from game loop)
+            updatePlayerPosition(x, y, rotation) {
+                if (!this.isMultiplayer) return;
+
+                // Send to host or broadcast to clients
+                const message = {
+                    type: 'player_update',
+                    playerId: this.playerId,
+                    x: Math.round(x),
+                    y: Math.round(y),
+                    rotation: rotation,
+                    timestamp: Date.now()
+                };
+
+                if (this.isHost) {
+                    // Host broadcasts to all clients
+                    this.broadcastToAll(message);
+                } else {
+                    // Client sends to host only
+                    const hostConn = this.connections.get(this.gameId);
+                    if (hostConn && hostConn.open) {
+                        hostConn.send(message);
+                    }
                 }
-            });
-            this.connections.clear();
 
-            // Reset state
-            this.gameId = null;
-            this.isHost = false;
-            this.isMultiplayer = false;
-            this.players.clear();
-            this.gameState = null;
-
-            // Show main menu
-            document.getElementById('multiplayerLobby').style.display = 'none';
-            document.getElementById('multiplayerGameUI').style.display = 'none';
-            document.getElementById('gameModeSelect').style.display = 'block';
-
-            console.log('Left game');
-        }
-
-        // Update lobby display
-        updateLobbyDisplay() {
-            const lobbyPlayers = document.getElementById('lobbyPlayers');
-            if (!lobbyPlayers || !this.players) return;
-
-            let html = '<h4>Players:</h4>';
-            this.players.forEach((player, playerId) => {
-                const hostBadge = player.isHost ? ' 👑' : '';
-                const targetInfo = this.gameMode === 'competitive' && player.targetType
-                    ? ` (Target: ${player.targetType})`
-                    : '';
-                html += `<div>${player.nickname}${hostBadge}${targetInfo}</div>`;
-            });
-
-            lobbyPlayers.innerHTML = html;
-
-            // Update start button for host
-            if (this.isHost) {
-                const startBtn = document.getElementById('multiplayerStartBtn');
-                if (startBtn) {
-                    startBtn.style.display = this.players.size >= 2 ? 'inline-block' : 'none';
+                // Update local player position
+                if (this.gameState && this.gameState.players.has(this.playerId)) {
+                    const player = this.gameState.players.get(this.playerId);
+                    player.x = x;
+                    player.y = y;
+                    player.rotation = rotation;
                 }
             }
-        }
 
-        // Update lobby info
-        updateLobbyInfo(gameInfo) {
-            document.getElementById('lobbyGameMode').textContent = `Mode: ${gameInfo.mode || this.gameMode}`;
-            document.getElementById('lobbyDifficulty').textContent = `Difficulty: ${gameInfo.difficulty || 'normal'}`;
-        }
+            // Fire bullet (called when player shoots)
+            fireBullet(weapon = 'bullet') {
+                if (!this.isMultiplayer) return;
 
-        // Show current lobby
-        showCurrentLobby() {
-            document.getElementById('gameCreation').style.display = 'none';
-            document.getElementById('gameList').style.display = 'none';
-            document.getElementById('currentLobby').style.display = 'block';
+                const message = {
+                    type: 'shoot',
+                    playerId: this.playerId,
+                    weapon: weapon,
+                    timestamp: Date.now()
+                };
+
+                if (this.isHost) {
+                    // Host processes shoot and broadcasts to clients
+                    this.handleShootEvent(message, this.playerId);
+                } else {
+                    // Client sends to host
+                    const hostConn = this.connections.get(this.gameId);
+                    if (hostConn && hostConn.open) {
+                        hostConn.send(message);
+                    }
+                }
+            }
+
+            // Start multiplayer game (host only)
+            startGame() {
+                if (!this.isHost) return;
+
+                // Broadcast game start to all players
+                this.broadcastToAll({
+                    type: 'game_start',
+                    timestamp: Date.now()
+                });
+
+                // Start game locally
+                this.handleGameStart({});
+            }
+
+            // Handle player disconnect
+            handlePlayerDisconnect(peerId) {
+                console.log('Player disconnected:', peerId);
+
+                if (this.gameState && this.gameState.players.has(peerId)) {
+                    this.gameState.players.delete(peerId);
+                    this.players = this.gameState.players;
+                }
+
+                this.connections.delete(peerId);
+
+                // If host, broadcast updated player list
+                if (this.isHost) {
+                    this.broadcastToAll({
+                        type: 'players_update',
+                        players: Array.from(this.gameState.players.entries()),
+                        timestamp: Date.now()
+                    });
+                }
+
+                this.updateLobbyDisplay();
+            }
+
+            // Handle connection errors
+            handleConnectionError(error) {
+                console.error('PeerJS connection error:', error);
+
+                if (error.type === 'peer-unavailable') {
+                    alert('Game not found. Please check the game code.');
+                } else if (error.type === 'network') {
+                    alert('Network error. Please check your connection.');
+                } else {
+                    alert('Connection error: ' + error.message);
+                }
+            }
+
+            // Leave current game
+            leaveGame() {
+                // Close all connections
+                this.connections.forEach((conn) => {
+                    if (conn.open) {
+                        conn.close();
+                    }
+                });
+                this.connections.clear();
+
+                // Reset state
+                this.gameId = null;
+                this.isHost = false;
+                this.isMultiplayer = false;
+                this.players.clear();
+                this.gameState = null;
+
+                // Show main menu
+                document.getElementById('multiplayerLobby').style.display = 'none';
+                document.getElementById('multiplayerGameUI').style.display = 'none';
+                document.getElementById('gameModeSelect').style.display = 'block';
+
+                console.log('Left game');
+            }
+
+            // Update lobby display
+            updateLobbyDisplay() {
+                const lobbyPlayers = document.getElementById('lobbyPlayers');
+                if (!lobbyPlayers || !this.players) return;
+
+                let html = '<h4>Players:</h4>';
+                this.players.forEach((player, playerId) => {
+                    const hostBadge = player.isHost ? ' 👑' : '';
+                    const targetInfo = this.gameMode === 'competitive' && player.targetType
+                        ? ` (Target: ${player.targetType})`
+                        : '';
+                    html += `<div>${player.nickname}${hostBadge}${targetInfo}</div>`;
+                });
+
+                lobbyPlayers.innerHTML = html;
+
+                // Update start button for host
+                if (this.isHost) {
+                    const startBtn = document.getElementById('multiplayerStartBtn');
+                    if (startBtn) {
+                        startBtn.style.display = this.players.size >= 2 ? 'inline-block' : 'none';
+                    }
+                }
+            }
 
             // Update lobby info
-            this.updateLobbyInfo({
-                mode: this.gameMode,
-                difficulty: 'normal'
-            });
+            updateLobbyInfo(gameInfo) {
+                document.getElementById('lobbyGameMode').textContent = `Mode: ${gameInfo.mode || this.gameMode}`;
+                document.getElementById('lobbyDifficulty').textContent = `Difficulty: ${gameInfo.difficulty || 'normal'}`;
+            }
 
-            this.updateLobbyDisplay();
+            // Show current lobby
+            showCurrentLobby() {
+                document.getElementById('gameCreation').style.display = 'none';
+                document.getElementById('gameList').style.display = 'none';
+                document.getElementById('currentLobby').style.display = 'block';
 
-            // Show the full peer ID as the game code for now (we can optimize later)
-            const gameCode = this.gameId || 'LOADING';
-            const lobbyStatus = document.getElementById('lobbyStatus');
-            if (lobbyStatus) {
-                lobbyStatus.innerHTML = `
+                // Update lobby info
+                this.updateLobbyInfo({
+                    mode: this.gameMode,
+                    difficulty: 'normal'
+                });
+
+                this.updateLobbyDisplay();
+
+                // Show the full peer ID as the game code for now (we can optimize later)
+                const gameCode = this.gameId || 'LOADING';
+                const lobbyStatus = document.getElementById('lobbyStatus');
+                if (lobbyStatus) {
+                    lobbyStatus.innerHTML = `
                         <div style="background: rgba(0,255,0,0.1); padding: 10px; border-radius: 5px; border: 1px solid #00ff00;">
                             <div style="font-size: 16px; color: #00ff00; margin-bottom: 5px;">🎮 Game Created!</div>
                             <div style="font-size: 12px;">Game Code:</div>
@@ -1737,41 +1738,41 @@
                             </button>
                         </div>
                     `;
+                }
+
+                console.log('🎯 Game lobby created with code:', gameCode);
             }
 
-            console.log('🎯 Game lobby created with code:', gameCode);
-        }
+            // Update competitive mode UI
+            updateCompetitiveUI() {
+                if (this.gameMode !== 'competitive') return;
 
-        // Update competitive mode UI
-        updateCompetitiveUI() {
-            if (this.gameMode !== 'competitive') return;
+                const competitiveUI = document.getElementById('multiplayerCompetitiveUI');
+                const playerScoreEl = document.getElementById('playerCompetitiveScore');
+                const playerTargetEl = document.getElementById('playerCompetitiveTarget');
 
-            const competitiveUI = document.getElementById('multiplayerCompetitiveUI');
-            const playerScoreEl = document.getElementById('playerCompetitiveScore');
-            const playerTargetEl = document.getElementById('playerCompetitiveTarget');
+                if (competitiveUI && this.gameState && this.gameState.players.has(this.playerId)) {
+                    competitiveUI.style.display = 'block';
+                    const playerData = this.gameState.players.get(this.playerId);
 
-            if (competitiveUI && this.gameState && this.gameState.players.has(this.playerId)) {
-                competitiveUI.style.display = 'block';
-                const playerData = this.gameState.players.get(this.playerId);
+                    if (playerScoreEl) playerScoreEl.textContent = playerData.score || 0;
+                    if (playerTargetEl) playerTargetEl.textContent = playerData.targetType || '-';
+                }
+            }
 
-                if (playerScoreEl) playerScoreEl.textContent = playerData.score || 0;
-                if (playerTargetEl) playerTargetEl.textContent = playerData.targetType || '-';
+            // Get network statistics
+            getNetworkStats() {
+                return this.networkStats;
+            }
+
+            // Cleanup
+            destroy() {
+                this.leaveGame();
+                if (this.peer) {
+                    this.peer.destroy();
+                }
             }
         }
-
-        // Get network statistics
-        getNetworkStats() {
-            return this.networkStats;
-        }
-
-        // Cleanup
-        destroy() {
-            this.leaveGame();
-            if (this.peer) {
-                this.peer.destroy();
-            }
-        }
-    }
 
         // Initialize PeerJS multiplayer manager with delay
         console.log('🔧 Starting PeerJS initialization process...');
@@ -4297,7 +4298,7 @@
                             // Track total kills
                             gameState.totalKills++;
 
-                            if (isMultiplayerCompetitive) {
+                            if (window.multiplayerManager && window.multiplayerManager.isMultiplayer && window.multiplayerManager.gameMode === 'competitive') {
                                 // Competitive mode scoring logic
                                 const isCorrectTarget = enemy.wasteType === window.multiplayerManager.targetType;
 
