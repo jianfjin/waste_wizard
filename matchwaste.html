@@ -1470,7 +1470,7 @@
                 if (existingGems.length === 4 && typeCountNum === 4 && maxCount === 1) {
                     console.log('All 4 remaining gems are of different types - game complete!');
                     gameActive = false;
-                    promptNicknameAndSave(score);
+                    promptNicknameAndSave(gameTime);
                     return;
                 }
 
@@ -1479,7 +1479,7 @@
                 if (existingGems.length === 3 && typeCountNum === 3 && maxCount === 1) {
                     console.log('All 3 remaining gems are of different types - game complete!');
                     gameActive = false;
-                    promptNicknameAndSave(score);
+                    promptNicknameAndSave(gameTime);
                     return;
                 }
 
@@ -1487,7 +1487,7 @@
                 if (existingGems.length === 2 && typeCountNum === 2) {
                     console.log('Only 2 gems left of different types - game complete!');
                     gameActive = false;
-                    promptNicknameAndSave(score);
+                    promptNicknameAndSave(gameTime);
                     return;
                 }
 
@@ -1498,7 +1498,7 @@
                     if (counts.length === 2 && counts[0] === 2 && counts[1] === 2) {
                         console.log('Remaining gems are 2 of each type (A A B B) - game complete!');
                         gameActive = false;
-                        promptNicknameAndSave(score);
+                        promptNicknameAndSave(gameTime);
                         return;
                     }
                 }
@@ -1512,7 +1512,7 @@
                     // Show game over message
                     setTimeout(() => {
                         console.log('Game Over - Unwinnable state. Prompting for score save.');
-                        promptNicknameAndSave(score);
+                        promptNicknameAndSave(gameTime);
                     }, 300);
                     return;
                 }
