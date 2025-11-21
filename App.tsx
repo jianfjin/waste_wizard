@@ -50,8 +50,8 @@ const App: React.FC = () => {
     <button
       onClick={() => setActiveTab(tab)}
       className={`flex-1 p-3 text-sm sm:text-base font-bold flex items-center justify-center gap-2 rounded-t-lg transition-all duration-300 ${activeTab === tab
-          ? 'bg-white text-green-600 shadow-md'
-          : 'bg-green-500 text-white hover:bg-green-600'
+        ? 'bg-white text-green-600 shadow-md'
+        : 'bg-green-500 text-white hover:bg-green-600'
         }`}
     >
       {icon}
@@ -68,7 +68,7 @@ const App: React.FC = () => {
             <nav className="flex bg-green-600 rounded-t-lg">
               <NavButton tab="chat" icon={<ChatBotIcon />} label={t('chatTab')} />
               <NavButton tab="game" icon={<GameIcon />} label={t('gameTab')} />
-              <NavButton tab="game" icon={<GameIcon />} label={t('gameTab')} />
+
               <button
                 onClick={() => window.location.href = '/matchwaste.html'}
                 className={`flex-1 p-3 text-sm sm:text-base font-bold flex items-center justify-center gap-2 rounded-t-lg transition-all duration-300 bg-green-500 text-white hover:bg-green-600`}
