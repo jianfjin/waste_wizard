@@ -34,6 +34,8 @@ const App: React.FC = () => {
         return <ChatAgent />;
       case 'game':
         return <WasteGame />;
+      case 'match':
+        return <MatchWaste />;
       case 'shoot':
         return <ShootWaste />;
       case 'info':
@@ -66,19 +68,7 @@ const App: React.FC = () => {
             <nav className="flex bg-green-600 rounded-t-lg overflow-x-auto">
               <NavButton tab="chat" icon={<ChatBotIcon />} label={t('chatTab')} />
               <NavButton tab="game" icon={<GameIcon />} label={t('gameTab')} />
-
-              <button
-                type="button"
-                onClick={() => window.location.assign('/matchwaste.html')}
-                onTouchEnd={(e) => {
-                  e.preventDefault(); // Prevent ghost clicks
-                  window.location.assign('/matchwaste.html');
-                }}
-                className={`flex-1 p-3 text-sm sm:text-base font-bold flex items-center justify-center gap-2 rounded-t-lg transition-all duration-300 bg-green-500 text-white hover:bg-green-600 min-w-[120px]`}
-              >
-                <span>♢</span>
-                Match Waste
-              </button>
+              <NavButton tab="match" icon={<span>♢</span>} label="Match Waste" />
               <NavButton tab="shoot" icon={<span>🎮</span>} label="Shoot Game" />
               <NavButton tab="info" icon={<InfoIcon />} label={t('infoTab')} />
             </nav>
