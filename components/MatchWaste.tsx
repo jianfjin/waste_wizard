@@ -32,7 +32,7 @@ const MatchWaste: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-[calc((100vh-200px)*3/4)] min-h-[450px] md:h-[calc(100vh-200px)] md:min-h-[600px] max-md:w-[110%] max-md:h-[calc((100vh-200px)*3/4*1.1)] max-md:-ml-[5%]">
+    <div className="w-full h-[calc((100vh-200px)*3/4)] min-h-[450px] md:h-[calc(100vh-200px)] md:min-h-[600px] max-md:h-[85vh]">
       {isLoading && (
         <div className="flex items-center justify-center h-full bg-gray-100 rounded-lg">
           <div className="text-center">
