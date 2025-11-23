@@ -64,8 +64,8 @@
         }
 
         .gem {
-            width: 50px;
-            height: 50px;
+            width: clamp(30px, 11vw, 50px);
+            height: clamp(30px, 11vw, 50px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -132,6 +132,20 @@
             text-align: center;
         }
 
+        @media (max-width: 640px) {
+            #controls {
+                position: sticky;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.8);
+                z-index: 100;
+                padding: 10px;
+                width: 100%;
+                box-sizing: border-box;
+                margin-top: 0;
+                border-top: 1px solid rgba(255, 255, 255, 0.2);
+            }
+        }
+
         button {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -165,7 +179,9 @@
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
         }
 
         .modal {
@@ -229,6 +245,18 @@
 
         .waste-type-8 {
             background: rgba(85, 107, 47, 0.3);
+        }
+
+        .waste-card {
+            transition: max-height 0.3s ease;
+            cursor: pointer;
+            max-height: 180px;
+            overflow: hidden;
+        }
+
+        .waste-card.expanded {
+            max-height: none;
+            overflow: visible;
         }
 
         /* ========== FULL-SCREEN MODAL SOLUTION FOR MOBILE ========== */
@@ -2437,7 +2465,7 @@
                 });
 
                 html += `
-                    <div style="background: ${bgColor}; color: white; padding: 10px; border-radius: 8px; text-align: center; break-inside: avoid; margin-bottom: 15px; display: inline-block; width: 100%;">
+                    <div class="waste-card" onclick="this.classList.toggle('expanded')" style="background: ${bgColor}; color: white; padding: 10px; border-radius: 8px; text-align: center; break-inside: avoid; margin-bottom: 15px; display: inline-block; width: 100%;">
                         <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${typeName}</div>
                         <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 3px;">${itemsHtml}</div>
                         <div style="font-size: 12px; margin-top: 5px; opacity: 0.8;">${items.length} items</div>
@@ -2601,7 +2629,7 @@
                 const isPlayer = score.nickname === playerName && score.time === playerTime;
                 const rowStyle = isPlayer ? 'background: rgba(255,255,0,0.3);' : '';
                 const date = new Date(score.date).toLocaleDateString();
-                html += `<tr style="${rowStyle}"><td style="padding: 8px; border: 1px solid #00ffff;">${index + 1}</td><td style="padding: 8px; border: 1px solid #00ffff;">${score.nickname}</td><td style="padding: 8px; border: 1px solid #00ffff;">${formatTime(score.time)}</td><td style="padding: 8px; border: 1px solid #00ffff;">${date}</td></tr>`;
+                html += `< tr style = "${rowStyle}" ><td style="padding: 8px; border: 1px solid #00ffff;">${index + 1}</td><td style="padding: 8px; border: 1px solid #00ffff;">${score.nickname}</td><td style="padding: 8px; border: 1px solid #00ffff;">${formatTime(score.time)}</td><td style="padding: 8px; border: 1px solid #00ffff;">${date}</td></tr > `;
             });
 
             html += '</table>';
@@ -2610,7 +2638,7 @@
             // Show player's entry if not in top 10
             const playerInTop10 = scores.some(score => score.nickname === playerName && score.time === playerTime);
             if (!playerInTop10) {
-                playerEntry.textContent = `Your Time: ${playerName} - ${formatTime(playerTime)}`;
+                playerEntry.textContent = `Your Time: ${playerName} - ${formatTime(playerTime)} `;
             } else {
                 playerEntry.textContent = '';
             }
@@ -2640,11 +2668,11 @@
         // Add pulse animation for hints
         const style = document.createElement('style');
         style.textContent = `
-            @keyframes pulse {
-                0% { transform: scale(1); }
-                50% { transform: scale(1.2); background: rgba(255, 255, 0, 0.5); }
-                100% { transform: scale(1); }
-            }
+                @keyframes pulse {
+                    0 % { transform: scale(1); }
+                    50 % { transform: scale(1.2); background: rgba(255, 255, 0, 0.5); }
+                    100 % { transform: scale(1); }
+                }
         `;
         document.head.appendChild(style);
 
@@ -2688,15 +2716,10 @@
             const urlParams = new URLSearchParams(window.location.search);
             const lang = urlParams.get('lang');
 
-            if (lang) {
-                // Embedded in iframe - show preview
-                console.log('Lang parameter detected:', lang);
-                showMainMenu();
-            } else {
-                // Standalone - start game directly
-                console.log('No lang parameter - starting game directly');
-                newGame();
-            }
+            // Always start with new game flow (Language -> New Game -> Guide -> Start)
+            // This ensures consistent experience even when embedded
+            console.log('Starting game flow...');
+            newGame();
         });
     </script>
 </body>
