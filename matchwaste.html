@@ -243,7 +243,7 @@
             }
 
             /* FULL-SCREEN MODAL CONTAINER */
-            #wasteTypePreview:not([style*="display: none"]) {
+            #wasteTypePreview.mobile-modal-visible {
                 position: fixed !important;
                 top: 0 !important;
                 left: 0 !important;
@@ -2145,7 +2145,9 @@
 
             // Show waste type guide instead of game mode selection (single player only)
             document.getElementById('languageSelect').style.display = 'none';
-            document.getElementById('wasteTypePreview').style.display = 'block';
+            const wasteTypePreview = document.getElementById('wasteTypePreview');
+            wasteTypePreview.style.display = 'block';
+            wasteTypePreview.classList.add('mobile-modal-visible');
 
             // Populate waste type guide
             populateWasteTypeGuide();
@@ -2202,7 +2204,9 @@
         function showMainMenu() {
             // Reset to main menu (single player - show waste type preview)
             document.getElementById('multiplayerLobby').style.display = 'none';
-            document.getElementById('wasteTypePreview').style.display = 'block';
+            const wasteTypePreview = document.getElementById('wasteTypePreview');
+            wasteTypePreview.style.display = 'block';
+            wasteTypePreview.classList.add('mobile-modal-visible');
 
             // Populate waste type guide
             populateWasteTypeGuide();
@@ -2210,7 +2214,9 @@
 
         function startGameFromPreview() {
             // Hide the waste type preview
-            document.getElementById('wasteTypePreview').style.display = 'none';
+            const wasteTypePreview = document.getElementById('wasteTypePreview');
+            wasteTypePreview.style.display = 'none';
+            wasteTypePreview.classList.remove('mobile-modal-visible');
 
             // Show and activate the game
             document.getElementById('gameContainer').style.display = 'block';
@@ -2454,7 +2460,10 @@
             console.log('wasteTypePreview element:', document.getElementById('wasteTypePreview'));
             console.log('gameContainer element:', document.getElementById('gameContainer'));
 
-            document.getElementById('wasteTypePreview').style.display = 'none';
+            const wasteTypePreview = document.getElementById('wasteTypePreview');
+            wasteTypePreview.style.display = 'none';
+            wasteTypePreview.classList.remove('mobile-modal-visible');
+
             document.getElementById('gameModeSelect').style.display = 'none';
             document.getElementById('gameContainer').style.display = 'block';
             gameActive = true;
