@@ -19,14 +19,17 @@
         }
 
         #gameContainer {
-            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
             border-radius: 20px;
-            padding: 30px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             max-width: 500px;
             display: none;
             padding-bottom: 80px;
             /* Prevent button overlap on mobile */
+            max-height: 90vh;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         h1 {
@@ -754,7 +757,78 @@
                 wasteType6: 'Paper',
                 wasteType7: 'Plastic/Metal',
                 wasteType8: 'Textile',
-                wasteType9: 'Organic'
+                wasteType9: 'Organic',
+                // Items
+                'Batteries': 'Batteries',
+                'Computer': 'Computer',
+                'Electrical': 'Electrical',
+                'Watch': 'Watch',
+                'Refrigerator': 'Refrigerator',
+                'Mobile Phone': 'Mobile Phone',
+                'Modem': 'Modem',
+                'Virus Protection': 'Virus Protection',
+                'Big Bag': 'Big Bag',
+                'CD/DVD': 'CD/DVD',
+                'Cassette': 'Cassette',
+                'Diskette': 'Diskette',
+                'Photo Film': 'Photo Film',
+                'Needle': 'Needle',
+                'Magnet': 'Magnet',
+                'Radioactive': 'Radioactive',
+                'Light Bulb': 'Light Bulb',
+                'Wallpaper': 'Wallpaper',
+                'Furniture': 'Furniture',
+                'Mattress': 'Mattress',
+                'Pan': 'Pan',
+                'Carpet': 'Carpet',
+                'Tent': 'Tent',
+                'Prosthesis': 'Prosthesis',
+                'Construction': 'Construction',
+                'Floral Foam': 'Floral Foam',
+                'Treated Wood': 'Treated Wood',
+                'Plastic Frame': 'Plastic Frame',
+                'Stationery': 'Stationery',
+                'Glass Vase': 'Glass Vase',
+                'Glass Bottle': 'Glass Bottle',
+                'Special Paper': 'Special Paper',
+                'Binder': 'Binder',
+                'Cardboard': 'Cardboard',
+                'Drink Carton': 'Drink Carton',
+                'Cardboard Cup': 'Cardboard Cup',
+                'Chemical': 'Chemical',
+                'Paint': 'Paint',
+                'Fuel/Oil': 'Fuel/Oil',
+                'Medicine': 'Medicine',
+                'Nail Polish': 'Nail Polish',
+                'Aerosol Can': 'Aerosol Can',
+                'Metal Can': 'Metal Can',
+                'Crown Cap': 'Crown Cap',
+                'Pouch': 'Pouch',
+                'Clothing': 'Clothing',
+                'Shoes': 'Shoes',
+                'Textile': 'Textile',
+                'Plastic Bag': 'Plastic Bag',
+                'Plastic Tray': 'Plastic Tray',
+                'Plastic Bowl': 'Plastic Bowl',
+                'Plastic Card': 'Plastic Card',
+                'Utensils': 'Utensils',
+                'Animal Waste': 'Animal Waste',
+                'Sharp Object': 'Sharp Object',
+                'Crockery': 'Crockery',
+                'Candle Wax': 'Candle Wax',
+                'Adhesive Tape': 'Adhesive Tape',
+                'Cheese Paper': 'Cheese Paper',
+                'Coffee Cup': 'Coffee Cup',
+                'Fireworks': 'Fireworks',
+                'Fruit Net': 'Fruit Net',
+                'Garden Waste': 'Garden Waste',
+                'Ground': 'Ground',
+                'Plant Remains': 'Plant Remains',
+                'Garden Tools': 'Garden Tools',
+                'Meat/Fish': 'Meat/Fish',
+                'Food Remains': 'Food Remains',
+                'Dairy': 'Dairy',
+                'Bicycle': 'Bicycle'
             },
             nl: {
                 gameOver: 'Game Over',
@@ -800,7 +874,78 @@
                 wasteType6: 'Papier',
                 wasteType7: 'Plastic/Metaal',
                 wasteType8: 'Textiel',
-                wasteType9: 'Organisch'
+                wasteType9: 'Organisch',
+                // Items
+                'Batteries': 'Batterijen',
+                'Computer': 'Computer',
+                'Electrical': 'Elektrisch',
+                'Watch': 'Horloge',
+                'Refrigerator': 'Koelkast',
+                'Mobile Phone': 'Mobiele Telefoon',
+                'Modem': 'Modem',
+                'Virus Protection': 'Virusbescherming',
+                'Big Bag': 'Grote Tas',
+                'CD/DVD': 'CD/DVD',
+                'Cassette': 'Cassette',
+                'Diskette': 'Diskette',
+                'Photo Film': 'Fotorolletje',
+                'Needle': 'Naald',
+                'Magnet': 'Magneet',
+                'Radioactive': 'Radioactief',
+                'Light Bulb': 'Gloeilamp',
+                'Wallpaper': 'Behang',
+                'Furniture': 'Meubilair',
+                'Mattress': 'Matras',
+                'Pan': 'Pan',
+                'Carpet': 'Tapijt',
+                'Tent': 'Tent',
+                'Prosthesis': 'Prothese',
+                'Construction': 'Bouwafval',
+                'Floral Foam': 'Steekschuim',
+                'Treated Wood': 'Behandeld Hout',
+                'Plastic Frame': 'Plastic Frame',
+                'Stationery': 'Kantoorartikelen',
+                'Glass Vase': 'Glazen Vaas',
+                'Glass Bottle': 'Glazen Fles',
+                'Special Paper': 'Speciaal Papier',
+                'Binder': 'Map',
+                'Cardboard': 'Karton',
+                'Drink Carton': 'Drankkarton',
+                'Cardboard Cup': 'Kartonnen Beker',
+                'Chemical': 'Chemisch',
+                'Paint': 'Verf',
+                'Fuel/Oil': 'Brandstof/Olie',
+                'Medicine': 'Medicijnen',
+                'Nail Polish': 'Nagellak',
+                'Aerosol Can': 'Spuitbus',
+                'Metal Can': 'Metalen Blik',
+                'Crown Cap': 'Kroonkurk',
+                'Pouch': 'Zakje',
+                'Clothing': 'Kleding',
+                'Shoes': 'Schoenen',
+                'Textile': 'Textiel',
+                'Plastic Bag': 'Plastic Zak',
+                'Plastic Tray': 'Plastic Bakje',
+                'Plastic Bowl': 'Plastic Kom',
+                'Plastic Card': 'Plastic Kaart',
+                'Utensils': 'Bestek',
+                'Animal Waste': 'Dierlijk Afval',
+                'Sharp Object': 'Scherp Voorwerp',
+                'Crockery': 'Servies',
+                'Candle Wax': 'Kaarsvet',
+                'Adhesive Tape': 'Plakband',
+                'Cheese Paper': 'Kaaspapier',
+                'Coffee Cup': 'Koffiebeker',
+                'Fireworks': 'Vuurwerk',
+                'Fruit Net': 'Fruitnet',
+                'Garden Waste': 'Tuinafval',
+                'Ground': 'Grond',
+                'Plant Remains': 'Plantresten',
+                'Garden Tools': 'Tuingereedschap',
+                'Meat/Fish': 'Vlees/Vis',
+                'Food Remains': 'Etensresten',
+                'Dairy': 'Zuivel',
+                'Bicycle': 'Fiets'
             },
             zh: {
                 gameOver: '游戏结束',
@@ -846,7 +991,78 @@
                 wasteType6: '纸张',
                 wasteType7: '塑料/金属',
                 wasteType8: '纺织品',
-                wasteType9: '有机垃圾'
+                wasteType9: '有机垃圾',
+                // Items
+                'Batteries': '电池',
+                'Computer': '电脑',
+                'Electrical': '电器',
+                'Watch': '手表',
+                'Refrigerator': '冰箱',
+                'Mobile Phone': '手机',
+                'Modem': '调制解调器',
+                'Virus Protection': '杀毒软件',
+                'Big Bag': '大袋子',
+                'CD/DVD': '光盘',
+                'Cassette': '磁带',
+                'Diskette': '软盘',
+                'Photo Film': '胶卷',
+                'Needle': '针头',
+                'Magnet': '磁铁',
+                'Radioactive': '放射性',
+                'Light Bulb': '灯泡',
+                'Wallpaper': '壁纸',
+                'Furniture': '家具',
+                'Mattress': '床垫',
+                'Pan': '平底锅',
+                'Carpet': '地毯',
+                'Tent': '帐篷',
+                'Prosthesis': '假肢',
+                'Construction': '建筑废料',
+                'Floral Foam': '花泥',
+                'Treated Wood': '处理过的木材',
+                'Plastic Frame': '塑料框',
+                'Stationery': '文具',
+                'Glass Vase': '玻璃花瓶',
+                'Glass Bottle': '玻璃瓶',
+                'Special Paper': '特种纸',
+                'Binder': '活页夹',
+                'Cardboard': '纸板',
+                'Drink Carton': '饮料盒',
+                'Cardboard Cup': '纸杯',
+                'Chemical': '化学品',
+                'Paint': '油漆',
+                'Fuel/Oil': '燃料/油',
+                'Medicine': '药品',
+                'Nail Polish': '指甲油',
+                'Aerosol Can': '气溶胶罐',
+                'Metal Can': '金属罐',
+                'Crown Cap': '皇冠盖',
+                'Pouch': '袋子',
+                'Clothing': '衣服',
+                'Shoes': '鞋子',
+                'Textile': '纺织品',
+                'Plastic Bag': '塑料袋',
+                'Plastic Tray': '塑料托盘',
+                'Plastic Bowl': '塑料碗',
+                'Plastic Card': '塑料卡',
+                'Utensils': '餐具',
+                'Animal Waste': '动物粪便',
+                'Sharp Object': '尖锐物体',
+                'Crockery': '陶器',
+                'Candle Wax': '蜡烛',
+                'Adhesive Tape': '胶带',
+                'Cheese Paper': '奶酪纸',
+                'Coffee Cup': '咖啡杯',
+                'Fireworks': '烟花',
+                'Fruit Net': '水果网',
+                'Garden Waste': '园林废弃物',
+                'Ground': '泥土',
+                'Plant Remains': '植物残余',
+                'Garden Tools': '园艺工具',
+                'Meat/Fish': '肉/鱼',
+                'Food Remains': '食物残渣',
+                'Dairy': '乳制品',
+                'Bicycle': '自行车'
             }
         };
 
@@ -2420,6 +2636,23 @@
             });
         }
 
+        function toggleCard(btn, event) {
+            event.stopPropagation();
+            const card = btn.closest('.waste-card');
+            const content = card.querySelector('.card-content');
+            const isExpanded = content.style.display === 'flex';
+
+            content.style.display = isExpanded ? 'none' : 'flex';
+            btn.textContent = isExpanded ? '+' : '-';
+
+            // Toggle expanded class for any other styling
+            if (isExpanded) {
+                card.classList.remove('expanded');
+            } else {
+                card.classList.add('expanded');
+            }
+        }
+
         // Populate waste type guide
         function populateWasteTypeGuide() {
             const grids = [
@@ -2460,16 +2693,21 @@
                 // Create HTML for items with emoji and names
                 let itemsHtml = '';
                 items.forEach(item => {
+                    // Translate item name
+                    const translatedName = t(item.name) || item.name;
                     itemsHtml += `<div style="display: inline-flex; flex-direction: column; align-items: center; margin: 5px; max-width: 70px;">
                         <span style="font-size: 24px;">${item.emoji}</span>
-                        <span style="font-size: 9px; line-height: 1.2; margin-top: 2px; word-wrap: break-word; text-align: center;">${item.name}</span>
+                        <span style="font-size: 9px; line-height: 1.2; margin-top: 2px; word-wrap: break-word; text-align: center;">${translatedName}</span>
                     </div>`;
                 });
 
                 html += `
-                    <div class="waste-card" onclick="this.classList.toggle('expanded')" style="background: ${bgColor}; color: white; padding: 10px; border-radius: 8px; text-align: center; break-inside: avoid; margin-bottom: 15px; display: inline-block; width: 100%;">
-                        <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${typeName}</div>
-                        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 3px;">${itemsHtml}</div>
+                    <div class="waste-card" style="background: ${bgColor}; color: white; padding: 10px; border-radius: 8px; text-align: center; break-inside: avoid; margin-bottom: 15px; display: inline-block; width: 100%;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; cursor: pointer;" onclick="toggleCard(this.querySelector('button'), event)">
+                            <div style="font-weight: bold; font-size: 16px; flex-grow: 1;">${typeName}</div>
+                            <button class="collapse-btn" style="background:none; border:none; color:white; font-size: 24px; cursor:pointer; font-weight: bold; padding: 0 10px;">+</button>
+                        </div>
+                        <div class="card-content" style="display: none; flex-wrap: wrap; justify-content: center; gap: 3px;">${itemsHtml}</div>
                         <div style="font-size: 12px; margin-top: 5px; opacity: 0.8;">${items.length} items</div>
                     </div>
                 `;
@@ -2671,9 +2909,9 @@
         const style = document.createElement('style');
         style.textContent = `
                 @keyframes pulse {
-                    0 % { transform: scale(1); }
-                    50 % { transform: scale(1.2); background: rgba(255, 255, 0, 0.5); }
-                    100 % { transform: scale(1); }
+                    0% { transform: scale(1); }
+                    50% { transform: scale(1.2); background: rgba(255, 255, 0, 0.5); }
+                    100% { transform: scale(1); }
                 }
         `;
         document.head.appendChild(style);
