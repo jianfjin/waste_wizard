@@ -25,6 +25,8 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             max-width: 500px;
             display: none;
+            padding-bottom: 80px;
+            /* Prevent button overlap on mobile */
         }
 
         h1 {
@@ -64,8 +66,8 @@
         }
 
         .gem {
-            width: clamp(30px, 11vw, 50px);
-            height: clamp(30px, 11vw, 50px);
+            width: clamp(30px, 10vw, 50px);
+            height: clamp(30px, 10vw, 50px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -2629,7 +2631,7 @@
                 const isPlayer = score.nickname === playerName && score.time === playerTime;
                 const rowStyle = isPlayer ? 'background: rgba(255,255,0,0.3);' : '';
                 const date = new Date(score.date).toLocaleDateString();
-                html += `< tr style = "${rowStyle}" ><td style="padding: 8px; border: 1px solid #00ffff;">${index + 1}</td><td style="padding: 8px; border: 1px solid #00ffff;">${score.nickname}</td><td style="padding: 8px; border: 1px solid #00ffff;">${formatTime(score.time)}</td><td style="padding: 8px; border: 1px solid #00ffff;">${date}</td></tr > `;
+                html += `<tr style="${rowStyle}"><td style="padding: 8px; border: 1px solid #00ffff;">${index + 1}</td><td style="padding: 8px; border: 1px solid #00ffff;">${score.nickname}</td><td style="padding: 8px; border: 1px solid #00ffff;">${formatTime(score.time)}</td><td style="padding: 8px; border: 1px solid #00ffff;">${date}</td></tr>`;
             });
 
             html += '</table>';
@@ -2638,7 +2640,7 @@
             // Show player's entry if not in top 10
             const playerInTop10 = scores.some(score => score.nickname === playerName && score.time === playerTime);
             if (!playerInTop10) {
-                playerEntry.textContent = `Your Time: ${playerName} - ${formatTime(playerTime)} `;
+                playerEntry.textContent = `Your Time: ${playerName} - ${formatTime(playerTime)}`;
             } else {
                 playerEntry.textContent = '';
             }
