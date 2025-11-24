@@ -32,6 +32,12 @@
             overflow-x: auto;
         }
 
+        @media (min-width: 640px) {
+            #gameContainer {
+                max-width: 800px;
+            }
+        }
+
         h1 {
             text-align: center;
             color: #fff;
@@ -60,7 +66,7 @@
 
         #gameBoard {
             display: grid;
-            grid-template-columns: repeat(8, 1fr);
+            /* grid-template-columns will be set via JS */
             gap: 5px;
             margin: 0 auto;
             background: rgba(0, 0, 0, 0.3);
@@ -1147,7 +1153,9 @@
             { emoji: '🚲', name: 'Bicycle', type: 3 }
         ];
 
-        const BOARD_SIZE = 8;
+        // const BOARD_SIZE = 8; // Replaced by dynamic ROWS and COLS
+        let ROWS = 8;
+        let COLS = 8;
         const TYPES_COUNT = 10;
 
         // Game state
@@ -1201,16 +1209,35 @@
             }
         }
 
+        function setBoardDimensions() {
+            if (window.innerWidth <= 640) {
+                // Mobile
+                COLS = 6;
+                ROWS = 10;
+            } else {
+                // Desktop
+                COLS = 10;
+                ROWS = 6;
+            }
+
+            const gameBoard = document.getElementById('gameBoard');
+            if (gameBoard) {
+                gameBoard.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+            }
+            console.log(`Board dimensions set to: ${ROWS}x${COLS}`);
+        }
+
         function initBoard() {
+            setBoardDimensions();
             board = [];
             let attempts = 0;
             const maxAttempts = 100;
 
             do {
                 board = [];
-                for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let row = 0; row < ROWS; row++) {
                     board[row] = [];
-                    for (let col = 0; col < BOARD_SIZE; col++) {
+                    for (let col = 0; col < COLS; col++) {
                         board[row][col] = createRandomGem();
                     }
                 }
@@ -1237,28 +1264,32 @@
             const gameBoard = document.getElementById('gameBoard');
             gameBoard.innerHTML = '';
 
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
-                    const gemDiv = document.createElement('div');
-                    gemDiv.id = `gem-${row}-${col}`;
-                    gemDiv.dataset.row = row;
-                    gemDiv.dataset.col = col;
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const gem = board[row][col];
+                    const gemElement = document.createElement('div');
+                    gemElement.classList.add('gem');
+                    gemElement.id = `gem-${row}-${col}`;
 
-                    if (board[row][col]) {
-                        gemDiv.className = `gem waste-type-${board[row][col].type % 10}`;
-                        gemDiv.setAttribute('data-type', board[row][col].type);
-                        gemDiv.textContent = board[row][col].emoji;
-                        gemDiv.title = board[row][col].name;
+                    if (gem) {
+                        gemElement.textContent = gem.emoji;
+                        // Add type class for styling if needed
+                        gemElement.classList.add(`type-${gem.type}`);
+
+                        if (selectedGem && selectedGem.row === row && selectedGem.col === col) {
+                            gemElement.classList.add('selected');
+                        }
+
+                        gemElement.addEventListener('click', () => selectGem(row, col));
+                        gemElement.addEventListener('touchstart', (e) => {
+                            e.preventDefault(); // Prevent default touch behavior
+                            selectGem(row, col);
+                        }, { passive: false });
                     } else {
-                        gemDiv.className = 'gem empty';
+                        gemElement.classList.add('empty');
                     }
 
-                    if (selectedGem && selectedGem.row === row && selectedGem.col === col) {
-                        gemDiv.classList.add('selected');
-                    }
-
-                    gemDiv.onclick = () => selectGem(row, col);
-                    gameBoard.appendChild(gemDiv);
+                    gameBoard.appendChild(gemElement);
                 }
             }
         }
@@ -1339,9 +1370,9 @@
 
             // Log the board state after swap for debugging
             console.log('Board state after swap:');
-            for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let r = 0; r < ROWS; r++) {
                 let rowStr = '';
-                for (let c = 0; c < BOARD_SIZE; c++) {
+                for (let c = 0; c < COLS; c++) {
                     if (board[r][c]) {
                         rowStr += board[r][c].emoji + ' ';
                     } else {
@@ -1353,9 +1384,9 @@
 
             // Also log types for easier understanding
             console.log('Board types after swap:');
-            for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let r = 0; r < ROWS; r++) {
                 let typeStr = '';
-                for (let c = 0; c < BOARD_SIZE; c++) {
+                for (let c = 0; c < COLS; c++) {
                     if (board[r][c]) {
                         typeStr += board[r][c].type + ' ';
                     } else {
@@ -1396,62 +1427,55 @@
         function findMatches() {
             const matches = [];
 
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                let count = 1;
-                let currentType = board[row][0]?.type;
+            // Check horizontal matches
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS - 2; col++) {
+                    const gem1 = board[row][col];
+                    const gem2 = board[row][col + 1];
+                    const gem3 = board[row][col + 2];
 
-                for (let col = 1; col < BOARD_SIZE; col++) {
-                    if (board[row][col] && board[row][col].type === currentType) {
-                        count++;
-                    } else {
-                        if (count >= 3) {
-                            for (let i = col - count; i < col; i++) {
-                                matches.push({ row, col: i });
-                            }
-                        }
-                        count = 1;
-                        currentType = board[row][col]?.type;
-                    }
-                }
-                if (count >= 3) {
-                    for (let i = BOARD_SIZE - count; i < BOARD_SIZE; i++) {
-                        matches.push({ row, col: i });
+                    if (gem1 && gem2 && gem3 && gem1.type === gem2.type && gem1.type === gem3.type) {
+                        matches.push({ row, col });
+                        matches.push({ row, col: col + 1 });
+                        matches.push({ row, col: col + 2 });
                     }
                 }
             }
 
-            for (let col = 0; col < BOARD_SIZE; col++) {
-                let count = 1;
-                let currentType = board[0][col]?.type;
+            // Check vertical matches
+            for (let col = 0; col < COLS; col++) {
+                for (let row = 0; row < ROWS - 2; row++) {
+                    const gem1 = board[row][col];
+                    const gem2 = board[row + 1][col];
+                    const gem3 = board[row + 2][col];
 
-                for (let row = 1; row < BOARD_SIZE; row++) {
-                    if (board[row][col] && board[row][col].type === currentType) {
-                        count++;
-                    } else {
-                        if (count >= 3) {
-                            for (let i = row - count; i < row; i++) {
-                                matches.push({ row: i, col });
-                            }
-                        }
-                        count = 1;
-                        currentType = board[row][col]?.type;
-                    }
-                }
-                if (count >= 3) {
-                    for (let i = BOARD_SIZE - count; i < BOARD_SIZE; i++) {
-                        matches.push({ row: i, col });
+                    if (gem1 && gem2 && gem3 && gem1.type === gem2.type && gem1.type === gem3.type) {
+                        matches.push({ row, col });
+                        matches.push({ row: row + 1, col });
+                        matches.push({ row: row + 2, col });
                     }
                 }
             }
 
-            return matches;
+            // Filter out duplicate match positions
+            const uniqueMatches = [];
+            const seen = new Set();
+            matches.forEach(match => {
+                const key = `${match.row}-${match.col}`;
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    uniqueMatches.push(match);
+                }
+            });
+
+            return uniqueMatches;
         }
 
         // Helper function to count remaining gems on the board
         function countRemainingGems() {
             let count = 0;
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     if (board[row][col]) {
                         count++;
                     }
@@ -1463,8 +1487,8 @@
         // Helper function to get all remaining gems as an array
         function getAllRemainingGems() {
             const gems = [];
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     if (board[row][col]) {
                         gems.push(board[row][col]);
                     }
@@ -1564,15 +1588,15 @@
         }
 
         function applyGravity() {
-            for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let col = 0; col < COLS; col++) {
                 const gems = [];
-                for (let row = BOARD_SIZE - 1; row >= 0; row--) {
+                for (let row = ROWS - 1; row >= 0; row--) {
                     if (board[row][col]) {
                         gems.push(board[row][col]);
                     }
                 }
 
-                for (let row = BOARD_SIZE - 1; row >= 0; row--) {
+                for (let row = ROWS - 1; row >= 0; row--) {
                     if (gems.length > 0) {
                         board[row][col] = gems.shift();
                     } else {
@@ -1591,8 +1615,8 @@
         }
 
         function isBoardEmpty() {
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     if (board[row][col]) {
                         return false;
                     }
@@ -1605,13 +1629,13 @@
         function hasValidMoves() {
             const validSwaps = [];
             // Try swapping adjacent gems to see if any match can be created
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     // Skip if current position is empty
                     if (!board[row][col]) continue;
 
                     // Check right neighbor
-                    if (col < BOARD_SIZE - 1 && board[row][col + 1]) {
+                    if (col < COLS - 1 && board[row][col + 1]) {
                         swapGemsTest(row, col, row, col + 1);
                         const matches = findMatches();
                         if (matches.length > 0) {
@@ -1624,7 +1648,7 @@
                         swapGemsTest(row, col, row, col + 1); // Swap back
                     }
                     // Check bottom neighbor
-                    if (row < BOARD_SIZE - 1 && board[row + 1][col]) {
+                    if (row < ROWS - 1 && board[row + 1][col]) {
                         swapGemsTest(row, col, row + 1, col);
                         const matches = findMatches();
                         if (matches.length > 0) {
@@ -1661,8 +1685,8 @@
 
             // Collect all existing non-null gems from the current board
             const existingGems = [];
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     if (board[row][col]) {
                         existingGems.push(board[row][col]);
                     }
@@ -1685,8 +1709,8 @@
 
             // Collect all existing non-null gems from the current board
             const existingGems = [];
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     if (board[row][col]) {
                         existingGems.push(board[row][col]);
                     }
@@ -1766,8 +1790,8 @@
             }
 
             // Clear the board
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     board[row][col] = null;
                 }
             }
@@ -1802,7 +1826,7 @@
 
                 // Pick a random different type for the middle gem
                 const otherTypes = Object.keys(gemsByType).filter(type => type !== chosenType);
-                const otherType = otherTypes[Math.floor(Math.random() * otherTypes.length)];
+                const otherType = otherTypes.length > 0 ? otherTypes[Math.floor(Math.random() * otherTypes.length)] : chosenType; // Fallback to chosenType if no other types
                 const middleGem = gemsByType[otherType][0];
 
                 // Choose horizontal or vertical placement
@@ -1810,12 +1834,12 @@
                 let row, col, positions;
 
                 if (useHorizontal) {
-                    row = Math.floor(Math.random() * BOARD_SIZE);
-                    col = Math.floor(Math.random() * (BOARD_SIZE - 2));
+                    row = Math.floor(Math.random() * ROWS);
+                    col = Math.floor(Math.random() * (COLS - 2));
                     positions = [`${row}-${col}`, `${row}-${col + 1}`, `${row}-${col + 2}`];
                 } else {
-                    col = Math.floor(Math.random() * BOARD_SIZE);
-                    row = Math.floor(Math.random() * (BOARD_SIZE - 2));
+                    col = Math.floor(Math.random() * COLS);
+                    row = Math.floor(Math.random() * (ROWS - 2));
                     positions = [`${row}-${col}`, `${row + 1}-${col}`, `${row + 2}-${col}`];
                 }
 
@@ -1861,8 +1885,8 @@
             });
 
             // Clear all positions except the guaranteed move positions
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                for (let c = 0; c < BOARD_SIZE; c++) {
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
                     const pos = `${r}-${c}`;
                     if (!placedPositions.has(pos)) {
                         board[r][c] = null;
@@ -1877,7 +1901,7 @@
             const rowsNeeded = Math.ceil(numGems / colsNeeded);
 
             // Start from bottom-left to leave room for gravity effects
-            const startRow = BOARD_SIZE - rowsNeeded;
+            const startRow = ROWS - rowsNeeded;
             const startCol = 0;
 
             // Shuffle remaining gems for variety
@@ -1894,7 +1918,7 @@
                 const col = startCol + (i % colsNeeded);
 
                 // Safety check
-                if (row < BOARD_SIZE && col < BOARD_SIZE) {
+                if (row < ROWS && col < COLS) {
                     board[row][col] = gem;
                 }
             }
@@ -1903,8 +1927,8 @@
             // This is especially important when there are < 20 gems
             if (remainingGems.length < 20) {
                 const allPositions = [];
-                for (let r = 0; r < BOARD_SIZE; r++) {
-                    for (let c = 0; c < BOARD_SIZE; c++) {
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
                         if (board[r][c] && !placedPositions.has(`${r}-${c}`)) {
                             allPositions.push({ r, c });
                         }
@@ -1930,15 +1954,15 @@
                         const row = startRow + Math.floor(i / (colsNeeded - 1));
                         const col = startCol + (i % (colsNeeded - 1));
 
-                        if (row < BOARD_SIZE && col < BOARD_SIZE && board[row][col] === null) {
+                        if (row < ROWS && col < COLS && board[row][col] === null) {
                             board[row][col] = gem;
                         } else {
                             // Find first available spot
-                            for (let r = startRow; r < BOARD_SIZE; r++) {
-                                for (let c = 0; c < BOARD_SIZE; c++) {
+                            for (let r = startRow; r < ROWS; r++) {
+                                for (let c = 0; c < COLS; c++) {
                                     if (board[r][c] === null) {
                                         board[r][c] = gem;
-                                        r = BOARD_SIZE; // Break outer loop
+                                        r = ROWS; // Break outer loop
                                         break;
                                     }
                                 }
@@ -1969,8 +1993,8 @@
                 // Count gems by type
                 const typeCount = {};
                 let totalGems = 0;
-                for (let r = 0; r < BOARD_SIZE; r++) {
-                    for (let c = 0; c < BOARD_SIZE; c++) {
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
                         if (board[r][c] && !placedPositions.has(`${r}-${c}`)) {
                             const type = board[r][c].type;
                             typeCount[type] = (typeCount[type] || 0) + 1;
@@ -1992,8 +2016,8 @@
 
                 // Try different COMPACT arrangement strategies
                 const allGems = [];
-                for (let r = 0; r < BOARD_SIZE; r++) {
-                    for (let c = 0; c < BOARD_SIZE; c++) {
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
                         if (board[r][c] && !placedPositions.has(`${r}-${c}`)) {
                             allGems.push(board[r][c]);
                         }
@@ -2014,8 +2038,8 @@
                     arrangementTried++;
 
                     // Clear board except guaranteed move
-                    for (let r = 0; r < BOARD_SIZE; r++) {
-                        for (let c = 0; c < BOARD_SIZE; c++) {
+                    for (let r = 0; r < ROWS; r++) {
+                        for (let c = 0; c < COLS; c++) {
                             const pos = `${r}-${c}`;
                             if (!placedPositions.has(pos)) {
                                 board[r][c] = null;
@@ -2024,8 +2048,8 @@
                     }
 
                     // For small counts, start from bottom-left corner always for consistency
-                    const anchorRow = isSmallCount ? BOARD_SIZE - 2 : Math.floor(Math.random() * (BOARD_SIZE - 2));
-                    const anchorCol = isSmallCount ? 0 : Math.floor(Math.random() * (BOARD_SIZE - 2));
+                    const anchorRow = isSmallCount ? ROWS - 2 : Math.floor(Math.random() * (ROWS - 2));
+                    const anchorCol = isSmallCount ? 0 : Math.floor(Math.random() * (COLS - 2));
 
                     // Shuffle gems
                     const shuffled = [...allGems];
@@ -2055,7 +2079,7 @@
                         types.forEach(type => {
                             const gemsOfType = gemsByType[type];
                             gemsOfType.forEach(gem => {
-                                if (col >= BOARD_SIZE) {
+                                if (col >= COLS) {
                                     row--;
                                     col = 0;
                                 }
@@ -2073,7 +2097,7 @@
                         for (let i = 0; i < shuffled.length; i++) {
                             const row = anchorRow + Math.floor(i / colsNeeded);
                             const col = anchorCol + (i % colsNeeded);
-                            if (row < BOARD_SIZE && col < BOARD_SIZE) {
+                            if (row < ROWS && col < COLS) {
                                 board[row][col] = shuffled[i];
                             }
                         }
@@ -2088,12 +2112,12 @@
 
                 // Strategy 2: Try spiral compaction
                 if (!foundValidBoard && arrangementTried < maxArrangements) {
-                    const centerR = Math.floor(BOARD_SIZE / 2);
-                    const centerC = Math.floor(BOARD_SIZE / 2);
+                    const centerR = Math.floor(ROWS / 2);
+                    const centerC = Math.floor(COLS / 2);
 
                     // Clear board
-                    for (let r = 0; r < BOARD_SIZE; r++) {
-                        for (let c = 0; c < BOARD_SIZE; c++) {
+                    for (let r = 0; r < ROWS; r++) {
+                        for (let c = 0; c < COLS; c++) {
                             const pos = `${r}-${c}`;
                             if (!placedPositions.has(pos)) {
                                 board[r][c] = null;
@@ -2103,7 +2127,7 @@
 
                     // Create spiral positions
                     const spiralPositions = [];
-                    let top = 0, bottom = BOARD_SIZE - 1, left = 0, right = BOARD_SIZE - 1;
+                    let top = 0, bottom = ROWS - 1, left = 0, right = COLS - 1;
 
                     while (top <= bottom && left <= right) {
                         for (let c = left; c <= right; c++) spiralPositions.push({ r: top, c });
@@ -2155,8 +2179,8 @@
                     // Final check: Is it mathematically impossible?
                     const typeCount = {};
                     let totalGems = 0;
-                    for (let r = 0; r < BOARD_SIZE; r++) {
-                        for (let c = 0; c < BOARD_SIZE; c++) {
+                    for (let r = 0; r < ROWS; r++) {
+                        for (let c = 0; c < COLS; c++) {
                             if (board[r][c]) {
                                 const type = board[r][c].type;
                                 typeCount[type] = (typeCount[type] || 0) + 1;
@@ -2194,15 +2218,15 @@
         // Create a board that is guaranteed to have at least one valid move
         function createGuaranteedValidBoard() {
             // Clear board
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     board[row][col] = null;
                 }
             }
 
             // Fill board with random gems first
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     board[row][col] = createRandomGem();
                 }
             }
@@ -2221,8 +2245,8 @@
 
                     // Try horizontal swap pattern
                     if (Math.random() < 0.5) {
-                        const row = Math.floor(Math.random() * BOARD_SIZE);
-                        const col = Math.floor(Math.random() * (BOARD_SIZE - 2));
+                        const row = Math.floor(Math.random() * ROWS);
+                        const col = Math.floor(Math.random() * (COLS - 2));
 
                         // We'll place X Y X pattern (positions col, col+1, col+2)
                         // Where Y is different from X
@@ -2284,8 +2308,8 @@
                         }
                     } else {
                         // Try vertical swap pattern
-                        const row = Math.floor(Math.random() * (BOARD_SIZE - 2));
-                        const col = Math.floor(Math.random() * BOARD_SIZE);
+                        const row = Math.floor(Math.random() * (ROWS - 2));
+                        const col = Math.floor(Math.random() * COLS);
 
                         // We'll place X Y X pattern vertically (rows row, row+1, row+2)
                         const pos1 = `${row}-${col}`;
@@ -2492,8 +2516,8 @@
             let checkedPositions = 0;
             let emptyPositions = 0;
 
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     checkedPositions++;
 
                     // Skip if current position is empty
@@ -2503,7 +2527,7 @@
                     }
 
                     // Check right neighbor
-                    if (col < BOARD_SIZE - 1 && board[row][col + 1]) {
+                    if (col < COLS - 1 && board[row][col + 1]) {
                         swapGemsTest(row, col, row, col + 1);
                         const matches = findMatches();
                         swapGemsTest(row, col, row, col + 1); // Swap back
@@ -2518,7 +2542,7 @@
                     }
 
                     // Check bottom neighbor
-                    if (row < BOARD_SIZE - 1 && board[row + 1][col]) {
+                    if (row < ROWS - 1 && board[row + 1][col]) {
                         swapGemsTest(row, col, row + 1, col);
                         const matches = findMatches();
                         swapGemsTest(row, col, row + 1, col); // Swap back
