@@ -72,6 +72,7 @@
             background: rgba(0, 0, 0, 0.3);
             padding: 10px;
             border-radius: 15px;
+            justify-content: center;
         }
 
         .gem {
@@ -1274,7 +1275,7 @@
                     if (gem) {
                         gemElement.textContent = gem.emoji;
                         // Add type class for styling if needed
-                        gemElement.classList.add(`type-${gem.type}`);
+                        gemElement.classList.add(`waste-type-${gem.type}`);
 
                         if (selectedGem && selectedGem.row === row && selectedGem.col === col) {
                             gemElement.classList.add('selected');
