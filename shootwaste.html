@@ -921,7 +921,8 @@
                         connected: true,
                         isHost: true,
                         score: 0,
-                        targetType: this.targetType
+                        targetType: this.targetType,
+                        dead: false
                     });
 
                     this.players = this.gameState.players;
@@ -1078,6 +1079,12 @@
                     case 'damage':
                         this.handleDamageEvent(message);
                         break;
+                    case 'player_hit':
+                        this.handlePlayerHit(message);
+                        break;
+                    case 'score_update':
+                        this.handleScoreUpdate(message, fromPeer);
+                        break;
                 }
             }
 
@@ -1109,6 +1116,9 @@
                     targetType = availableTypes.length > 0
                         ? availableTypes[Math.floor(Math.random() * availableTypes.length)]
                         : wasteTypes[Math.floor(Math.random() * wasteTypes.length)];
+                } else {
+                    // Cooperative mode: use host's target type
+                    targetType = this.gameState.targetType || this.targetType;
                 }
 
                 this.gameState.players.set(fromPeer, {
@@ -1117,11 +1127,12 @@
                     x: 400,
                     y: 520,
                     rotation: 0,
-                    lives: 5,
+                    lives: 5, // Initialize with 5 lives
                     connected: true,
                     isHost: false,
                     score: 0,
-                    targetType: targetType
+                    targetType: targetType,
+                    dead: false
                 });
 
                 this.players = this.gameState.players;
@@ -1170,12 +1181,13 @@
                     score: 0,
                     lives: 5,
                     gameMode: this.gameMode,
+                    targetType: this.targetType,  // Set the received target type to gameState
                     timestamp: Date.now()
                 };
 
                 this.players = this.gameState.players;
                 this.showCurrentLobby();
-                console.log('Successfully joined game');
+                console.log('Successfully joined game. Target:', this.targetType);
             }
 
             // Handle player position updates
@@ -1248,7 +1260,19 @@
                 if (message.score !== undefined) {
                     gameState.score = message.score;
                     document.getElementById('score').textContent = message.score;
+
+                    // Update team score display if it exists
+                    const teamScoreEl = document.getElementById('teamScoreDisplay');
+                    if (teamScoreEl) {
+                        teamScoreEl.textContent = message.score;
+                    }
                 }
+
+                // Don't overwrite local lives with global state
+                // if (message.lives !== undefined) {
+                //    gameState.lives = message.lives;
+                //    document.getElementById('lives').textContent = message.lives;
+                // }
 
                 // Update competitive scores
                 if (this.gameMode === 'competitive' && message.playerScores) {
@@ -1471,7 +1495,7 @@
                     type: 'game_state',
                     enemies: enemiesData,
                     score: gameState.score,
-                    lives: gameState.lives,
+                    // lives: gameState.lives, // Don't sync global lives anymore
                     timestamp: Date.now()
                 });
             }
@@ -1516,6 +1540,127 @@
                 }
             }
 
+            // Report player hit to host
+            reportPlayerHit() {
+                if (!this.isMultiplayer) return;
+
+                if (this.isHost) {
+                    // Host hit logic
+                    this.handlePlayerHit({ playerId: this.playerId });
+                } else {
+                    // Client hit - send to host
+                    const hostConn = this.connections.get(this.gameId);
+                    if (hostConn && hostConn.open) {
+                        hostConn.send({
+                            type: 'player_hit',
+                            playerId: this.playerId,
+                            timestamp: Date.now()
+                        });
+                    }
+                }
+            }
+
+            // Handle player hit (Host only)
+            handlePlayerHit(message) {
+                if (!this.isHost) return;
+
+                const playerId = message.playerId;
+
+                // Update player lives in host's state
+                if (this.players.has(playerId)) {
+                    const player = this.players.get(playerId);
+                    if (!player.dead) {
+                        player.lives = (player.lives || 5) - 1;
+
+                        console.log(`Player ${player.nickname} hit! Lives remaining: ${player.lives}`);
+
+                        if (player.lives <= 0) {
+                            player.lives = 0;
+                            player.dead = true;
+                            console.log(`Player ${player.nickname} died!`);
+
+                            // Check if ALL players are dead
+                            this.checkAllPlayersDead();
+                        }
+                    }
+                } else if (playerId === this.playerId) {
+                    // Host self-update (should be in players map too, but just in case)
+                    // Actually host adds themselves to players map in createGame usually? 
+                    // Let's ensure host is in players map.
+                    // If not, we handle host separately or ensure host is in map.
+                    // For now assuming host is in map or we check separately.
+
+                    // Host lives are tracked in gameState.lives locally, but for multiplayer logic
+                    // we should also track it in the players map if possible, or check gameState.lives.
+
+                    // Let's assume we sync host lives to players map for consistency
+                    if (this.players.has(this.playerId)) {
+                        // Already handled above
+                    } else {
+                        // Host might not be in their own map? Let's check createGame.
+                        // createGame doesn't seem to add host to players map explicitly?
+                        // It calls showCurrentLobby -> updateLobbyInfo -> updateLobbyDisplay
+                        // updateLobbyDisplay iterates this.players.
+                        // So host MUST be in this.players.
+                    }
+                }
+            }
+
+            // Check if all players are dead
+            checkAllPlayersDead() {
+                let allDead = true;
+                let aliveCount = 0;
+
+                this.players.forEach(p => {
+                    if (!p.dead && p.connected) {
+                        allDead = false;
+                        aliveCount++;
+                    }
+                });
+
+                console.log(`Alive players: ${aliveCount}`);
+
+                if (allDead) {
+                    console.log('💀 ALL PLAYERS DEAD - GAME OVER');
+                    this.broadcastGameOver();
+
+                    // Trigger local game over for host
+                    gameState.gameOver = true;
+                    document.getElementById('gameOver').style.display = 'block';
+                    // ... standard game over UI update ...
+                    const accuracy = gameState.totalKills > 0
+                        ? (gameState.correctKills / gameState.totalKills)
+                        : 0;
+                    const finalScore = Math.round(gameState.score * accuracy * accuracy);
+                    document.getElementById('finalScore').innerHTML = `
+                        ${t('finalScore')} ${finalScore}<br>
+                        <small>Base Score: ${gameState.score} | Accuracy: ${(accuracy * 100).toFixed(1)}%</small>
+                    `;
+                    // setTimeout(() => promptNicknameAndSave(finalScore), 500);
+                }
+            }
+
+            // Handle score update from client (Host only)
+            handleScoreUpdate(message, fromPeer) {
+                if (!this.isHost || this.gameMode !== 'cooperative') return;
+
+                // Track each player's last reported score
+                if (!this.playerScores) {
+                    this.playerScores = new Map();
+                }
+
+                const previousScore = this.playerScores.get(fromPeer) || 0;
+                const scoreDelta = message.score - previousScore;
+
+                // Update player's score tracking
+                this.playerScores.set(fromPeer, message.score);
+
+                // Add the delta to the host's team score
+                gameState.score += scoreDelta;
+                document.getElementById('score').textContent = gameState.score;
+
+                console.log(`Score update from ${fromPeer}: +${scoreDelta} (total: ${gameState.score})`);
+            }
 
 
             // Handle game start
@@ -2779,7 +2924,8 @@
             rotation: 0, // 0 is upright
             rotationSpeed: 0.05,
             rollAngle: 0, // For body roll effect
-            horizontalVelocity: 0 // Track horizontal movement for roll effect
+            horizontalVelocity: 0, // Track horizontal movement for roll effect
+            dead: false
         };
 
         // Enemies
@@ -3208,7 +3354,9 @@
                     updateCompetitiveUI();
                 } else {
                     // Show cooperative UI
-                    document.getElementById('multiplayerScore').style.display = 'block';
+                    const scoreDiv = document.getElementById('multiplayerScore');
+                    scoreDiv.style.display = 'block';
+                    scoreDiv.innerHTML = '<h4 style="margin: 0 0 5px 0; color: #00ffff;">Team Score: <span id="teamScoreDisplay">0</span></h4>';
                     document.getElementById('multiplayerCompetitiveUI').style.display = 'none';
                 }
             }
@@ -3944,8 +4092,10 @@
                 document.getElementById('bossLabel').style.display = 'none';
                 document.getElementById('bossHealthBar').style.display = 'none';
                 document.getElementById('victory').style.display = 'block';
-                // Prompt for nickname and show leaderboard
-                setTimeout(() => promptNicknameAndSave(finalScore), 500);
+                // Prompt for nickname and show leaderboard only in single player
+                if (!window.peerManager || !window.peerManager.isMultiplayer) {
+                    setTimeout(() => promptNicknameAndSave(finalScore), 500);
+                }
             }
         }
 
@@ -4142,19 +4292,21 @@
             // Track horizontal movement for body roll effect
             let previousX = player.x;
 
-            if (keys['ArrowLeft'] && player.x > 0) {
-                player.x -= player.speed;
-                movingLeft = true;
-            }
-            if (keys['ArrowRight'] && player.x < canvas.width - player.width) {
-                player.x += player.speed;
-                movingRight = true;
-            }
-            if (keys['ArrowUp'] && player.y > 0) {
-                player.y -= player.speed;
-            }
-            if (keys['ArrowDown'] && player.y < canvas.height - player.height) {
-                player.y += player.speed;
+            if (!player.dead) {
+                if (keys['ArrowLeft'] && player.x > 0) {
+                    player.x -= player.speed;
+                    movingLeft = true;
+                }
+                if (keys['ArrowRight'] && player.x < canvas.width - player.width) {
+                    player.x += player.speed;
+                    movingRight = true;
+                }
+                if (keys['ArrowUp'] && player.y > 0) {
+                    player.y -= player.speed;
+                }
+                if (keys['ArrowDown'] && player.y < canvas.height - player.height) {
+                    player.y += player.speed;
+                }
             }
 
             // Calculate horizontal velocity for body roll effect
@@ -4169,18 +4321,21 @@
             player.rollAngle += (targetRoll - player.rollAngle) * rollSpeed;
 
             // Rotation controlled by A and D keys (like spaceshooter.html)
-            if ((keys['a'] || keys['A']) && !(keys['d'] || keys['D'])) {
-                player.rotation -= player.rotationSpeed;
-            } else if ((keys['d'] || keys['D']) && !(keys['a'] || keys['A'])) {
-                player.rotation += player.rotationSpeed;
-            } else {
-                // Smoothly return to upright position when no rotation key is pressed
-                if (player.rotation > 0) {
-                    player.rotation = Math.max(0, player.rotation - player.rotationSpeed / 2);
-                } else if (player.rotation < 0) {
-                    player.rotation = Math.min(0, player.rotation + player.rotationSpeed / 2);
+            if (!player.dead) {
+                if ((keys['a'] || keys['A']) && !(keys['d'] || keys['D'])) {
+                    player.rotation -= player.rotationSpeed;
+                } else if ((keys['d'] || keys['D']) && !(keys['a'] || keys['A'])) {
+                    player.rotation += player.rotationSpeed;
+                } else {
+                    // Smoothly return to upright position when no rotation key is pressed
+                    if (player.rotation > 0) {
+                        player.rotation = Math.max(0, player.rotation - player.rotationSpeed / 2);
+                    } else if (player.rotation < 0) {
+                        player.rotation = Math.min(0, player.rotation + player.rotationSpeed / 2);
+                    }
                 }
             }
+
 
             // Keep rotation within -PI to PI range for consistency
             if (player.rotation > Math.PI) player.rotation -= Math.PI * 2;
@@ -4196,7 +4351,7 @@
             }
 
             // Shooting
-            if (isShooting) {
+            if (isShooting && !player.dead) {
                 shoot();
             }
 
@@ -4324,7 +4479,7 @@
                                     playSound('failed');
                                 }
                             } else {
-                                // Cooperative mode or single player - original logic
+                                //Cooperative mode or single player - original logic
                                 if (enemy.wasteType === gameState.targetType) {
                                     gameState.correctKills++;
                                     gameState.score += 10;
@@ -4357,10 +4512,36 @@
 
                                     // Play explosion sound for correct hit
                                     playSound('explosion');
+
+                                    // Send score update to host in cooperative multiplayer
+                                    if (window.peerManager && window.peerManager.isMultiplayer &&
+                                        window.peerManager.gameMode === 'cooperative' && !window.peerManager.isHost) {
+                                        const hostConn = window.peerManager.connections.get(window.peerManager.gameId);
+                                        if (hostConn && hostConn.open) {
+                                            hostConn.send({
+                                                type: 'score_update',
+                                                score: gameState.score,
+                                                timestamp: Date.now()
+                                            });
+                                        }
+                                    }
                                 } else {
                                     // Wrong waste type - deduct points and play failed sound
                                     gameState.score -= 10;
                                     playSound('failed');
+
+                                    // Send score update to host in cooperative multiplayer
+                                    if (window.peerManager && window.peerManager.isMultiplayer &&
+                                        window.peerManager.gameMode === 'cooperative' && !window.peerManager.isHost) {
+                                        const hostConn = window.peerManager.connections.get(window.peerManager.gameId);
+                                        if (hostConn && hostConn.open) {
+                                            hostConn.send({
+                                                type: 'score_update',
+                                                score: gameState.score,
+                                                timestamp: Date.now()
+                                            });
+                                        }
+                                    }
                                 }
                             }
 
@@ -4400,31 +4581,44 @@
                 }
 
                 // Check collision with player
-                if (checkCollision(player, enemy)) {
+                if (!player.dead && checkCollision(player, enemy)) {
                     gameState.lives--;
                     enemies.splice(i, 1);
                     createExplosion(player.x + player.width / 2, player.y + player.height / 2);
                     playSound('hit');
 
-                    if (gameState.lives <= 0) {
-                        gameState.gameOver = true;
+                    // Report hit in multiplayer
+                    if (window.peerManager && window.peerManager.isMultiplayer) {
+                        window.peerManager.reportPlayerHit();
+                    }
 
-                        // Broadcast game over in PeerJS cooperative mode if host dies
-                        if (window.peerManager && window.peerManager.isHost && window.peerManager.isMultiplayer &&
-                            window.peerManager.gameMode === 'cooperative') {
-                            window.peerManager.broadcastGameOver();
+                    if (gameState.lives <= 0) {
+                        player.dead = true;
+
+                        // Only trigger immediate game over if NOT in multiplayer cooperative mode
+                        // In cooperative mode, PeerManager handles the "all players dead" check
+                        const isCoopMultiplayer = window.peerManager &&
+                            window.peerManager.isMultiplayer &&
+                            window.peerManager.gameMode === 'cooperative';
+
+                        if (!isCoopMultiplayer) {
+                            gameState.gameOver = true;
+
+                            const accuracy = gameState.totalKills > 0
+                                ? (gameState.correctKills / gameState.totalKills)
+                                : 0;
+                            const finalScore = Math.round(gameState.score * accuracy * accuracy);
+                            document.getElementById('finalScore').innerHTML = `
+                                ${t('finalScore')} ${finalScore}<br>
+                                <small>Base Score: ${gameState.score} | Accuracy: ${(accuracy * 100).toFixed(1)}%</small>
+                            `;
+                            document.getElementById('gameOver').style.display = 'block';
+                            // Prompt for nickname and show leaderboard
+                            setTimeout(() => promptNicknameAndSave(finalScore), 500);
+                        } else {
+                            // In multiplayer, just show a "You Died" message or spectate mode
+                            showComboText('YOU DIED! Waiting for teammates...');
                         }
-                        const accuracy = gameState.totalKills > 0
-                            ? (gameState.correctKills / gameState.totalKills)
-                            : 0;
-                        const finalScore = Math.round(gameState.score * accuracy * accuracy);
-                        document.getElementById('finalScore').innerHTML = `
-                            ${t('finalScore')} ${finalScore}<br>
-                            <small>Base Score: ${gameState.score} | Accuracy: ${(accuracy * 100).toFixed(1)}%</small>
-                        `;
-                        document.getElementById('gameOver').style.display = 'block';
-                        // Prompt for nickname and show leaderboard
-                        setTimeout(() => promptNicknameAndSave(finalScore), 500);
                     }
                 }
             }
@@ -4915,48 +5109,88 @@
                 ctx.restore();
             }
 
-            // Draw player (symmetrical spaceship - copied from spaceshooter.html)
-            ctx.save();
-            ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
-            ctx.rotate(player.rotation);
+            // Draw player (if not dead)
+            if (!player.dead) {
+                ctx.save();
+                ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
 
-            // Calculate wing scale factors based on roll angle for body roll effect
-            const baseWingScale = 1.0;
-            const rollEffectStrength = 0.4; // How much the wings scale
-            const leftWingScale = baseWingScale + (player.rollAngle * rollEffectStrength);
-            const rightWingScale = baseWingScale - (player.rollAngle * rollEffectStrength);
+                // Apply roll rotation
+                ctx.rotate(player.rotation + player.rollAngle);
 
-            ctx.fillStyle = '#00ffff';
-            ctx.shadowColor = '#00ffff';
-            ctx.shadowBlur = 10;
-            ctx.beginPath();
-            ctx.moveTo(0, -player.height / 2); // Top point (nose)
+                // Draw spaceship body
+                ctx.beginPath();
+                ctx.moveTo(0, -player.height / 2); // Nose
+                ctx.lineTo(player.width / 3, player.height / 2); // Right bottom
+                ctx.lineTo(0, player.height / 2 - 10); // Center bottom notch
+                ctx.lineTo(-player.width / 3, player.height / 2); // Left bottom
+                ctx.closePath();
 
-            // Left wing (scaled based on roll)
-            ctx.lineTo(-player.width / 2 * leftWingScale, player.height / 2); // Bottom-left wing tip
-            ctx.lineTo(-player.width / 4, player.height / 2 * 0.6); // Inner-left wing root
+                // Gradient for metallic look
+                const gradient = ctx.createLinearGradient(-player.width / 2, 0, player.width / 2, 0);
+                gradient.addColorStop(0, '#0099ff');
+                gradient.addColorStop(0.5, '#00ffff');
+                gradient.addColorStop(1, '#0099ff');
 
-            // Right wing (scaled based on roll)  
-            ctx.lineTo(player.width / 4, player.height / 2 * 0.6); // Inner-right wing root
-            ctx.lineTo(player.width / 2 * rightWingScale, player.height / 2); // Bottom-right wing tip
+                ctx.fillStyle = gradient;
+                ctx.fill();
 
-            ctx.closePath();
-            ctx.fill();
+                // Cockpit
+                ctx.beginPath();
+                ctx.ellipse(0, -5, 8, 15, 0, 0, Math.PI * 2);
+                ctx.fillStyle = '#ccffff';
+                ctx.fill();
 
-            // Engine glow (scaled based on roll angle)
-            ctx.fillStyle = '#ff4400';
-            const engineWidth = player.width / 2;
-            const engineLeftScale = baseWingScale + (player.rollAngle * rollEffectStrength * 0.5); // Less effect than wings
-            const engineRightScale = baseWingScale - (player.rollAngle * rollEffectStrength * 0.5);
+                // Wings with dynamic scaling based on roll
+                const baseWingScale = 1.0;
+                const rollEffectStrength = 0.5;
 
-            // Left side of engine
-            const leftEngineWidth = engineWidth / 2 * engineLeftScale;
-            ctx.fillRect(-player.width / 4, player.height / 2 * 0.6, leftEngineWidth, player.height * 0.2);
+                // Calculate wing projection based on roll
+                // When rolling left (negative angle), left wing appears shorter, right wing longer
+                const leftWingScale = baseWingScale + (player.rollAngle * rollEffectStrength);
+                const rightWingScale = baseWingScale - (player.rollAngle * rollEffectStrength);
 
-            // Right side of engine
-            const rightEngineWidth = engineWidth / 2 * engineRightScale;
-            ctx.fillRect(0, player.height / 2 * 0.6, rightEngineWidth, player.height * 0.2);
+                ctx.beginPath();
+                ctx.fillStyle = '#0066cc';
 
+                // Left wing (scaled based on roll)
+                ctx.moveTo(-player.width / 4, player.height / 2 * 0.6); // Inner-left wing root
+                ctx.lineTo(-player.width / 2 * leftWingScale, player.height / 2); // Bottom-left wing tip
+                ctx.lineTo(-player.width / 4, player.height / 2); // Inner-left wing bottom
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.fillStyle = '#0066cc';
+                // Right wing (scaled based on roll)
+                ctx.moveTo(player.width / 4, player.height / 2 * 0.6); // Inner-right wing root
+                ctx.lineTo(player.width / 2 * rightWingScale, player.height / 2); // Bottom-right wing tip
+                ctx.lineTo(player.width / 4, player.height / 2); // Inner-right wing bottom
+                ctx.closePath();
+                ctx.fill();
+
+
+                // Engine glow (scaled based on roll angle)
+                ctx.fillStyle = '#ff4400';
+                const engineWidth = player.width / 2;
+                const engineLeftScale = baseWingScale + (player.rollAngle * rollEffectStrength * 0.5); // Less effect than wings
+                const engineRightScale = baseWingScale - (player.rollAngle * rollEffectStrength * 0.5);
+
+                // Left engine
+                ctx.beginPath();
+                ctx.moveTo(-10 * engineLeftScale, player.height / 2);
+                ctx.lineTo(-5 * engineLeftScale, player.height / 2 + (Math.random() * 10 + 5));
+                ctx.lineTo(0, player.height / 2);
+                ctx.fill();
+
+                // Right engine
+                ctx.beginPath();
+                ctx.moveTo(10 * engineRightScale, player.height / 2);
+                ctx.lineTo(5 * engineRightScale, player.height / 2 + (Math.random() * 10 + 5));
+                ctx.lineTo(0, player.height / 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
             ctx.shadowBlur = 0;
             ctx.restore();
 
