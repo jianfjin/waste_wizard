@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MatchWaste - Match 3 Puzzle Game</title>
     <style>
         body {
@@ -18,12 +19,23 @@
         }
 
         #gameContainer {
-            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
             border-radius: 20px;
-            padding: 30px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             max-width: 500px;
             display: none;
+            padding-bottom: 80px;
+            /* Prevent button overlap on mobile */
+            max-height: 90vh;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+
+        @media (min-width: 640px) {
+            #gameContainer {
+                max-width: 800px;
+            }
         }
 
         h1 {
@@ -43,7 +55,9 @@
             flex-wrap: wrap;
         }
 
-        #time, #moves, #matchCount {
+        #time,
+        #moves,
+        #matchCount {
             background: rgba(255, 255, 255, 0.1);
             padding: 10px 20px;
             border-radius: 10px;
@@ -52,17 +66,18 @@
 
         #gameBoard {
             display: grid;
-            grid-template-columns: repeat(8, 1fr);
+            /* grid-template-columns will be set via JS */
             gap: 5px;
             margin: 0 auto;
             background: rgba(0, 0, 0, 0.3);
             padding: 10px;
             border-radius: 15px;
+            justify-content: center;
         }
 
         .gem {
-            width: 50px;
-            height: 50px;
+            width: clamp(30px, 10vw, 50px);
+            height: clamp(30px, 10vw, 50px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -95,9 +110,19 @@
         }
 
         @keyframes blast {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.3) rotate(180deg); background: rgba(255, 255, 255, 0.8); }
-            100% { transform: scale(0); opacity: 0; }
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.3) rotate(180deg);
+                background: rgba(255, 255, 255, 0.8);
+            }
+
+            100% {
+                transform: scale(0);
+                opacity: 0;
+            }
         }
 
         .falling {
@@ -105,13 +130,32 @@
         }
 
         @keyframes fall {
-            from { transform: translateY(-100px); }
-            to { transform: translateY(0); }
+            from {
+                transform: translateY(-100px);
+            }
+
+            to {
+                transform: translateY(0);
+            }
         }
 
         #controls {
             margin-top: 20px;
             text-align: center;
+        }
+
+        @media (max-width: 640px) {
+            #controls {
+                position: sticky;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.8);
+                z-index: 100;
+                padding: 10px;
+                width: 100%;
+                box-sizing: border-box;
+                margin-top: 0;
+                border-top: 1px solid rgba(255, 255, 255, 0.2);
+            }
         }
 
         button {
@@ -136,7 +180,8 @@
             transform: translateY(0);
         }
 
-        #gameOver, #victory {
+        #gameOver,
+        #victory {
             position: fixed;
             top: 0;
             left: 0;
@@ -146,7 +191,9 @@
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
         }
 
         .modal {
@@ -176,42 +223,325 @@
             opacity: 0.8;
         }
 
-        .waste-type-0 { background: rgba(139, 69, 19, 0.3); }
-        .waste-type-1 { background: rgba(65, 105, 225, 0.3); }
-        .waste-type-2 { background: rgba(255, 165, 0, 0.3); }
-        .waste-type-3 { background: rgba(0, 206, 209, 0.3); }
-        .waste-type-4 { background: rgba(147, 112, 219, 0.3); }
-        .waste-type-5 { background: rgba(105, 105, 105, 0.3); }
-        .waste-type-6 { background: rgba(220, 20, 60, 0.3); }
-        .waste-type-7 { background: rgba(255, 20, 147, 0.3); }
-        .waste-type-8 { background: rgba(85, 107, 47, 0.3); }
+        .waste-type-0 {
+            background: rgba(139, 69, 19, 0.3);
+        }
 
+        .waste-type-1 {
+            background: rgba(65, 105, 225, 0.3);
+        }
+
+        .waste-type-2 {
+            background: rgba(255, 165, 0, 0.3);
+        }
+
+        .waste-type-3 {
+            background: rgba(0, 206, 209, 0.3);
+        }
+
+        .waste-type-4 {
+            background: rgba(147, 112, 219, 0.3);
+        }
+
+        .waste-type-5 {
+            background: rgba(105, 105, 105, 0.3);
+        }
+
+        .waste-type-6 {
+            background: rgba(220, 20, 60, 0.3);
+        }
+
+        .waste-type-7 {
+            background: rgba(255, 20, 147, 0.3);
+        }
+
+        .waste-type-8 {
+            background: rgba(85, 107, 47, 0.3);
+        }
+
+        .waste-card {
+            transition: max-height 0.3s ease;
+            cursor: pointer;
+            max-height: 180px;
+            overflow: hidden;
+        }
+
+        .waste-card.expanded {
+            max-height: none;
+            overflow: visible;
+        }
+
+        /* ========== FULL-SCREEN MODAL SOLUTION FOR MOBILE ========== */
+        @media (max-width: 640px) {
+
+            /* Body locked when modal is open */
+            body.modal-open {
+                overflow: hidden !important;
+                position: fixed !important;
+                width: 100% !important;
+                height: 100% !important;
+            }
+
+            /* FULL-SCREEN MODAL CONTAINER */
+            #wasteTypePreview.mobile-modal-visible {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                z-index: 10000 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border-radius: 0 !important;
+                /* Changed to hidden to allow child scrolling */
+                overflow: hidden !important;
+                max-width: none !important;
+                box-shadow: none !important;
+                /* CRITICAL: Re-enable pointer events for modal content */
+                pointer-events: auto !important;
+            }
+
+            /* Modal header with title - target both h2 and h3 */
+            #wasteTypePreview>h2,
+            #wasteTypePreview>h3,
+            #wasteTypePreview #previewTitle {
+                background: rgba(0, 0, 0, 0.2) !important;
+                color: white !important;
+                margin: 0 !important;
+                padding: 20px !important;
+                text-align: center !important;
+                font-size: 24px !important;
+                border-bottom: 2px solid rgba(255, 255, 255, 0.3) !important;
+                flex-shrink: 0 !important;
+                order: 1 !important;
+                /* Re-enable pointer events for header */
+                pointer-events: auto !important;
+            }
+
+            /* Modal subtitle */
+            #wasteTypePreview>p,
+            #wasteTypePreview #previewSubtitle {
+                background: rgba(0, 0, 0, 0.1) !important;
+                color: rgba(255, 255, 255, 0.9) !important;
+                margin: 0 !important;
+                padding: 10px 20px !important;
+                text-align: center !important;
+                font-size: 16px !important;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+                flex-shrink: 0 !important;
+                order: 2 !important;
+                /* Re-enable pointer events for subtitle */
+                pointer-events: auto !important;
+            }
+
+            /* INDEPENDENT SCROLLING GRID CONTAINER */
+            #wasteTypeGridPreview {
+                flex: 1 !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+                padding: 20px !important;
+                display: grid !important;
+                /* Default mobile layout: auto-fit */
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+                grid-auto-rows: auto !important;
+                gap: 20px !important;
+                row-gap: 25px !important;
+                align-content: start !important;
+                align-items: stretch !important;
+                background: transparent !important;
+                margin: 0 !important;
+                max-height: none !important;
+                height: auto !important;
+                order: 3 !important;
+                padding-bottom: 140px !important;
+                pointer-events: auto !important;
+            }
+
+            /* Ensure grid items (cards) behave correctly - CONSOLIDATED RULES */
+            #wasteTypeGridPreview>div {
+                /* Layout & Sizing */
+                height: auto !important;
+                min-height: min-content !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                overflow: visible !important;
+
+                /* Flexbox for internal layout */
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: flex-start !important;
+                /* Start from top */
+                align-items: stretch !important;
+                /* Stretch to fill width */
+
+                /* Visual Styling */
+                border-radius: 12px !important;
+                padding: 15px !important;
+                text-align: center !important;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+                transition: transform 0.2s ease !important;
+                cursor: pointer !important;
+
+                /* Let the waste type color classes (from JavaScript) define the background */
+                /* Background color is set inline by JS */
+            }
+
+            #wasteTypeGridPreview>div:active,
+            #wasteTypeGridPreview>div:hover {
+                transform: scale(1.02) !important;
+                /* Reduced scale to prevent overlap */
+                z-index: 10 !important;
+                /* Bring to front on hover */
+            }
+
+            /* PERMANENTLY DOCKED BUTTON BAR */
+            #gameButtonContainer {
+                max-width: none !important;
+                z-index: 10002 !important;
+                /* Increased z-index to be above everything */
+                background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%) !important;
+                padding: 20px !important;
+                padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
+                margin: 0 !important;
+                border-radius: 0 !important;
+                border-top: 3px solid rgba(255, 255, 255, 0.4) !important;
+                box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3) !important;
+                display: flex !important;
+                gap: 15px !important;
+                justify-content: center !important;
+                flex-shrink: 0 !important;
+                order: 4 !important;
+                /* CRITICAL: Re-enable pointer events for buttons to be clickable */
+                pointer-events: auto !important;
+                box-sizing: border-box !important;
+            }
+
+            /* Prominent Start Game button */
+            #startGameBtn {
+                flex: 2 !important;
+                max-width: 200px !important;
+                margin: 0 !important;
+                font-size: 18px !important;
+                padding: 18px 20px !important;
+                background: #00ff00 !important;
+                color: #000 !important;
+                border: 3px solid #00aa00 !important;
+                font-weight: bold !important;
+                text-transform: uppercase !important;
+                letter-spacing: 1px !important;
+                border-radius: 12px !important;
+                box-shadow: 0 4px 15px rgba(0, 255, 0, 0.3) !important;
+                min-height: 60px !important;
+                cursor: pointer !important;
+                touch-action: manipulation !important;
+            }
+
+            #skipBtn {
+                flex: 1 !important;
+                max-width: 120px !important;
+                margin: 0 !important;
+                background: #ffaa00 !important;
+                color: #000 !important;
+                border: 2px solid #cc7700 !important;
+                font-weight: bold !important;
+                border-radius: 12px !important;
+                font-size: 16px !important;
+                padding: 18px 15px !important;
+                min-height: 60px !important;
+                cursor: pointer !important;
+                touch-action: manipulation !important;
+            }
+
+            /* Touch-friendly button styling */
+            button {
+                min-height: 50px !important;
+                min-width: 120px !important;
+                font-size: 16px !important;
+                border-radius: 10px !important;
+                transition: all 0.2s ease !important;
+                cursor: pointer !important;
+                touch-action: manipulation !important;
+                -webkit-tap-highlight-color: transparent !important;
+            }
+
+            button:active {
+                transform: scale(0.95) !important;
+            }
+
+            /* Ensure buttons are clickable on mobile */
+            #startGameBtn:active,
+            #skipBtn:active {
+                background: rgba(0, 255, 0, 0.8) !important;
+                transform: scale(0.95) !important;
+            }
+
+            #skipBtn:active {
+                background: rgba(255, 170, 0, 0.8) !important;
+            }
+        }
+
+        /* Specific adjustments for smaller mobile screens */
         @media (max-width: 600px) {
             #gameContainer {
                 padding: 15px;
+                max-width: 95%;
             }
+
             .gem {
                 width: 40px;
                 height: 40px;
                 font-size: 24px;
             }
+
             h1 {
                 font-size: 28px;
+            }
+
+            /* Smaller grid items on very small screens */
+            #wasteTypeGrid,
+            #wasteTypeGridPreview {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                gap: 10px;
+            }
+
+            /* Slightly smaller buttons on tiny screens */
+            button {
+                font-size: 16px;
+                padding: 15px 20px;
+                min-height: 50px;
+            }
+
+            #startGameBtn {
+                font-size: 18px !important;
+                padding: 18px !important;
             }
         }
 
         /* Hide game board when waste type preview is shown */
-        #wasteTypePreview:not([style*="display: none"]) ~ #gameContainer {
+        #wasteTypePreview:not([style*="display: none"])~#gameContainer {
             display: none;
         }
 
-        /* Mobile leaderboard positioning */
-        @media (max-width: 768px) {
-            .menu {
-                padding: 20px;
-                max-width: 95%;
-            }
+        /* General menu styling */
+        .menu {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 500px;
+            color: white;
+            text-align: center;
+        }
 
+        /* Additional mobile-specific components */
+        @media (max-width: 1024px) {
+
+            /* Leaderboard mobile positioning */
             #leaderboard {
                 position: fixed;
                 bottom: 0;
@@ -219,18 +549,54 @@
                 left: 0;
                 right: 0;
                 transform: none;
-                max-height: 50vh;
+                max-height: 60vh;
                 overflow-y: auto;
                 border-radius: 15px 15px 0 0;
                 z-index: 1001;
+                margin: 0;
             }
 
             #leaderboardTable {
-                max-height: 30vh;
+                max-height: 40vh;
+                overflow-y: auto;
+            }
+
+            /* Game mode selection mobile improvements */
+            #gameModeSelect {
+                padding: 20px;
+            }
+
+            #gameModeSelect button {
+                width: 90%;
+                margin: 10px auto;
+                display: block;
+                min-height: 55px;
+                font-size: 18px;
+            }
+
+            /* Waste types guide in main menu mobile adjustments */
+            #gameModeSelect>div:last-child {
+                margin-top: 25px;
+                padding-top: 20px;
+                border-top: 2px solid rgba(255, 255, 255, 0.2);
+            }
+
+            /* Better spacing for waste type items in grid */
+            #wasteTypeGrid>div,
+            #wasteTypeGridPreview>div {
+                padding: 12px;
+                border-radius: 8px;
+                transition: transform 0.2s ease;
+            }
+
+            #wasteTypeGrid>div:hover,
+            #wasteTypeGridPreview>div:hover {
+                transform: scale(1.05);
             }
         }
     </style>
 </head>
+
 <body>
     <div id="gameContainer">
         <h1>♢ MatchWaste ♢</h1>
@@ -244,7 +610,8 @@
             <button onclick="newGame()">New Game</button>
             <button onclick="showHint()" id="hintBtn" disabled>Hint</button>
         </div>
-        <div id="hint">Click two adjacent emojis to swap them. Match 3+ of the same type to clear them! Clear all waste to win!</div>
+        <div id="hint">Click two adjacent emojis to swap them. Match 3+ of the same type to clear them! Clear all waste
+            to win!</div>
     </div>
 
     <!-- Language selection menu -->
@@ -260,17 +627,23 @@
     <div id="gameModeSelect" class="menu" style="display:none;">
         <h1>MatchWaste</h1>
         <h3 style="color: white;">Choose Game Mode</h3>
-        <button onclick="showMultiplayerLobby()" style="background: linear-gradient(45deg, #ff6600, #ff9900); margin-bottom: 10px; padding: 15px 30px; font-size: 18px;">🎮 Multiplayer</button>
+        <button onclick="showMultiplayerLobby()"
+            style="background: linear-gradient(45deg, #ff6600, #ff9900); margin-bottom: 10px; padding: 15px 30px; font-size: 18px;">🎮
+            Multiplayer</button>
         <br>
-        <button onclick="startSinglePlayer()" style="background: linear-gradient(45deg, #00ff00, #00cc00); padding: 15px 30px; font-size: 18px;">👤 Single Player</button>
+        <button onclick="startSinglePlayer()"
+            style="background: linear-gradient(45deg, #00ff00, #00cc00); padding: 15px 30px; font-size: 18px;">👤 Single
+            Player</button>
         <br><br>
         <button onclick="showLanguageSelect()" style="background: #666; padding: 10px 20px;">← Back to Language</button>
 
         <!-- Waste Type Guide moved here -->
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.3);">
             <h3 style="color: white;">Waste Types Guide</h3>
-            <p style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 15px;">Learn the waste categories before you start!</p>
-            <div id="wasteTypeGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; max-height: 400px; overflow-y: auto; padding: 10px;">
+            <p style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 15px;">Learn the waste categories
+                before you start!</p>
+            <div id="wasteTypeGrid"
+                style="column-count: 2; column-gap: 15px; max-height: 400px; overflow-y: auto; padding: 10px;">
                 <!-- Waste types will be dynamically inserted here -->
             </div>
         </div>
@@ -298,13 +671,19 @@
 
     <div id="wasteTypePreview" class="menu" style="display:none;">
         <h2 id="previewTitle" style="text-align: center;">Waste Types Guide</h2>
-        <p id="previewSubtitle" style="font-size: 14px; margin-bottom: 20px; text-align: center;">Learn the waste categories before you start!</p>
-        <div id="wasteTypeGridPreview" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; max-height: 400px; overflow-y: auto; padding: 10px;">
+        <p id="previewSubtitle" style="font-size: 14px; margin-bottom: 20px; text-align: center;">Learn the waste
+            categories before you start!</p>
+        <div id="wasteTypeGridPreview"
+            style="column-count: 2; column-gap: 15px; max-height: 400px; overflow-y: auto; padding: 10px;">
             <!-- Waste types will be dynamically inserted here -->
         </div>
-        <div style="margin-top: 20px; text-align: center;">
-            <button id="startGameBtn" onclick="startGameFromPreview()" style="background: #00ff00; color: #000; font-weight: bold; padding: 12px 30px; font-size: 18px; margin-right: 10px; border: none; border-radius: 5px; cursor: pointer;">Start Game</button>
-            <button id="skipBtn" onclick="startGameFromPreview()" style="background: #ffaa00; color: #000; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Skip</button>
+        <div id="gameButtonContainer"
+            style="margin-top: 20px; text-align: center; position: sticky; bottom: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 10px; border-top: 2px solid rgba(255,255,255,0.3);">
+            <button id="startGameBtn" onclick="startGameFromPreview()"
+                style="background: #00ff00; color: #000; font-weight: bold; padding: 15px 30px; font-size: 18px; margin: 5px; border: 2px solid #00aa00; border-radius: 8px; cursor: pointer; min-width: 140px;">Start
+                Game</button>
+            <button id="skipBtn"
+                style="background: #ffaa00; color: #000; padding: 12px 20px; border: 2px solid #cc7700; border-radius: 8px; cursor: pointer; margin: 5px;">Skip</button>
         </div>
     </div>
 
@@ -325,7 +704,8 @@
 
     <div id="nicknamePrompt" class="menu" style="display:none;">
         <h2>Enter Your Nickname</h2>
-        <input type="text" id="nicknameInput" maxlength="15" placeholder="Your Name" style="padding: 10px; font-size: 18px; margin: 10px 0; width: 80%;">
+        <input type="text" id="nicknameInput" maxlength="15" placeholder="Your Name"
+            style="padding: 10px; font-size: 18px; margin: 10px 0; width: 80%;">
         <br>
         <button id="submitNicknameBtn" onclick="saveScore()" style="margin-top: 10px;">Submit</button>
     </div>
@@ -378,13 +758,84 @@
                 wasteType0: 'E-waste',
                 wasteType1: 'Electronics',
                 wasteType2: 'Mixed Items',
-                wasteType3: 'Large Appliances',
+                wasteType3: 'Bulky Waste',
                 wasteType4: 'Hazardous',
                 wasteType5: 'Glass',
                 wasteType6: 'Paper',
                 wasteType7: 'Plastic/Metal',
                 wasteType8: 'Textile',
-                wasteType9: 'Organic'
+                wasteType9: 'Organic',
+                // Items
+                'Batteries': 'Batteries',
+                'Computer': 'Computer',
+                'Electrical': 'Electrical',
+                'Watch': 'Watch',
+                'Refrigerator': 'Refrigerator',
+                'Mobile Phone': 'Mobile Phone',
+                'Modem': 'Modem',
+                'Virus Protection': 'Virus Protection',
+                'Big Bag': 'Big Bag',
+                'CD/DVD': 'CD/DVD',
+                'Cassette': 'Cassette',
+                'Diskette': 'Diskette',
+                'Photo Film': 'Photo Film',
+                'Needle': 'Needle',
+                'Magnet': 'Magnet',
+                'Radioactive': 'Radioactive',
+                'Light Bulb': 'Light Bulb',
+                'Wallpaper': 'Wallpaper',
+                'Furniture': 'Furniture',
+                'Mattress': 'Mattress',
+                'Pan': 'Pan',
+                'Carpet': 'Carpet',
+                'Tent': 'Tent',
+                'Prosthesis': 'Prosthesis',
+                'Construction': 'Construction',
+                'Floral Foam': 'Floral Foam',
+                'Treated Wood': 'Treated Wood',
+                'Plastic Frame': 'Plastic Frame',
+                'Stationery': 'Stationery',
+                'Glass Vase': 'Glass Vase',
+                'Glass Bottle': 'Glass Bottle',
+                'Special Paper': 'Special Paper',
+                'Binder': 'Binder',
+                'Cardboard': 'Cardboard',
+                'Drink Carton': 'Drink Carton',
+                'Cardboard Cup': 'Cardboard Cup',
+                'Chemical': 'Chemical',
+                'Paint': 'Paint',
+                'Fuel/Oil': 'Fuel/Oil',
+                'Medicine': 'Medicine',
+                'Nail Polish': 'Nail Polish',
+                'Aerosol Can': 'Aerosol Can',
+                'Metal Can': 'Metal Can',
+                'Crown Cap': 'Crown Cap',
+                'Pouch': 'Pouch',
+                'Clothing': 'Clothing',
+                'Shoes': 'Shoes',
+                'Textile': 'Textile',
+                'Plastic Bag': 'Plastic Bag',
+                'Plastic Tray': 'Plastic Tray',
+                'Plastic Bowl': 'Plastic Bowl',
+                'Plastic Card': 'Plastic Card',
+                'Utensils': 'Utensils',
+                'Animal Waste': 'Animal Waste',
+                'Sharp Object': 'Sharp Object',
+                'Crockery': 'Crockery',
+                'Candle Wax': 'Candle Wax',
+                'Adhesive Tape': 'Adhesive Tape',
+                'Cheese Paper': 'Cheese Paper',
+                'Coffee Cup': 'Coffee Cup',
+                'Fireworks': 'Fireworks',
+                'Fruit Net': 'Fruit Net',
+                'Garden Waste': 'Garden Waste',
+                'Ground': 'Ground',
+                'Plant Remains': 'Plant Remains',
+                'Garden Tools': 'Garden Tools',
+                'Meat/Fish': 'Meat/Fish',
+                'Food Remains': 'Food Remains',
+                'Dairy': 'Dairy',
+                'Bicycle': 'Bicycle'
             },
             nl: {
                 gameOver: 'Game Over',
@@ -424,13 +875,84 @@
                 wasteType0: 'E-afval',
                 wasteType1: 'Elektronica',
                 wasteType2: 'Gemengde Items',
-                wasteType3: 'Grote Apparaten',
+                wasteType3: 'Grofvuil',
                 wasteType4: 'Gevaarlijk',
                 wasteType5: 'Glas',
                 wasteType6: 'Papier',
                 wasteType7: 'Plastic/Metaal',
                 wasteType8: 'Textiel',
-                wasteType9: 'Organisch'
+                wasteType9: 'Organisch',
+                // Items
+                'Batteries': 'Batterijen',
+                'Computer': 'Computer',
+                'Electrical': 'Elektrisch',
+                'Watch': 'Horloge',
+                'Refrigerator': 'Koelkast',
+                'Mobile Phone': 'Mobiele Telefoon',
+                'Modem': 'Modem',
+                'Virus Protection': 'Virusbescherming',
+                'Big Bag': 'Grote Tas',
+                'CD/DVD': 'CD/DVD',
+                'Cassette': 'Cassette',
+                'Diskette': 'Diskette',
+                'Photo Film': 'Fotorolletje',
+                'Needle': 'Naald',
+                'Magnet': 'Magneet',
+                'Radioactive': 'Radioactief',
+                'Light Bulb': 'Gloeilamp',
+                'Wallpaper': 'Behang',
+                'Furniture': 'Meubilair',
+                'Mattress': 'Matras',
+                'Pan': 'Pan',
+                'Carpet': 'Tapijt',
+                'Tent': 'Tent',
+                'Prosthesis': 'Prothese',
+                'Construction': 'Bouwafval',
+                'Floral Foam': 'Steekschuim',
+                'Treated Wood': 'Behandeld Hout',
+                'Plastic Frame': 'Plastic Frame',
+                'Stationery': 'Kantoorartikelen',
+                'Glass Vase': 'Glazen Vaas',
+                'Glass Bottle': 'Glazen Fles',
+                'Special Paper': 'Speciaal Papier',
+                'Binder': 'Map',
+                'Cardboard': 'Karton',
+                'Drink Carton': 'Drankkarton',
+                'Cardboard Cup': 'Kartonnen Beker',
+                'Chemical': 'Chemisch',
+                'Paint': 'Verf',
+                'Fuel/Oil': 'Brandstof/Olie',
+                'Medicine': 'Medicijnen',
+                'Nail Polish': 'Nagellak',
+                'Aerosol Can': 'Spuitbus',
+                'Metal Can': 'Metalen Blik',
+                'Crown Cap': 'Kroonkurk',
+                'Pouch': 'Zakje',
+                'Clothing': 'Kleding',
+                'Shoes': 'Schoenen',
+                'Textile': 'Textiel',
+                'Plastic Bag': 'Plastic Zak',
+                'Plastic Tray': 'Plastic Bakje',
+                'Plastic Bowl': 'Plastic Kom',
+                'Plastic Card': 'Plastic Kaart',
+                'Utensils': 'Bestek',
+                'Animal Waste': 'Dierlijk Afval',
+                'Sharp Object': 'Scherp Voorwerp',
+                'Crockery': 'Servies',
+                'Candle Wax': 'Kaarsvet',
+                'Adhesive Tape': 'Plakband',
+                'Cheese Paper': 'Kaaspapier',
+                'Coffee Cup': 'Koffiebeker',
+                'Fireworks': 'Vuurwerk',
+                'Fruit Net': 'Fruitnet',
+                'Garden Waste': 'Tuinafval',
+                'Ground': 'Grond',
+                'Plant Remains': 'Plantresten',
+                'Garden Tools': 'Tuingereedschap',
+                'Meat/Fish': 'Vlees/Vis',
+                'Food Remains': 'Etensresten',
+                'Dairy': 'Zuivel',
+                'Bicycle': 'Fiets'
             },
             zh: {
                 gameOver: '游戏结束',
@@ -470,13 +992,84 @@
                 wasteType0: '电子垃圾',
                 wasteType1: '电子产品',
                 wasteType2: '混合物品',
-                wasteType3: '大型电器',
+                wasteType3: '大件垃圾',
                 wasteType4: '有害垃圾',
                 wasteType5: '玻璃',
                 wasteType6: '纸张',
                 wasteType7: '塑料/金属',
                 wasteType8: '纺织品',
-                wasteType9: '有机垃圾'
+                wasteType9: '有机垃圾',
+                // Items
+                'Batteries': '电池',
+                'Computer': '电脑',
+                'Electrical': '电器',
+                'Watch': '手表',
+                'Refrigerator': '冰箱',
+                'Mobile Phone': '手机',
+                'Modem': '调制解调器',
+                'Virus Protection': '杀毒软件',
+                'Big Bag': '大袋子',
+                'CD/DVD': '光盘',
+                'Cassette': '磁带',
+                'Diskette': '软盘',
+                'Photo Film': '胶卷',
+                'Needle': '针头',
+                'Magnet': '磁铁',
+                'Radioactive': '放射性',
+                'Light Bulb': '灯泡',
+                'Wallpaper': '壁纸',
+                'Furniture': '家具',
+                'Mattress': '床垫',
+                'Pan': '平底锅',
+                'Carpet': '地毯',
+                'Tent': '帐篷',
+                'Prosthesis': '假肢',
+                'Construction': '建筑废料',
+                'Floral Foam': '花泥',
+                'Treated Wood': '处理过的木材',
+                'Plastic Frame': '塑料框',
+                'Stationery': '文具',
+                'Glass Vase': '玻璃花瓶',
+                'Glass Bottle': '玻璃瓶',
+                'Special Paper': '特种纸',
+                'Binder': '活页夹',
+                'Cardboard': '纸板',
+                'Drink Carton': '饮料盒',
+                'Cardboard Cup': '纸杯',
+                'Chemical': '化学品',
+                'Paint': '油漆',
+                'Fuel/Oil': '燃料/油',
+                'Medicine': '药品',
+                'Nail Polish': '指甲油',
+                'Aerosol Can': '气溶胶罐',
+                'Metal Can': '金属罐',
+                'Crown Cap': '皇冠盖',
+                'Pouch': '袋子',
+                'Clothing': '衣服',
+                'Shoes': '鞋子',
+                'Textile': '纺织品',
+                'Plastic Bag': '塑料袋',
+                'Plastic Tray': '塑料托盘',
+                'Plastic Bowl': '塑料碗',
+                'Plastic Card': '塑料卡',
+                'Utensils': '餐具',
+                'Animal Waste': '动物粪便',
+                'Sharp Object': '尖锐物体',
+                'Crockery': '陶器',
+                'Candle Wax': '蜡烛',
+                'Adhesive Tape': '胶带',
+                'Cheese Paper': '奶酪纸',
+                'Coffee Cup': '咖啡杯',
+                'Fireworks': '烟花',
+                'Fruit Net': '水果网',
+                'Garden Waste': '园林废弃物',
+                'Ground': '泥土',
+                'Plant Remains': '植物残余',
+                'Garden Tools': '园艺工具',
+                'Meat/Fish': '肉/鱼',
+                'Food Remains': '食物残渣',
+                'Dairy': '乳制品',
+                'Bicycle': '自行车'
             }
         };
 
@@ -561,7 +1154,9 @@
             { emoji: '🚲', name: 'Bicycle', type: 3 }
         ];
 
-        const BOARD_SIZE = 8;
+        // const BOARD_SIZE = 8; // Replaced by dynamic ROWS and COLS
+        let ROWS = 8;
+        let COLS = 8;
         const TYPES_COUNT = 10;
 
         // Game state
@@ -595,11 +1190,11 @@
         function startGameTimer() {
             gameStartTime = Date.now();
             gameTime = 0;
-            
+
             if (gameTimer) {
                 clearInterval(gameTimer);
             }
-            
+
             gameTimer = setInterval(() => {
                 if (gameActive && !gameState.paused) {
                     gameTime = Math.floor((Date.now() - gameStartTime) / 1000);
@@ -615,16 +1210,35 @@
             }
         }
 
+        function setBoardDimensions() {
+            if (window.innerWidth <= 640) {
+                // Mobile
+                COLS = 6;
+                ROWS = 10;
+            } else {
+                // Desktop
+                COLS = 10;
+                ROWS = 6;
+            }
+
+            const gameBoard = document.getElementById('gameBoard');
+            if (gameBoard) {
+                gameBoard.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+            }
+            console.log(`Board dimensions set to: ${ROWS}x${COLS}`);
+        }
+
         function initBoard() {
+            setBoardDimensions();
             board = [];
             let attempts = 0;
             const maxAttempts = 100;
 
             do {
                 board = [];
-                for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let row = 0; row < ROWS; row++) {
                     board[row] = [];
-                    for (let col = 0; col < BOARD_SIZE; col++) {
+                    for (let col = 0; col < COLS; col++) {
                         board[row][col] = createRandomGem();
                     }
                 }
@@ -651,27 +1265,32 @@
             const gameBoard = document.getElementById('gameBoard');
             gameBoard.innerHTML = '';
 
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
-                    const gemDiv = document.createElement('div');
-                    gemDiv.id = `gem-${row}-${col}`;
-                    gemDiv.dataset.row = row;
-                    gemDiv.dataset.col = col;
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const gem = board[row][col];
+                    const gemElement = document.createElement('div');
+                    gemElement.classList.add('gem');
+                    gemElement.id = `gem-${row}-${col}`;
 
-                    if (board[row][col]) {
-                        gemDiv.className = `gem waste-type-${board[row][col].type % 10}`;
-                        gemDiv.textContent = board[row][col].emoji;
-                        gemDiv.title = board[row][col].name;
+                    if (gem) {
+                        gemElement.textContent = gem.emoji;
+                        // Add type class for styling if needed
+                        gemElement.classList.add(`waste-type-${gem.type}`);
+
+                        if (selectedGem && selectedGem.row === row && selectedGem.col === col) {
+                            gemElement.classList.add('selected');
+                        }
+
+                        gemElement.addEventListener('click', () => selectGem(row, col));
+                        gemElement.addEventListener('touchstart', (e) => {
+                            e.preventDefault(); // Prevent default touch behavior
+                            selectGem(row, col);
+                        }, { passive: false });
                     } else {
-                        gemDiv.className = 'gem empty';
+                        gemElement.classList.add('empty');
                     }
 
-                    if (selectedGem && selectedGem.row === row && selectedGem.col === col) {
-                        gemDiv.classList.add('selected');
-                    }
-
-                    gemDiv.onclick = () => selectGem(row, col);
-                    gameBoard.appendChild(gemDiv);
+                    gameBoard.appendChild(gemElement);
                 }
             }
         }
@@ -752,9 +1371,9 @@
 
             // Log the board state after swap for debugging
             console.log('Board state after swap:');
-            for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let r = 0; r < ROWS; r++) {
                 let rowStr = '';
-                for (let c = 0; c < BOARD_SIZE; c++) {
+                for (let c = 0; c < COLS; c++) {
                     if (board[r][c]) {
                         rowStr += board[r][c].emoji + ' ';
                     } else {
@@ -766,9 +1385,9 @@
 
             // Also log types for easier understanding
             console.log('Board types after swap:');
-            for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let r = 0; r < ROWS; r++) {
                 let typeStr = '';
-                for (let c = 0; c < BOARD_SIZE; c++) {
+                for (let c = 0; c < COLS; c++) {
                     if (board[r][c]) {
                         typeStr += board[r][c].type + ' ';
                     } else {
@@ -809,62 +1428,55 @@
         function findMatches() {
             const matches = [];
 
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                let count = 1;
-                let currentType = board[row][0]?.type;
+            // Check horizontal matches
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS - 2; col++) {
+                    const gem1 = board[row][col];
+                    const gem2 = board[row][col + 1];
+                    const gem3 = board[row][col + 2];
 
-                for (let col = 1; col < BOARD_SIZE; col++) {
-                    if (board[row][col] && board[row][col].type === currentType) {
-                        count++;
-                    } else {
-                        if (count >= 3) {
-                            for (let i = col - count; i < col; i++) {
-                                matches.push({ row, col: i });
-                            }
-                        }
-                        count = 1;
-                        currentType = board[row][col]?.type;
-                    }
-                }
-                if (count >= 3) {
-                    for (let i = BOARD_SIZE - count; i < BOARD_SIZE; i++) {
-                        matches.push({ row, col: i });
+                    if (gem1 && gem2 && gem3 && gem1.type === gem2.type && gem1.type === gem3.type) {
+                        matches.push({ row, col });
+                        matches.push({ row, col: col + 1 });
+                        matches.push({ row, col: col + 2 });
                     }
                 }
             }
 
-            for (let col = 0; col < BOARD_SIZE; col++) {
-                let count = 1;
-                let currentType = board[0][col]?.type;
+            // Check vertical matches
+            for (let col = 0; col < COLS; col++) {
+                for (let row = 0; row < ROWS - 2; row++) {
+                    const gem1 = board[row][col];
+                    const gem2 = board[row + 1][col];
+                    const gem3 = board[row + 2][col];
 
-                for (let row = 1; row < BOARD_SIZE; row++) {
-                    if (board[row][col] && board[row][col].type === currentType) {
-                        count++;
-                    } else {
-                        if (count >= 3) {
-                            for (let i = row - count; i < row; i++) {
-                                matches.push({ row: i, col });
-                            }
-                        }
-                        count = 1;
-                        currentType = board[row][col]?.type;
-                    }
-                }
-                if (count >= 3) {
-                    for (let i = BOARD_SIZE - count; i < BOARD_SIZE; i++) {
-                        matches.push({ row: i, col });
+                    if (gem1 && gem2 && gem3 && gem1.type === gem2.type && gem1.type === gem3.type) {
+                        matches.push({ row, col });
+                        matches.push({ row: row + 1, col });
+                        matches.push({ row: row + 2, col });
                     }
                 }
             }
 
-            return matches;
+            // Filter out duplicate match positions
+            const uniqueMatches = [];
+            const seen = new Set();
+            matches.forEach(match => {
+                const key = `${match.row}-${match.col}`;
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    uniqueMatches.push(match);
+                }
+            });
+
+            return uniqueMatches;
         }
 
         // Helper function to count remaining gems on the board
         function countRemainingGems() {
             let count = 0;
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     if (board[row][col]) {
                         count++;
                     }
@@ -876,8 +1488,8 @@
         // Helper function to get all remaining gems as an array
         function getAllRemainingGems() {
             const gems = [];
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     if (board[row][col]) {
                         gems.push(board[row][col]);
                     }
@@ -951,14 +1563,14 @@
                             if (isBoardEmpty()) {
                                 gameActive = false;
                                 // Game finished - directly prompt for nickname and show leaderboard
-                                promptNicknameAndSave(score);
+                                promptNicknameAndSave(gameTime);
                             } else {
                                 // Check for VICTORY: less than 3 gems left
                                 const gemCount = countRemainingGems();
                                 if (gemCount < 3) {
                                     console.log(`Only ${gemCount} gem(s) left after cascade - game complete!`);
                                     gameActive = false;
-                                    promptNicknameAndSave(score);
+                                    promptNicknameAndSave(gameTime);
                                     return;
                                 }
 
@@ -977,15 +1589,15 @@
         }
 
         function applyGravity() {
-            for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let col = 0; col < COLS; col++) {
                 const gems = [];
-                for (let row = BOARD_SIZE - 1; row >= 0; row--) {
+                for (let row = ROWS - 1; row >= 0; row--) {
                     if (board[row][col]) {
                         gems.push(board[row][col]);
                     }
                 }
 
-                for (let row = BOARD_SIZE - 1; row >= 0; row--) {
+                for (let row = ROWS - 1; row >= 0; row--) {
                     if (gems.length > 0) {
                         board[row][col] = gems.shift();
                     } else {
@@ -1004,8 +1616,8 @@
         }
 
         function isBoardEmpty() {
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     if (board[row][col]) {
                         return false;
                     }
@@ -1018,13 +1630,13 @@
         function hasValidMoves() {
             const validSwaps = [];
             // Try swapping adjacent gems to see if any match can be created
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     // Skip if current position is empty
                     if (!board[row][col]) continue;
 
                     // Check right neighbor
-                    if (col < BOARD_SIZE - 1 && board[row][col + 1]) {
+                    if (col < COLS - 1 && board[row][col + 1]) {
                         swapGemsTest(row, col, row, col + 1);
                         const matches = findMatches();
                         if (matches.length > 0) {
@@ -1037,7 +1649,7 @@
                         swapGemsTest(row, col, row, col + 1); // Swap back
                     }
                     // Check bottom neighbor
-                    if (row < BOARD_SIZE - 1 && board[row + 1][col]) {
+                    if (row < ROWS - 1 && board[row + 1][col]) {
                         swapGemsTest(row, col, row + 1, col);
                         const matches = findMatches();
                         if (matches.length > 0) {
@@ -1074,8 +1686,8 @@
 
             // Collect all existing non-null gems from the current board
             const existingGems = [];
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     if (board[row][col]) {
                         existingGems.push(board[row][col]);
                     }
@@ -1098,8 +1710,8 @@
 
             // Collect all existing non-null gems from the current board
             const existingGems = [];
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     if (board[row][col]) {
                         existingGems.push(board[row][col]);
                     }
@@ -1130,7 +1742,7 @@
                 if (existingGems.length === 4 && typeCountNum === 4 && maxCount === 1) {
                     console.log('All 4 remaining gems are of different types - game complete!');
                     gameActive = false;
-                    promptNicknameAndSave(score);
+                    promptNicknameAndSave(gameTime);
                     return;
                 }
 
@@ -1139,7 +1751,7 @@
                 if (existingGems.length === 3 && typeCountNum === 3 && maxCount === 1) {
                     console.log('All 3 remaining gems are of different types - game complete!');
                     gameActive = false;
-                    promptNicknameAndSave(score);
+                    promptNicknameAndSave(gameTime);
                     return;
                 }
 
@@ -1147,7 +1759,7 @@
                 if (existingGems.length === 2 && typeCountNum === 2) {
                     console.log('Only 2 gems left of different types - game complete!');
                     gameActive = false;
-                    promptNicknameAndSave(score);
+                    promptNicknameAndSave(gameTime);
                     return;
                 }
 
@@ -1158,7 +1770,7 @@
                     if (counts.length === 2 && counts[0] === 2 && counts[1] === 2) {
                         console.log('Remaining gems are 2 of each type (A A B B) - game complete!');
                         gameActive = false;
-                        promptNicknameAndSave(score);
+                        promptNicknameAndSave(gameTime);
                         return;
                     }
                 }
@@ -1171,16 +1783,16 @@
                     gameActive = false;
                     // Show game over message
                     setTimeout(() => {
-                        alert('Game Over! Not enough matching items left to clear the board.');
-                        location.reload();
+                        console.log('Game Over - Unwinnable state. Prompting for score save.');
+                        promptNicknameAndSave(gameTime);
                     }, 300);
                     return;
                 }
             }
 
             // Clear the board
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     board[row][col] = null;
                 }
             }
@@ -1215,7 +1827,7 @@
 
                 // Pick a random different type for the middle gem
                 const otherTypes = Object.keys(gemsByType).filter(type => type !== chosenType);
-                const otherType = otherTypes[Math.floor(Math.random() * otherTypes.length)];
+                const otherType = otherTypes.length > 0 ? otherTypes[Math.floor(Math.random() * otherTypes.length)] : chosenType; // Fallback to chosenType if no other types
                 const middleGem = gemsByType[otherType][0];
 
                 // Choose horizontal or vertical placement
@@ -1223,12 +1835,12 @@
                 let row, col, positions;
 
                 if (useHorizontal) {
-                    row = Math.floor(Math.random() * BOARD_SIZE);
-                    col = Math.floor(Math.random() * (BOARD_SIZE - 2));
+                    row = Math.floor(Math.random() * ROWS);
+                    col = Math.floor(Math.random() * (COLS - 2));
                     positions = [`${row}-${col}`, `${row}-${col + 1}`, `${row}-${col + 2}`];
                 } else {
-                    col = Math.floor(Math.random() * BOARD_SIZE);
-                    row = Math.floor(Math.random() * (BOARD_SIZE - 2));
+                    col = Math.floor(Math.random() * COLS);
+                    row = Math.floor(Math.random() * (ROWS - 2));
                     positions = [`${row}-${col}`, `${row + 1}-${col}`, `${row + 2}-${col}`];
                 }
 
@@ -1274,8 +1886,8 @@
             });
 
             // Clear all positions except the guaranteed move positions
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                for (let c = 0; c < BOARD_SIZE; c++) {
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
                     const pos = `${r}-${c}`;
                     if (!placedPositions.has(pos)) {
                         board[r][c] = null;
@@ -1290,7 +1902,7 @@
             const rowsNeeded = Math.ceil(numGems / colsNeeded);
 
             // Start from bottom-left to leave room for gravity effects
-            const startRow = BOARD_SIZE - rowsNeeded;
+            const startRow = ROWS - rowsNeeded;
             const startCol = 0;
 
             // Shuffle remaining gems for variety
@@ -1307,7 +1919,7 @@
                 const col = startCol + (i % colsNeeded);
 
                 // Safety check
-                if (row < BOARD_SIZE && col < BOARD_SIZE) {
+                if (row < ROWS && col < COLS) {
                     board[row][col] = gem;
                 }
             }
@@ -1316,8 +1928,8 @@
             // This is especially important when there are < 20 gems
             if (remainingGems.length < 20) {
                 const allPositions = [];
-                for (let r = 0; r < BOARD_SIZE; r++) {
-                    for (let c = 0; c < BOARD_SIZE; c++) {
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
                         if (board[r][c] && !placedPositions.has(`${r}-${c}`)) {
                             allPositions.push({ r, c });
                         }
@@ -1343,15 +1955,15 @@
                         const row = startRow + Math.floor(i / (colsNeeded - 1));
                         const col = startCol + (i % (colsNeeded - 1));
 
-                        if (row < BOARD_SIZE && col < BOARD_SIZE && board[row][col] === null) {
+                        if (row < ROWS && col < COLS && board[row][col] === null) {
                             board[row][col] = gem;
                         } else {
                             // Find first available spot
-                            for (let r = startRow; r < BOARD_SIZE; r++) {
-                                for (let c = 0; c < BOARD_SIZE; c++) {
+                            for (let r = startRow; r < ROWS; r++) {
+                                for (let c = 0; c < COLS; c++) {
                                     if (board[r][c] === null) {
                                         board[r][c] = gem;
-                                        r = BOARD_SIZE; // Break outer loop
+                                        r = ROWS; // Break outer loop
                                         break;
                                     }
                                 }
@@ -1382,8 +1994,8 @@
                 // Count gems by type
                 const typeCount = {};
                 let totalGems = 0;
-                for (let r = 0; r < BOARD_SIZE; r++) {
-                    for (let c = 0; c < BOARD_SIZE; c++) {
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
                         if (board[r][c] && !placedPositions.has(`${r}-${c}`)) {
                             const type = board[r][c].type;
                             typeCount[type] = (typeCount[type] || 0) + 1;
@@ -1405,8 +2017,8 @@
 
                 // Try different COMPACT arrangement strategies
                 const allGems = [];
-                for (let r = 0; r < BOARD_SIZE; r++) {
-                    for (let c = 0; c < BOARD_SIZE; c++) {
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
                         if (board[r][c] && !placedPositions.has(`${r}-${c}`)) {
                             allGems.push(board[r][c]);
                         }
@@ -1427,8 +2039,8 @@
                     arrangementTried++;
 
                     // Clear board except guaranteed move
-                    for (let r = 0; r < BOARD_SIZE; r++) {
-                        for (let c = 0; c < BOARD_SIZE; c++) {
+                    for (let r = 0; r < ROWS; r++) {
+                        for (let c = 0; c < COLS; c++) {
                             const pos = `${r}-${c}`;
                             if (!placedPositions.has(pos)) {
                                 board[r][c] = null;
@@ -1437,8 +2049,8 @@
                     }
 
                     // For small counts, start from bottom-left corner always for consistency
-                    const anchorRow = isSmallCount ? BOARD_SIZE - 2 : Math.floor(Math.random() * (BOARD_SIZE - 2));
-                    const anchorCol = isSmallCount ? 0 : Math.floor(Math.random() * (BOARD_SIZE - 2));
+                    const anchorRow = isSmallCount ? ROWS - 2 : Math.floor(Math.random() * (ROWS - 2));
+                    const anchorCol = isSmallCount ? 0 : Math.floor(Math.random() * (COLS - 2));
 
                     // Shuffle gems
                     const shuffled = [...allGems];
@@ -1468,7 +2080,7 @@
                         types.forEach(type => {
                             const gemsOfType = gemsByType[type];
                             gemsOfType.forEach(gem => {
-                                if (col >= BOARD_SIZE) {
+                                if (col >= COLS) {
                                     row--;
                                     col = 0;
                                 }
@@ -1486,7 +2098,7 @@
                         for (let i = 0; i < shuffled.length; i++) {
                             const row = anchorRow + Math.floor(i / colsNeeded);
                             const col = anchorCol + (i % colsNeeded);
-                            if (row < BOARD_SIZE && col < BOARD_SIZE) {
+                            if (row < ROWS && col < COLS) {
                                 board[row][col] = shuffled[i];
                             }
                         }
@@ -1501,12 +2113,12 @@
 
                 // Strategy 2: Try spiral compaction
                 if (!foundValidBoard && arrangementTried < maxArrangements) {
-                    const centerR = Math.floor(BOARD_SIZE / 2);
-                    const centerC = Math.floor(BOARD_SIZE / 2);
+                    const centerR = Math.floor(ROWS / 2);
+                    const centerC = Math.floor(COLS / 2);
 
                     // Clear board
-                    for (let r = 0; r < BOARD_SIZE; r++) {
-                        for (let c = 0; c < BOARD_SIZE; c++) {
+                    for (let r = 0; r < ROWS; r++) {
+                        for (let c = 0; c < COLS; c++) {
                             const pos = `${r}-${c}`;
                             if (!placedPositions.has(pos)) {
                                 board[r][c] = null;
@@ -1516,7 +2128,7 @@
 
                     // Create spiral positions
                     const spiralPositions = [];
-                    let top = 0, bottom = BOARD_SIZE - 1, left = 0, right = BOARD_SIZE - 1;
+                    let top = 0, bottom = ROWS - 1, left = 0, right = COLS - 1;
 
                     while (top <= bottom && left <= right) {
                         for (let c = left; c <= right; c++) spiralPositions.push({ r: top, c });
@@ -1564,12 +2176,12 @@
                 } else if (!finalValidMoves) {
                     console.error(`FAILED: No valid moves after ${arrangementTried} compact arrangement attempts!`);
                     console.log('This board configuration may truly have no valid moves.');
-                    
+
                     // Final check: Is it mathematically impossible?
                     const typeCount = {};
                     let totalGems = 0;
-                    for (let r = 0; r < BOARD_SIZE; r++) {
-                        for (let c = 0; c < BOARD_SIZE; c++) {
+                    for (let r = 0; r < ROWS; r++) {
+                        for (let c = 0; c < COLS; c++) {
                             if (board[r][c]) {
                                 const type = board[r][c].type;
                                 typeCount[type] = (typeCount[type] || 0) + 1;
@@ -1577,7 +2189,7 @@
                             }
                         }
                     }
-                    
+
                     const maxOfAnyType = Math.max(...Object.values(typeCount));
                     if (maxOfAnyType < 3) {
                         console.log(`Declaring victory: ${totalGems} gems remaining, no type has 3+ gems (max: ${maxOfAnyType})`);
@@ -1607,15 +2219,15 @@
         // Create a board that is guaranteed to have at least one valid move
         function createGuaranteedValidBoard() {
             // Clear board
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     board[row][col] = null;
                 }
             }
 
             // Fill board with random gems first
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     board[row][col] = createRandomGem();
                 }
             }
@@ -1634,8 +2246,8 @@
 
                     // Try horizontal swap pattern
                     if (Math.random() < 0.5) {
-                        const row = Math.floor(Math.random() * BOARD_SIZE);
-                        const col = Math.floor(Math.random() * (BOARD_SIZE - 2));
+                        const row = Math.floor(Math.random() * ROWS);
+                        const col = Math.floor(Math.random() * (COLS - 2));
 
                         // We'll place X Y X pattern (positions col, col+1, col+2)
                         // Where Y is different from X
@@ -1697,8 +2309,8 @@
                         }
                     } else {
                         // Try vertical swap pattern
-                        const row = Math.floor(Math.random() * (BOARD_SIZE - 2));
-                        const col = Math.floor(Math.random() * BOARD_SIZE);
+                        const row = Math.floor(Math.random() * (ROWS - 2));
+                        const col = Math.floor(Math.random() * COLS);
 
                         // We'll place X Y X pattern vertically (rows row, row+1, row+2)
                         const pos1 = `${row}-${col}`;
@@ -1804,7 +2416,9 @@
 
             // Show waste type guide instead of game mode selection (single player only)
             document.getElementById('languageSelect').style.display = 'none';
-            document.getElementById('wasteTypePreview').style.display = 'block';
+            const wasteTypePreview = document.getElementById('wasteTypePreview');
+            wasteTypePreview.style.display = 'block';
+            wasteTypePreview.classList.add('mobile-modal-visible');
 
             // Populate waste type guide
             populateWasteTypeGuide();
@@ -1861,10 +2475,28 @@
         function showMainMenu() {
             // Reset to main menu (single player - show waste type preview)
             document.getElementById('multiplayerLobby').style.display = 'none';
-            document.getElementById('wasteTypePreview').style.display = 'block';
+            const wasteTypePreview = document.getElementById('wasteTypePreview');
+            wasteTypePreview.style.display = 'block';
+            wasteTypePreview.classList.add('mobile-modal-visible');
 
             // Populate waste type guide
             populateWasteTypeGuide();
+        }
+
+        function startGameFromPreview() {
+            // Hide the waste type preview
+            const wasteTypePreview = document.getElementById('wasteTypePreview');
+            wasteTypePreview.style.display = 'none';
+            wasteTypePreview.classList.remove('mobile-modal-visible');
+
+            // Show and activate the game
+            document.getElementById('gameContainer').style.display = 'block';
+            gameActive = true;
+
+            // Start the game timer
+            startGameTimer();
+
+            console.log('Game started from preview');
         }
 
         function showMultiplayerLobby() {
@@ -1885,8 +2517,8 @@
             let checkedPositions = 0;
             let emptyPositions = 0;
 
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     checkedPositions++;
 
                     // Skip if current position is empty
@@ -1896,7 +2528,7 @@
                     }
 
                     // Check right neighbor
-                    if (col < BOARD_SIZE - 1 && board[row][col + 1]) {
+                    if (col < COLS - 1 && board[row][col + 1]) {
                         swapGemsTest(row, col, row, col + 1);
                         const matches = findMatches();
                         swapGemsTest(row, col, row, col + 1); // Swap back
@@ -1911,7 +2543,7 @@
                     }
 
                     // Check bottom neighbor
-                    if (row < BOARD_SIZE - 1 && board[row + 1][col]) {
+                    if (row < ROWS - 1 && board[row + 1][col]) {
                         swapGemsTest(row, col, row + 1, col);
                         const matches = findMatches();
                         swapGemsTest(row, col, row + 1, col); // Swap back
@@ -2029,70 +2661,29 @@
             });
         }
 
-        // Show waste type preview screen
-        function showWasteTypePreview() {
-            const previewDiv = document.getElementById('wasteTypePreview');
-            const gridDiv = document.getElementById('wasteTypeGrid');
+        function toggleCard(btn, event) {
+            event.stopPropagation();
+            const card = btn.closest('.waste-card');
+            const content = card.querySelector('.card-content');
+            const isExpanded = content.style.display === 'flex';
 
-            // Group waste by type
-            const wasteByType = {};
-            wasteEmojis.forEach(item => {
-                if (!wasteByType[item.type]) {
-                    wasteByType[item.type] = [];
-                }
-                wasteByType[item.type].push(item);
-            });
+            content.style.display = isExpanded ? 'none' : 'flex';
+            btn.textContent = isExpanded ? '+' : '-';
 
-            // Create waste type cards
-            let html = '';
-            const colorMap = {
-                0: '#DC143C',
-                1: '#FF6347',
-                2: '#FFA500',
-                3: '#00CED1',
-                4: '#FF1493',
-                5: '#00CED1',
-                6: '#4169E1',
-                7: '#FFA500',
-                8: '#9370DB',
-                9: '#8B4513'
-            };
-
-            Object.keys(wasteByType).forEach(type => {
-                // Use translation for type name
-                const typeName = t(`wasteType${type}`) || `Type ${type}`;
-                const items = wasteByType[type];
-                const bgColor = colorMap[type] || '#666666';
-
-                // Create HTML for items with emoji and names
-                let itemsHtml = '';
-                items.forEach(item => {
-                    itemsHtml += `<div style="display: inline-flex; flex-direction: column; align-items: center; margin: 5px; max-width: 70px;">
-                        <span style="font-size: 24px;">${item.emoji}</span>
-                        <span style="font-size: 9px; line-height: 1.2; margin-top: 2px; word-wrap: break-word; text-align: center;">${item.name}</span>
-                    </div>`;
-                });
-
-                html += `
-                    <div style="background: ${bgColor}; color: white; padding: 10px; border-radius: 8px; text-align: center;">
-                        <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${typeName}</div>
-                        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 3px;">${itemsHtml}</div>
-                        <div style="font-size: 12px; margin-top: 5px; opacity: 0.8;">${items.length} items</div>
-                    </div>
-                `;
-            });
-
-            gridDiv.innerHTML = html;
-            previewDiv.style.display = 'block';
+            // Toggle expanded class for any other styling
+            if (isExpanded) {
+                card.classList.remove('expanded');
+            } else {
+                card.classList.add('expanded');
+            }
         }
 
         // Populate waste type guide
         function populateWasteTypeGuide() {
-            const gridDiv = document.getElementById('wasteTypeGridPreview');
-            if (!gridDiv) {
-                console.error('wasteTypeGridPreview not found');
-                return;
-            }
+            const grids = [
+                document.getElementById('wasteTypeGrid'),
+                document.getElementById('wasteTypeGridPreview')
+            ];
 
             // Group waste by type
             const wasteByType = {};
@@ -2127,36 +2718,59 @@
                 // Create HTML for items with emoji and names
                 let itemsHtml = '';
                 items.forEach(item => {
+                    // Translate item name
+                    const translatedName = t(item.name) || item.name;
                     itemsHtml += `<div style="display: inline-flex; flex-direction: column; align-items: center; margin: 5px; max-width: 70px;">
                         <span style="font-size: 24px;">${item.emoji}</span>
-                        <span style="font-size: 9px; line-height: 1.2; margin-top: 2px; word-wrap: break-word; text-align: center;">${item.name}</span>
+                        <span style="font-size: 9px; line-height: 1.2; margin-top: 2px; word-wrap: break-word; text-align: center;">${translatedName}</span>
                     </div>`;
                 });
 
                 html += `
-                    <div style="background: ${bgColor}; color: white; padding: 10px; border-radius: 8px; text-align: center;">
-                        <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${typeName}</div>
-                        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 3px;">${itemsHtml}</div>
+                    <div class="waste-card" style="background: ${bgColor}; color: white; padding: 10px; border-radius: 8px; text-align: center; break-inside: avoid; margin-bottom: 25px; display: inline-block; width: 100%;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; cursor: pointer;" onclick="toggleCard(this.querySelector('button'), event)">
+                            <div style="font-weight: bold; font-size: 16px; flex-grow: 1;">${typeName}</div>
+                            <button class="collapse-btn" style="background:none; border:none; color:white; font-size: 24px; cursor:pointer; font-weight: bold; padding: 0 10px;">+</button>
+                        </div>
+                        <div class="card-content" style="display: none; flex-wrap: wrap; justify-content: center; gap: 3px;">${itemsHtml}</div>
                         <div style="font-size: 12px; margin-top: 5px; opacity: 0.8;">${items.length} items</div>
                     </div>
                 `;
             });
 
-            gridDiv.innerHTML = html;
+            // Populate all found grids
+            grids.forEach(grid => {
+                if (grid) {
+                    grid.innerHTML = html;
+                    console.log('Populated grid:', grid.id);
+                }
+            });
         }
 
         // Start game from preview
         function startGameFromPreview() {
-            document.getElementById('wasteTypePreview').style.display = 'none';
+            console.log('startGameFromPreview called!');
+            console.log('wasteTypePreview element:', document.getElementById('wasteTypePreview'));
+            console.log('gameContainer element:', document.getElementById('gameContainer'));
+
+            const wasteTypePreview = document.getElementById('wasteTypePreview');
+            wasteTypePreview.style.display = 'none';
+            wasteTypePreview.classList.remove('mobile-modal-visible');
+
             document.getElementById('gameModeSelect').style.display = 'none';
             document.getElementById('gameContainer').style.display = 'block';
             gameActive = true;
+
+            console.log('Game active set to:', gameActive);
+
             // Start the game timer
             startGameTimer();
             // Update hint button state
             updateHintButton();
             // Update UI text including instructions
             updateUIText();
+
+            console.log('startGameFromPreview completed');
         }
 
         // Initialize SQLite database
@@ -2173,7 +2787,7 @@
                 request.onupgradeneeded = (event) => {
                     const db = event.target.result;
                     const oldVersion = event.oldVersion;
-                    
+
                     // Version 1 to 2 upgrade: change from 'score' to 'time' index
                     if (oldVersion < 2) {
                         // Delete old object store if it exists
@@ -2319,16 +2933,60 @@
         // Add pulse animation for hints
         const style = document.createElement('style');
         style.textContent = `
-            @keyframes pulse {
-                0% { transform: scale(1); }
-                50% { transform: scale(1.2); background: rgba(255, 255, 0, 0.5); }
-                100% { transform: scale(1); }
-            }
+                @keyframes pulse {
+                    0% { transform: scale(1); }
+                    50% { transform: scale(1.2); background: rgba(255, 255, 0, 0.5); }
+                    100% { transform: scale(1); }
+                }
         `;
         document.head.appendChild(style);
 
-        // Initialize game
-        newGame();
+        // Initialize the game when the page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM Content Loaded');
+
+            // Attach event listeners to buttons
+            const startBtn = document.getElementById('startGameBtn');
+            const skipBtn = document.getElementById('skipBtn');
+
+            if (startBtn) {
+                console.log('Attaching click/touch listeners to START GAME button');
+                const startHandler = function (e) {
+                    console.log('START GAME button activated!');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    startGameFromPreview();
+                };
+                startBtn.addEventListener('click', startHandler);
+                startBtn.addEventListener('touchstart', startHandler, { passive: false });
+            } else {
+                console.error('START GAME button not found!');
+            }
+
+            if (skipBtn) {
+                console.log('Attaching click/touch listeners to SKIP button');
+                const skipHandler = function (e) {
+                    console.log('SKIP button activated!');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    startGameFromPreview();
+                };
+                skipBtn.addEventListener('click', skipHandler);
+                skipBtn.addEventListener('touchstart', skipHandler, { passive: false });
+            } else {
+                console.error('SKIP button not found!');
+            }
+
+            // Check for lang parameter to determine if we should show preview
+            const urlParams = new URLSearchParams(window.location.search);
+            const lang = urlParams.get('lang');
+
+            // Always start with new game flow (Language -> New Game -> Guide -> Start)
+            // This ensures consistent experience even when embedded
+            console.log('Starting game flow...');
+            newGame();
+        });
     </script>
 </body>
+
 </html>

@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
-    "build": "vite build",
+    "build": "vite build && npm run copy-assets",
+    "copy-assets": "cp shootwaste.html game-music-loop-3-144252.mp3 short-game-music-loop-38898.mp3 dist/ && cp -r images_selected dist/",
     "preview": "vite preview",
     "deploy": "firebase deploy --only hosting",
     "deploy:functions": "firebase deploy --only functions",
