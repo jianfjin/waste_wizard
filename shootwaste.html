@@ -3256,15 +3256,56 @@
 
         // Draw other multiplayer players' spaceships
         function drawMultiplayerSpaceships() {
+            // CRITICAL DEBUG - FIRST LINE OF FUNCTION
+            console.log('🚨 INSIDE drawMultiplayerSpaceships - FIRST LINE');
+            console.log('window.peerManager:', !!window.peerManager);
+            console.log('window.peerManager?.isMultiplayer:', window.peerManager?.isMultiplayer);
+            console.log('window.peerManager?.players:', window.peerManager?.players);
+            console.log('window.peerManager?.players type:', window.peerManager?.players?.constructor?.name);
+            console.log('window.peerManager?.players size:', window.peerManager?.players?.size);
+
+            console.log('window.multiplayerManager:', !!window.multiplayerManager);
+            console.log('window.multiplayerManager?.isMultiplayer:', window.multiplayerManager?.isMultiplayer);
+            console.log('window.multiplayerManager?.players:', window.multiplayerManager?.players);
+
+            // Debug: Check if function is called
+            if (!window.drawCallCounter) window.drawCallCounter = 0;
+            window.drawCallCounter++;
+            if (window.drawCallCounter % 120 === 0) {
+                console.log('🎨 drawMultiplayerSpaceships called');
+            }
+
             // Check PeerJS multiplayer first (primary), then Firebase fallback
             let multiplayerMgr = null;
             if (window.peerManager && window.peerManager.isMultiplayer && window.peerManager.players) {
+                console.log('✅ Using peerManager');
                 multiplayerMgr = window.peerManager;
             } else if (window.multiplayerManager && window.multiplayerManager.isMultiplayer) {
+                console.log('✅ Using multiplayerManager (fallback)');
                 multiplayerMgr = window.multiplayerManager;
+            } else {
+                console.log('❌ No valid multiplayer manager found');
             }
 
-            if (!multiplayerMgr || !multiplayerMgr.players) return;
+            if (!multiplayerMgr || !multiplayerMgr.players) {
+                console.log('⚠️ drawMultiplayerSpaceships returning early: No manager or players');
+                console.log('multiplayerMgr:', !!multiplayerMgr);
+                console.log('multiplayerMgr?.players:', multiplayerMgr?.players);
+                return;
+            }
+
+            console.log('🎯 About to iterate players. Count:', multiplayerMgr.players.size);
+
+            // Debug log (every ~60 frames)
+            if (!window.drawDebugCounter) window.drawDebugCounter = 0;
+            window.drawDebugCounter++;
+
+            if (window.drawDebugCounter % 60 === 0) {
+                console.log('🛸 Drawing multiplayer ships. Count:', multiplayerMgr.players.size);
+                multiplayerMgr.players.forEach((p, id) => {
+                    console.log(`   - Player ${id}: x=${Math.round(p.x)}, y=${Math.round(p.y)}, connected=${p.connected !== false}`);
+                });
+            }
 
             multiplayerMgr.players.forEach((playerData, playerId) => {
                 // Don't draw our own spaceship again
@@ -4200,47 +4241,7 @@
             }
         }
 
-        // Draw other players' spaceships
-        function drawMultiplayerSpaceships() {
-            if (!window.multiplayerManager || !window.multiplayerManager.isMultiplayer) return;
 
-            window.multiplayerManager.players.forEach((playerData, playerId) => {
-                // Don't draw current player
-                if (playerId === window.multiplayerManager.playerId) return;
-                if (!playerData.connected) return;
-
-                const px = playerData.x || 400;
-                const py = playerData.y || 550;
-                const rotation = playerData.rotation || 0;
-
-                // Draw spaceship (simplified version)
-                ctx.save();
-                ctx.translate(px + player.width / 2, py + player.height / 2);
-                ctx.rotate(rotation);
-
-                // Draw with different color to distinguish from current player
-                ctx.fillStyle = '#ffff00'; // Yellow for other players
-                ctx.shadowColor = '#ffff00';
-                ctx.shadowBlur = 10;
-                ctx.beginPath();
-                ctx.moveTo(0, -player.height / 2);
-                ctx.lineTo(-player.width / 2, player.height / 2);
-                ctx.lineTo(-player.width / 4, player.height / 2 * 0.6);
-                ctx.lineTo(player.width / 4, player.height / 2 * 0.6);
-                ctx.lineTo(player.width / 2, player.height / 2);
-                ctx.closePath();
-                ctx.fill();
-
-                ctx.shadowBlur = 0;
-                ctx.restore();
-
-                // Draw nickname above player
-                ctx.fillStyle = '#ffff00';
-                ctx.font = '12px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText(playerData.nickname || 'Player', px + player.width / 2, py - 10);
-            });
-        }
 
         // Audio Context for sound effects and background music
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -4742,7 +4743,35 @@
                 emoji: wasteItem.emoji,
                 fromBoss: true
             };
+
+            // Assign unique ID for multiplayer synchronization
+            enemy.localId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
             enemies.push(enemy);
+
+            // Broadcast enemy spawn to clients in PeerJS cooperative mode
+            if (window.peerManager && window.peerManager.isHost && window.peerManager.isMultiplayer &&
+                window.peerManager.gameMode === 'cooperative') {
+                console.log('👹 Host spawning and broadcasting boss projectile:', enemy.emoji, enemy.wasteType);
+                window.peerManager.broadcastToAll({
+                    type: 'enemy_spawn',
+                    enemy: {
+                        x: enemy.x,
+                        y: enemy.y,
+                        width: enemy.width,
+                        height: enemy.height,
+                        speed: enemy.speed,
+                        health: enemy.health,
+                        maxHealth: enemy.maxHealth,
+                        rotation: enemy.rotation,
+                        rotationSpeed: enemy.rotationSpeed,
+                        wasteType: enemy.wasteType,
+                        emoji: enemy.emoji,
+                        localId: enemy.localId
+                    },
+                    timestamp: Date.now()
+                });
+            }
         }
 
         // Spawn power-up
@@ -5443,6 +5472,9 @@
                 }
             }
 
+            // Spawn enemies
+            // ... (existing code)
+
             // Multiplayer synchronization
             if (window.multiplayerManager && window.multiplayerManager.isMultiplayer) {
                 // Sync player position
@@ -5455,6 +5487,9 @@
             }
 
             updateUI();
+
+            // Draw other players (multiplayer) - Moved to end to ensure visibility
+            drawMultiplayerSpaceships();
         }
 
         // Saturn and Ring properties with mobile scaling
@@ -5639,6 +5674,13 @@
 
         // Draw game
         function draw() {
+            // Debug: Check if draw is running
+            if (!window.mainDrawCounter) window.mainDrawCounter = 0;
+            window.mainDrawCounter++;
+            if (window.mainDrawCounter % 120 === 0) {
+                console.log('🎨 Main draw() loop running');
+            }
+
             // Clear main canvas with minimal transparency for trail effect
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -5820,9 +5862,6 @@
             ctx.shadowBlur = 0;
             ctx.restore();
 
-            // Draw other multiplayer players' spaceships
-            drawMultiplayerSpaceships();
-
             // Draw bullets
             player.bullets.forEach(bullet => {
                 if (bullet.type === 'missile') {
@@ -5839,6 +5878,8 @@
                     // Draw laser from tip position with rotation
                     const thickness = bullet.width;
                     const length = Math.max(canvas.width, canvas.height) * 1.5;
+                    const laserEndX = bullet.x + Math.sin(bullet.rotation) * (-length);
+                    const laserEndY = bullet.y - Math.cos(bullet.rotation) * length;
 
                     ctx.save();
                     ctx.translate(bullet.x, bullet.y);
@@ -5879,6 +5920,23 @@
                 ctx.fillRect(p.x, p.y, p.size, p.size);
                 ctx.globalAlpha = 1;
             });
+
+            // Debug: About to call drawMultiplayerSpaceships
+            if (!window.drawCallLogger) window.drawCallLogger = 0;
+            window.drawCallLogger++;
+            if (window.drawCallLogger % 120 === 0) {
+                console.log('🔍 About to call drawMultiplayerSpaceships');
+                console.log('Function exists:', typeof drawMultiplayerSpaceships);
+                console.log('peerManager:', !!window.peerManager);
+                console.log('multiplayerManager:', !!window.multiplayerManager);
+            }
+
+            // Draw other players (multiplayer) - Moved to end to ensure visibility
+            try {
+                drawMultiplayerSpaceships();
+            } catch (e) {
+                console.error('❌ Error calling drawMultiplayerSpaceships:', e);
+            }
         }
 
         function checkCollision(obj1, obj2) {
