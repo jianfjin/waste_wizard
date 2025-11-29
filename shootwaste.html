@@ -1363,10 +1363,20 @@
                 }
             }
 
-            // Handle boss defeat from host
+            // Handle boss defeat (from host OR from client in cooperative mode)
             handleBossDefeated(message) {
-                if (this.isHost) return; // Hosts don't receive boss defeat messages
+                // In cooperative mode, both host and clients process boss defeat
+                // Host receives defeat notification from clients
+                // Clients receive defeat notification from host
+                if (this.gameMode !== 'cooperative') return;
 
+                if (this.isHost) {
+                    // Host received boss defeat from client - broadcast to all other clients
+                    console.log('👹 Host received boss defeat from client, broadcasting to all');
+                    this.broadcastBossDefeated();
+                }
+
+                // Both host and clients set victory state
                 bossDefeated = true;
                 bossSpawned = true; // Keep true to prevent respawning
                 boss = null;
@@ -1379,15 +1389,19 @@
                 gameState.victory = true;
                 gameState.gameOver = true;
 
-                console.log('👹 Boss defeated by host - victory!');
+                console.log('👹 Boss defeated - victory!', this.isHost ? '(host)' : '(client)');
 
-                // Update UI
-                const finalScoreEl = document.getElementById('finalScore');
-                if (finalScoreEl) {
-                    finalScoreEl.textContent = `Final Score: ${gameState.score}`;
-                }
+                // Update victory UI
+                const accuracy = gameState.totalKills > 0
+                    ? (gameState.correctKills / gameState.totalKills)
+                    : 0;
+                const finalScore = Math.round(gameState.score * accuracy * accuracy);
 
-                document.getElementById('gameOver').style.display = 'block';
+                document.getElementById('victoryScore').innerHTML = `
+            ${t('finalScore')} ${finalScore}<br>
+            <small>Base Score: ${gameState.score} | Accuracy: ${(accuracy * 100).toFixed(1)}%</small>
+        `;
+                document.getElementById('victory').style.display = 'block';
             }
 
             // Handle game over from host
@@ -3256,55 +3270,16 @@
 
         // Draw other multiplayer players' spaceships
         function drawMultiplayerSpaceships() {
-            // CRITICAL DEBUG - FIRST LINE OF FUNCTION
-            console.log('🚨 INSIDE drawMultiplayerSpaceships - FIRST LINE');
-            console.log('window.peerManager:', !!window.peerManager);
-            console.log('window.peerManager?.isMultiplayer:', window.peerManager?.isMultiplayer);
-            console.log('window.peerManager?.players:', window.peerManager?.players);
-            console.log('window.peerManager?.players type:', window.peerManager?.players?.constructor?.name);
-            console.log('window.peerManager?.players size:', window.peerManager?.players?.size);
-
-            console.log('window.multiplayerManager:', !!window.multiplayerManager);
-            console.log('window.multiplayerManager?.isMultiplayer:', window.multiplayerManager?.isMultiplayer);
-            console.log('window.multiplayerManager?.players:', window.multiplayerManager?.players);
-
-            // Debug: Check if function is called
-            if (!window.drawCallCounter) window.drawCallCounter = 0;
-            window.drawCallCounter++;
-            if (window.drawCallCounter % 120 === 0) {
-                console.log('🎨 drawMultiplayerSpaceships called');
-            }
-
             // Check PeerJS multiplayer first (primary), then Firebase fallback
             let multiplayerMgr = null;
             if (window.peerManager && window.peerManager.isMultiplayer && window.peerManager.players) {
-                console.log('✅ Using peerManager');
                 multiplayerMgr = window.peerManager;
             } else if (window.multiplayerManager && window.multiplayerManager.isMultiplayer) {
-                console.log('✅ Using multiplayerManager (fallback)');
                 multiplayerMgr = window.multiplayerManager;
-            } else {
-                console.log('❌ No valid multiplayer manager found');
             }
 
             if (!multiplayerMgr || !multiplayerMgr.players) {
-                console.log('⚠️ drawMultiplayerSpaceships returning early: No manager or players');
-                console.log('multiplayerMgr:', !!multiplayerMgr);
-                console.log('multiplayerMgr?.players:', multiplayerMgr?.players);
                 return;
-            }
-
-            console.log('🎯 About to iterate players. Count:', multiplayerMgr.players.size);
-
-            // Debug log (every ~60 frames)
-            if (!window.drawDebugCounter) window.drawDebugCounter = 0;
-            window.drawDebugCounter++;
-
-            if (window.drawDebugCounter % 60 === 0) {
-                console.log('🛸 Drawing multiplayer ships. Count:', multiplayerMgr.players.size);
-                multiplayerMgr.players.forEach((p, id) => {
-                    console.log(`   - Player ${id}: x=${Math.round(p.x)}, y=${Math.round(p.y)}, connected=${p.connected !== false}`);
-                });
             }
 
             multiplayerMgr.players.forEach((playerData, playerId) => {
@@ -4629,7 +4604,12 @@
                 stealthUntil: 0,              // Timestamp when stealth ends
                 isInStealth: false,           // Is boss in stealth mode?
                 consecutiveHits: 0,           // Counter for consecutive hits
-                lastHitTime: 0                // Timestamp of last hit
+                lastHitTime: 0,               // Timestamp of last hit
+                // Rotation properties for waste variety
+                targetType: wasteTypes[Math.floor(Math.random() * wasteTypes.length)], // Current target waste type
+                rotationTimer: 0,             // Timer for waste type rotation
+                rotationInterval: 15000 + Math.random() * 5000, // 15-20 seconds (randomized)
+                lastRotationTime: Date.now()  // Timestamp of last rotation
             };
 
             // Broadcast boss spawn to clients in multiplayer cooperative mode
@@ -4655,6 +4635,25 @@
             if (boss.isInStealth && now >= boss.stealthUntil) {
                 boss.isInStealth = false;
                 showBossStatusText('Boss visible!');
+            }
+
+            // Boss waste type rotation (every 15-20 seconds)
+            if (now - boss.lastRotationTime >= boss.rotationInterval) {
+                // Select new random waste type
+                const previousType = boss.targetType;
+                let newType;
+                do {
+                    newType = wasteTypes[Math.floor(Math.random() * wasteTypes.length)];
+                } while (newType === previousType && wasteTypes.length > 1); // Avoid same type
+
+                boss.targetType = newType;
+                boss.lastRotationTime = now;
+                boss.rotationInterval = 15000 + Math.random() * 5000; // Next rotation in 15-20s
+
+                console.log(`👹 Boss rotating waste type: ${previousType} → ${newType}`);
+
+                // Optional: Show notification to player
+                showBossStatusText(`Boss now throwing ${newType}!`);
             }
 
             // Reset consecutive hits if too much time has passed (1 second)
@@ -4690,10 +4689,22 @@
             if (boss.health <= 0) {
                 bossDefeated = true;
 
-                // Broadcast boss defeat in PeerJS cooperative mode
-                if (window.peerManager && window.peerManager.isHost && window.peerManager.isMultiplayer &&
+                // Broadcast boss defeat in PeerJS cooperative mode (both host AND clients)
+                if (window.peerManager && window.peerManager.isMultiplayer &&
                     window.peerManager.gameMode === 'cooperative') {
-                    window.peerManager.broadcastBossDefeated();
+                    if (window.peerManager.isHost) {
+                        // Host broadcasts to all clients
+                        window.peerManager.broadcastBossDefeated();
+                    } else {
+                        // Client broadcasts to host
+                        window.peerManager.broadcastToAll({
+                            type: 'boss_defeated',
+                            score: gameState.score,
+                            timestamp: Date.now(),
+                            defeatedBy: window.peerManager.playerId
+                        });
+                        console.log('👹 Client broadcasting boss defeat to host');
+                    }
                 }
                 gameState.victory = true;
                 const accuracy = gameState.totalKills > 0
@@ -4716,9 +4727,9 @@
 
         function throwWasteFromBoss() {
             let wasteItem;
-            // 80% chance to spawn target waste type (same as regular enemies)
+            // 80% chance to spawn boss's current target waste type
             if (Math.random() < 0.8) {
-                const targetWastes = wasteData.filter(w => w.type === gameState.targetType);
+                const targetWastes = wasteData.filter(w => w.type === boss.targetType);
                 if (targetWastes.length > 0) {
                     wasteItem = targetWastes[Math.floor(Math.random() * targetWastes.length)];
                 } else {
@@ -5921,22 +5932,8 @@
                 ctx.globalAlpha = 1;
             });
 
-            // Debug: About to call drawMultiplayerSpaceships
-            if (!window.drawCallLogger) window.drawCallLogger = 0;
-            window.drawCallLogger++;
-            if (window.drawCallLogger % 120 === 0) {
-                console.log('🔍 About to call drawMultiplayerSpaceships');
-                console.log('Function exists:', typeof drawMultiplayerSpaceships);
-                console.log('peerManager:', !!window.peerManager);
-                console.log('multiplayerManager:', !!window.multiplayerManager);
-            }
-
-            // Draw other players (multiplayer) - Moved to end to ensure visibility
-            try {
-                drawMultiplayerSpaceships();
-            } catch (e) {
-                console.error('❌ Error calling drawMultiplayerSpaceships:', e);
-            }
+            // Draw other players (multiplayer)
+            drawMultiplayerSpaceships();
         }
 
         function checkCollision(obj1, obj2) {
