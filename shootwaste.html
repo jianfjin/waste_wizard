@@ -364,6 +364,21 @@
             border-radius: 3px;
             transition: width 0.3s;
         }
+
+        /* Mobile-specific positioning for boss health bar */
+        @media (max-width: 768px) {
+            #bossLabel {
+                top: 10px;
+                font-size: 18px;
+            }
+
+            #bossHealthBar {
+                top: 35px;
+                width: 90%;
+                max-width: 350px;
+                height: 25px;
+            }
+        }
     </style>
 </head>
 
@@ -3060,10 +3075,10 @@
             return isMobile ? 1.4 : 1.0;
         }
 
-        // Mobile speed modifier for falling waste items (0.75x speed on mobile)
+        // Mobile speed modifier for falling waste items (0.5x speed on mobile)
         function getMobileSpeedModifier() {
             const isMobile = window.innerWidth <= 768;
-            return isMobile ? 0.75 : 1.0;
+            return isMobile ? 0.5 : 1.0;
         }
 
         // Player with mobile scaling
