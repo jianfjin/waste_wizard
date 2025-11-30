@@ -1983,11 +1983,12 @@
                     this.generateQRCode();
                 }
 
-                // Show QR scanner button on mobile devices
+                // Show QR scanner button on mobile devices for clients only (not for hosts)
                 const isMobile = window.innerWidth <= 768;
                 const scanBtn = document.getElementById('scanQRBtn');
                 if (scanBtn) {
-                    scanBtn.style.display = isMobile ? 'inline-block' : 'none';
+                    // Only show scan button for clients on mobile, not for hosts
+                    scanBtn.style.display = (isMobile && !this.isHost) ? 'inline-block' : 'none';
                 }
 
                 console.log('🎯 Game lobby created with code:', gameCode);
