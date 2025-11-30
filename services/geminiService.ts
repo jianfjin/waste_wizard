@@ -22,7 +22,7 @@ const getAi = (): GoogleGenAI => {
         if (!process.env.API_KEY) {
             throw new Error("API_KEY environment variable not set");
         }
-        ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     }
     return ai;
 };
