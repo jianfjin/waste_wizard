@@ -555,6 +555,44 @@
                     style="width: 100%; padding: 10px;">Refresh</button>
             </div>
 
+            <!-- Manual Code Entry and QR Scanner for Joining -->
+            <div class="lobby-section"
+                style="margin-bottom: 30px; padding: 20px; border: 1px solid #ffaa00; border-radius: 10px;">
+                <h3>🎮 Join with Code</h3>
+
+                <!-- QR Scanner button (mobile only) -->
+                <div style="margin: 15px 0;">
+                    <button id="scanQRBtn" onclick="showQRScanner()"
+                        style="display:none; width:100%; padding:12px; background:#00ff00; color:#000; border:2px solid #00ff00; border-radius:5px; font-weight:bold; cursor:pointer;">
+                        📷 Scan QR Code to Join
+                    </button>
+                </div>
+
+                <!-- Manual code entry -->
+                <div style="margin: 15px 0;">
+                    <label for="gameCodeInput" style="display:block; margin-bottom:5px; color:#ffaa00;">Enter Game
+                        Code:</label>
+                    <input type="text" id="gameCodeInput" placeholder="Paste game code here"
+                        style="width:100%; padding:10px; background:rgba(0,0,0,0.5); border:2px solid #ffaa00; border-radius:5px; color:#fff; font-family:monospace;">
+                    <button onclick="joinGameByCode()"
+                        style="width:100%; padding:10px; margin-top:10px; background:#ffaa00; color:#000; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">
+                        Join Game
+                    </button>
+                </div>
+
+                <!-- QR Scanner UI (hidden by default) -->
+                <div id="qrScannerContainer"
+                    style="display:none; margin: 20px 0; padding:15px; background:rgba(0,0,0,0.8); border-radius:10px;">
+                    <h4 style="margin-top:0; color:#00ff00;">📷 Point camera at QR code</h4>
+                    <div id="qrReader"
+                        style="width:100%; max-width:500px; margin:0 auto; border-radius:8px; overflow:hidden;"></div>
+                    <button onclick="closeQRScanner()"
+                        style="width:100%; padding:10px; margin-top:15px; background:#ff0000; color:#fff; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">
+                        ✖ Cancel
+                    </button>
+                </div>
+            </div>
+
             <div id="currentLobby" class="lobby-section"
                 style="display:none; padding: 20px; border: 1px solid #00ff00; border-radius: 10px;">
                 <h3>Current Lobby</h3>
@@ -571,6 +609,15 @@
                         style="padding: 10px 20px; background: #ff0000; color: #fff;">Leave Lobby</button>
                 </div>
                 <div id="lobbyStatus" style="margin-top: 15px; font-style: italic;"></div>
+
+                <!-- QR Code display (host only) -->
+                <div id="qrCodeContainer"
+                    style="display:none; text-align:center; margin: 20px 0; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                    <h4 style="margin: 5px 0; color: #00ff00;">📱 Scan to Join</h4>
+                    <div id="qrcode"
+                        style="display:inline-block; padding: 10px; background: white; border-radius: 8px;"></div>
+                    <p style="font-size: 11px; color: #aaa; margin: 10px 0 0 0;">Or manually enter the code above</p>
+                </div>
             </div>
 
             <button onclick="showMainMenu()" class="lobby-btn"
@@ -622,7 +669,11 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
     <!-- Firebase removed - using Supabase for leaderboards and PeerJS for multiplayer -->
-    <script>
+    <!-- QR Code Libraries for Multiplayer -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <script type="module">
         // PeerJS WebRTC Multiplayer Manager
         class PeerManager {
             constructor() {
@@ -1919,22 +1970,61 @@
                 const gameCode = this.gameId || 'LOADING';
                 const lobbyStatus = document.getElementById('lobbyStatus');
                 if (lobbyStatus) {
-                    lobbyStatus.innerHTML = `
-                        <div style="background: rgba(0,255,0,0.1); padding: 10px; border-radius: 5px; border: 1px solid #00ff00;">
-                            <div style="font-size: 16px; color: #00ff00; margin-bottom: 5px;">🎮 Game Created!</div>
-                            <div style="font-size: 12px;">Game Code:</div>
-                            <div style="font-size: 14px; color: #00ffff; font-family: monospace; word-break: break-all; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 3px; margin: 5px 0;">
-                                ${gameCode}
-                            </div>
-                            <div style="font-size: 11px; color: #aaa;">Copy and share this code with friends!</div>
-                            <button onclick="navigator.clipboard.writeText('${gameCode}')" style="background: #00ff00; color: #000; border: none; padding: 5px 10px; border-radius: 3px; margin-top: 5px; cursor: pointer; font-size: 11px;">
-                                📋 Copy Code
-                            </button>
-                        </div>
-                    `;
+                    let html = `<div style="margin: 10px 0; padding: 15px; background: rgba(0,255,0,0.1); border: 2px solid #00ff00; border-radius: 8px;">`;
+                    html += `<div style="font-weight: bold; margin-bottom: 5px; color: #00ff00;">📋 Game Code:</div>`;
+                    html += `<div style="font-family: monospace; font-size: 16px; color: #ffff00; word-break: break-all;">${gameCode}</div>`;
+                    html += `<div style="font-size: 11px; color: #aaa; margin-top: 5px;">Share this code with friends to join!</div>`;
+                    html += `</div>`;
+                    lobbyStatus.innerHTML = html;
+                }
+
+                // Generate QR code for easy joining (host only)
+                if (this.isHost) {
+                    this.generateQRCode();
+                }
+
+                // Show QR scanner button on mobile devices
+                const isMobile = window.innerWidth <= 768;
+                const scanBtn = document.getElementById('scanQRBtn');
+                if (scanBtn) {
+                    scanBtn.style.display = isMobile ? 'inline-block' : 'none';
                 }
 
                 console.log('🎯 Game lobby created with code:', gameCode);
+            }
+
+            // Generate QR code for game joining (host only)
+            generateQRCode() {
+                if (!this.isHost || !this.gameId) return;
+
+                const qrContainer = document.getElementById('qrCodeContainer');
+                const qrDiv = document.getElementById('qrcode');
+
+                if (!qrContainer || !qrDiv) {
+                    console.warn('QR code containers not found');
+                    return;
+                }
+
+                // Clear previous QR code
+                qrDiv.innerHTML = '';
+
+                try {
+                    // Generate new QR code with game code
+                    new QRCode(qrDiv, {
+                        text: this.gameId,
+                        width: 200,
+                        height: 200,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+
+                    // Show QR code container
+                    qrContainer.style.display = 'block';
+                    console.log('✅ QR code generated for game:', this.gameId);
+                } catch (error) {
+                    console.error('Error generating QR code:', error);
+                }
             }
 
             // Update competitive mode UI
@@ -2138,7 +2228,7 @@
                     this.isMultiplayer = true;
 
                     // Check if game exists and has space
-                    const gameRef = window.firebaseRef(window.firebaseDatabase, `games/${gameId}`);
+                    const gameRef = window.firebaseRef(window.firebaseDatabase, `games / ${gameId} `);
                     const snapshot = await window.firebaseGet(gameRef);
 
                     if (!snapshot.exists()) {
@@ -2172,7 +2262,7 @@
                     }
 
                     // Add player to game
-                    const playerRef = window.firebaseRef(window.firebaseDatabase, `games/${gameId}/players/${this.playerId}`);
+                    const playerRef = window.firebaseRef(window.firebaseDatabase, `games / ${gameId} /players/${this.playerId} `);
                     await window.firebaseSet(playerRef, {
                         nickname: this.playerNickname,
                         x: 400,
@@ -2185,15 +2275,15 @@
                     });
 
                     // Update player count
-                    const currentPlayersRef = window.firebaseRef(window.firebaseDatabase, `games/${gameId}/gameInfo/currentPlayers`);
+                    const currentPlayersRef = window.firebaseRef(window.firebaseDatabase, `games / ${gameId} /gameInfo/currentPlayers`);
                     await window.firebaseSet(currentPlayersRef, gameData.gameInfo.currentPlayers + 1);
 
                     // Add competitive mode data if needed
                     if (this.gameMode === 'competitive') {
-                        const playerScoresRef = window.firebaseRef(window.firebaseDatabase, `games/${gameId}/gameState/playerScores/${this.playerId}`);
+                        const playerScoresRef = window.firebaseRef(window.firebaseDatabase, `games / ${gameId} /gameState/playerScores / ${this.playerId} `);
                         await window.firebaseSet(playerScoresRef, 0);
 
-                        const playerTargetsRef = window.firebaseRef(window.firebaseDatabase, `games/${gameId}/gameState/playerTargets/${this.playerId}`);
+                        const playerTargetsRef = window.firebaseRef(window.firebaseDatabase, `games / ${gameId} /gameState/playerTargets / ${this.playerId} `);
                         await window.firebaseSet(playerTargetsRef, this.targetType);
                     }
 
@@ -2214,7 +2304,7 @@
                 if (!this.gameId) return;
 
                 // Listen to players changes
-                const playersRef = window.firebaseRef(window.firebaseDatabase, `games/${this.gameId}/players`);
+                const playersRef = window.firebaseRef(window.firebaseDatabase, `games / ${this.gameId}/players`);
                 const playersUnsubscribe = window.firebaseOnValue(playersRef, (snapshot) => {
                     if (snapshot.exists()) {
                         const playersData = snapshot.val();
@@ -6287,6 +6377,105 @@
                 alert('Error joining game: ' + error.message);
             }
         }
+
+        // QR Code Scanner Functions
+        let html5QrcodeScanner = null;
+
+        // Show QR scanner UI
+        function showQRScanner() {
+            const scannerContainer = document.getElementById('qrScannerContainer');
+            const scanBtn = document.getElementById('scanQRBtn');
+
+            if (scannerContainer) {
+                scannerContainer.style.display = 'block';
+            }
+            if (scanBtn) {
+                scanBtn.style.display = 'none';
+            }
+
+            // Check if Html5Qrcode is available
+            if (typeof Html5QrcodeScanner === 'undefined') {
+                alert('QR Scanner library not loaded. Please refresh the page.');
+                closeQRScanner();
+                return;
+            }
+
+            try {
+                html5QrcodeScanner = new Html5QrcodeScanner(
+                    "qrReader",
+                    {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 },
+                        rememberLastUsedCamera: true
+                    },
+                    false  // verbose
+                );
+
+                html5QrcodeScanner.render(onScanSuccess, onScanError);
+                console.log('📷 QR Scanner initialized');
+            } catch (error) {
+                console.error('Error initializing QR scanner:', error);
+                alert('Failed to start camera. Please check permissions and try again.');
+                closeQRScanner();
+            }
+        }
+
+        // Handle successful QR scan
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log(`✅ QR Code scanned: ${decodedText}`);
+
+            // Close scanner
+            closeQRScanner();
+
+            // Fill game code input
+            const gameCodeInput = document.getElementById('gameCodeInput');
+            if (gameCodeInput) {
+                gameCodeInput.value = decodedText;
+            }
+
+            // Show success message
+            alert(`QR Code scanned! 🎉\nGame code: ${decodedText}\n\nJoining game...`);
+
+            // Auto-join game
+            setTimeout(() => {
+                joinGameByCode();
+            }, 500);
+        }
+
+        // Handle scan errors (can be ignored - happens when no QR in frame)
+        function onScanError(error) {
+            // Silent - only log actual errors, not "No QR code found"
+            if (error && !error.includes('NotFoundException') && !error.includes('No MultiFormat Readers')) {
+                console.warn('QR Scanner error:', error);
+            }
+        }
+
+        // Close QR scanner
+        function closeQRScanner() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear().catch(err => {
+                    console.warn('Error clearing scanner:', err);
+                });
+                html5QrcodeScanner = null;
+            }
+
+            const scannerContainer = document.getElementById('qrScannerContainer');
+            const scanBtn = document.getElementById('scanQRBtn');
+
+            if (scannerContainer) {
+                scannerContainer.style.display = 'none';
+            }
+            if (scanBtn) {
+                const isMobile = window.innerWidth <= 768;
+                scanBtn.style.display = isMobile ? 'inline-block' : 'none';
+            }
+
+            console.log('🔒 QR Scanner closed');
+        }
+
+        // Make scanner functions globally accessible
+        window.showQRScanner = showQRScanner;
+        window.closeQRScanner = closeQRScanner;
 
         // Start the multiplayer game - Override existing function
         async function startMultiplayerGame() {
