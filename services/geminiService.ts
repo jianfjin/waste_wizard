@@ -19,7 +19,7 @@ const getSystemInstruction = (language: Language): string => {
 let ai: GoogleGenAI | null = null;
 const getAi = (): GoogleGenAI => {
     if (!ai) {
-        if (!process.env.API_KEY) {
+        if (!process.env.GEMINI_API_KEY) {
             throw new Error("API_KEY environment variable not set");
         }
         ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
