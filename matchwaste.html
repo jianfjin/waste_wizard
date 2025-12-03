@@ -271,6 +271,29 @@
             overflow: visible;
         }
 
+        #wasteTypeGrid::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #wasteTypeGrid::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        #wasteTypeGrid::-webkit-scrollbar-thumb {
+            background: #00ffff;
+            border-radius: 4px;
+        }
+
+        #wasteTypeGrid::-webkit-scrollbar-thumb:hover {
+            background: #00cccc;
+            border-radius: 10px;
+            text-align: center;
+            color: #00ffff;
+            box-shadow: 0 0 30px #00ffff;
+            z-index: 100;
+        }
+
         /* ========== FULL-SCREEN MODAL SOLUTION FOR MOBILE ========== */
         @media (max-width: 640px) {
 
