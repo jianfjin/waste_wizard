@@ -259,17 +259,7 @@
             background: rgba(85, 107, 47, 0.3);
         }
 
-        .waste-card {
-            transition: max-height 0.3s ease;
-            cursor: pointer;
-            max-height: 180px;
-            overflow: hidden;
-        }
 
-        .waste-card.expanded {
-            max-height: none;
-            overflow: visible;
-        }
 
         #wasteTypeGrid::-webkit-scrollbar {
             width: 8px;
@@ -368,51 +358,15 @@
                 overflow-y: auto !important;
                 overflow-x: hidden !important;
                 padding: 20px !important;
-                display: grid !important;
-                /* Default mobile layout: auto-fit */
-                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
-                grid-auto-rows: auto !important;
-                gap: 20px !important;
-                row-gap: 25px !important;
-                align-content: start !important;
-                align-items: stretch !important;
-                background: transparent !important;
-                margin: 0 !important;
+                /* Use standard grid behavior */
                 max-height: none !important;
-                height: auto !important;
                 order: 3 !important;
-                padding-bottom: 140px !important;
+                padding-bottom: 20px !important;
                 pointer-events: auto !important;
             }
 
             /* Ensure grid items (cards) behave correctly - CONSOLIDATED RULES */
-            #wasteTypeGrid>div {
-                /* Layout & Sizing */
-                height: auto !important;
-                min-height: min-content !important;
-                width: 100% !important;
-                box-sizing: border-box !important;
-                overflow: visible !important;
 
-                /* Flexbox for internal layout */
-                display: flex !important;
-                flex-direction: column !important;
-                justify-content: flex-start !important;
-                /* Start from top */
-                align-items: stretch !important;
-                /* Stretch to fill width */
-
-                /* Visual Styling */
-                border-radius: 12px !important;
-                padding: 15px !important;
-                text-align: center !important;
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
-                transition: transform 0.2s ease !important;
-                cursor: pointer !important;
-
-                /* Let the waste type color classes (from JavaScript) define the background */
-                /* Background color is set inline by JS */
-            }
 
             #wasteTypeGrid>div:active,
             #wasteTypeGrid>div:hover {
