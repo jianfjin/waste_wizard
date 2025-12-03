@@ -340,7 +340,7 @@
             }
 
             /* INDEPENDENT SCROLLING GRID CONTAINER */
-            #wasteTypeGridPreview {
+            #wasteTypeGrid {
                 flex: 1 !important;
                 overflow-y: auto !important;
                 overflow-x: hidden !important;
@@ -363,7 +363,7 @@
             }
 
             /* Ensure grid items (cards) behave correctly - CONSOLIDATED RULES */
-            #wasteTypeGridPreview>div {
+            #wasteTypeGrid>div {
                 /* Layout & Sizing */
                 height: auto !important;
                 min-height: min-content !important;
@@ -391,8 +391,8 @@
                 /* Background color is set inline by JS */
             }
 
-            #wasteTypeGridPreview>div:active,
-            #wasteTypeGridPreview>div:hover {
+            #wasteTypeGrid>div:active,
+            #wasteTypeGrid>div:hover {
                 transform: scale(1.02) !important;
                 /* Reduced scale to prevent overlap */
                 z-index: 10 !important;
@@ -503,8 +503,7 @@
             }
 
             /* Smaller grid items on very small screens */
-            #wasteTypeGrid,
-            #wasteTypeGridPreview {
+            #wasteTypeGrid {
                 grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
                 gap: 10px;
             }
@@ -582,15 +581,13 @@
             }
 
             /* Better spacing for waste type items in grid */
-            #wasteTypeGrid>div,
-            #wasteTypeGridPreview>div {
+            #wasteTypeGrid>div {
                 padding: 12px;
                 border-radius: 8px;
                 transition: transform 0.2s ease;
             }
 
-            #wasteTypeGrid>div:hover,
-            #wasteTypeGridPreview>div:hover {
+            #wasteTypeGrid>div:hover {
                 transform: scale(1.05);
             }
         }
@@ -664,7 +661,7 @@
             }
 
             /* INDEPENDENT SCROLLING GRID CONTAINER */
-            #wasteTypeGridPreview {
+            #wasteTypeGrid {
                 flex: 1 !important;
                 overflow-y: auto !important;
                 overflow-x: hidden !important;
@@ -687,7 +684,7 @@
             }
 
             /* Ensure grid items (cards) behave correctly - CONSOLIDATED RULES */
-            #wasteTypeGridPreview>div {
+            #wasteTypeGrid>div {
                 /* Layout & Sizing */
                 height: auto !important;
                 min-height: min-content !important;
@@ -715,8 +712,8 @@
                 /* Background color is set inline by JS */
             }
 
-            #wasteTypeGridPreview>div:active,
-            #wasteTypeGridPreview>div:hover {
+            #wasteTypeGrid>div:active,
+            #wasteTypeGrid>div:hover {
                 transform: scale(1.02) !important;
                 /* Reduced scale to prevent overlap */
                 z-index: 10 !important;
@@ -866,11 +863,11 @@
         <h2 id="previewTitle">Waste Types Guide</h2>
         <p id="previewSubtitle" style="font-size: 14px; margin-bottom: 20px;">Learn the waste categories before you
             start!</p>
-        <div id="wasteTypeGridPreview"
+        <div id="wasteTypeGrid"
             style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; max-height: 400px; overflow-y: auto; padding: 10px;">
             <!-- Waste types will be dynamically inserted here -->
         </div>
-        <div id="gameButtonContainer" style="margin-top: 20px;">
+        <div style="margin-top: 20px;">
             <button id="startGameBtn" onclick="startGameFromPreview()"
                 style="background: #00ff00; color: #000; font-weight: bold; padding: 12px 30px; font-size: 18px; margin-right: 10px; border: none; border-radius: 5px; cursor: pointer;">Start
                 Game</button>
@@ -2856,10 +2853,7 @@
 
         // Populate waste type guide
         function populateWasteTypeGuide() {
-            const grids = [
-                document.getElementById('wasteTypeGrid'),
-                document.getElementById('wasteTypeGridPreview')
-            ];
+            const grid = document.getElementById('wasteTypeGrid');
 
             // Group waste by type
             const wasteByType = {};
@@ -2911,13 +2905,11 @@
                 `;
             });
 
-            // Populate all found grids
-            grids.forEach(grid => {
-                if (grid) {
-                    grid.innerHTML = html;
-                    console.log('Populated grid:', grid.id);
-                }
-            });
+            // Populate the grid
+            if (grid) {
+                grid.innerHTML = html;
+                console.log('Populated grid:', grid.id);
+            }
         }
 
         // Start game from preview
