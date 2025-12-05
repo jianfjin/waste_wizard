@@ -13,22 +13,87 @@ const ChatAgent: React.FC = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string>('');
+  const [accessKeyInput, setAccessKeyInput] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authError, setAuthError] = useState('');
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Check for persisted access key on mount
   useEffect(() => {
-    setIsLoading(true);
-    setMessages([]);
-    const newChat = createChatSession(language);
-    setChat(newChat);
-    setMessages([{ sender: 'bot', text: t('chatIntro') }]);
-    setIsLoading(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language]);
+    const storedKey = localStorage.getItem('chat_access_key');
+    const envKey = import.meta.env.VITE_ACCESS_KEY;
 
+    if (storedKey && storedKey === envKey) {
+      setIsAuthenticated(true);
+
+      // Load history
+      const storedHistory = localStorage.getItem('chat_history');
+      if (storedHistory) {
+        try {
+          setMessages(JSON.parse(storedHistory));
+        } catch (e) {
+          console.error("Failed to parse chat history", e);
+          setMessages([{ sender: 'bot', text: t('chatIntro') }]);
+        }
+      } else {
+        setMessages([{ sender: 'bot', text: t('chatIntro') }]);
+      }
+    }
+  }, [t]);
+
+  // Initialize Chat Session when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const newChat = createChatSession(language);
+      setChat(newChat);
+    }
+  }, [isAuthenticated, language]);
+
+  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isAuthenticated]);
+
+  // Save history whenever messages change
+  useEffect(() => {
+    if (isAuthenticated && messages.length > 0) {
+      localStorage.setItem('chat_history', JSON.stringify(messages));
+    }
+  }, [messages, isAuthenticated]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    const envKey = import.meta.env.VITE_ACCESS_KEY;
+
+    if (accessKeyInput === envKey) {
+      localStorage.setItem('chat_access_key', accessKeyInput);
+      setIsAuthenticated(true);
+      setAuthError('');
+
+      if (messages.length === 0) {
+        setMessages([{ sender: 'bot', text: t('chatIntro') }]);
+      }
+    } else {
+      setAuthError('Invalid Access Key. Please try again.');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('chat_access_key');
+    setIsAuthenticated(false);
+    setAccessKeyInput('');
+    setChat(null);
+  };
+
+  const handleClearChat = () => {
+    if (window.confirm('Are you sure you want to clear the chat history?')) {
+      const initialMsg: Message = { sender: 'bot', text: t('chatIntro') };
+      setMessages([initialMsg]);
+      localStorage.setItem('chat_history', JSON.stringify([initialMsg]));
+    }
+  };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -59,7 +124,10 @@ const ChatAgent: React.FC = () => {
       text: input || 'What type of waste is this and how should I dispose of it?',
       image: selectedImage || undefined
     };
-    setMessages(prev => [...prev, userMessage]);
+
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
+
     const messageText = input;
     setInput('');
     setIsLoading(true);
@@ -80,13 +148,13 @@ const ChatAgent: React.FC = () => {
         const groundingChunks = chunk.candidates?.[0]?.groundingMetadata?.groundingChunks;
 
         const sources = groundingChunks
-            ?.map((c: any) => c.web)
-            .filter((web: any) => web && web.uri && web.title) || [];
+          ?.map((c: any) => c.web)
+          .filter((web: any) => web && web.uri && web.title) || [];
 
         setMessages(prev => {
           const newMessages = [...prev];
           const lastMessage = newMessages[newMessages.length - 1];
-          if(lastMessage.sender === 'bot') {
+          if (lastMessage.sender === 'bot') {
             lastMessage.text = botResponse;
             if (sources.length > 0) {
               lastMessage.sources = sources;
@@ -103,9 +171,62 @@ const ChatAgent: React.FC = () => {
     }
   };
 
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col h-[70vh] items-center justify-center p-6 bg-gray-50 rounded-lg">
+        <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-md">
+          <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Waste Wizard Login</h2>
+          <p className="text-gray-600 text-center mb-6">Please enter the Access Key to start chatting.</p>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <input
+                type="password"
+                value={accessKeyInput}
+                onChange={(e) => setAccessKeyInput(e.target.value)}
+                placeholder="Enter Access Key..."
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+
+            {authError && (
+              <p className="text-red-500 text-sm text-center">{authError}</p>
+            )}
+
+            <button
+              type="submit"
+              className="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 transition-colors"
+            >
+              Unlock Chat
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-[70vh]">
-      <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50 rounded-lg">
+      {/* Header with actions */}
+      <div className="flex justify-between items-center px-4 py-2 bg-gray-100 rounded-t-lg border-b border-gray-200">
+        <span className="text-sm font-semibold text-gray-500">Waste Wizard AI</span>
+        <div className="flex space-x-2">
+          <button
+            onClick={handleClearChat}
+            className="text-xs text-gray-600 hover:text-red-600 px-2 py-1 rounded hover:bg-gray-200 transition-colors"
+          >
+            Clear Chat
+          </button>
+          <button
+            onClick={handleLogout}
+            className="text-xs text-gray-600 hover:text-gray-900 px-2 py-1 rounded hover:bg-gray-200 transition-colors"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50">
         {messages.map((msg, index) => (
           <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-lg p-3 rounded-2xl ${msg.sender === 'user' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
@@ -126,7 +247,7 @@ const ChatAgent: React.FC = () => {
                     {msg.sources.map((source, i) => (
                       <li key={i} className="text-xs">
                         <a href={source.uri} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline">
-                         <SourceIcon/>
+                          <SourceIcon />
                           <span>{source.title || new URL(source.uri).hostname}</span>
                         </a>
                       </li>
@@ -137,9 +258,9 @@ const ChatAgent: React.FC = () => {
             </div>
           </div>
         ))}
-        {isLoading && messages[messages.length-1].sender === 'user' && (
+        {isLoading && messages[messages.length - 1].sender === 'user' && (
           <div className="flex justify-start">
-             <div className="max-w-lg p-3 rounded-2xl bg-gray-200 text-gray-800 flex items-center">
+            <div className="max-w-lg p-3 rounded-2xl bg-gray-200 text-gray-800 flex items-center">
               <LoadingIcon />
               <span className="ml-2 animate-pulse">Wizard is thinking...</span>
             </div>
@@ -147,7 +268,7 @@ const ChatAgent: React.FC = () => {
         )}
         <div ref={messagesEndRef} />
       </div>
-      <form onSubmit={handleSendMessage} className="mt-4">
+      <form onSubmit={handleSendMessage} className="mt-auto p-4 bg-white border-t border-gray-200 rounded-b-lg">
         {selectedImage && (
           <div className="mb-4 relative inline-block">
             <img
@@ -194,6 +315,7 @@ const ChatAgent: React.FC = () => {
             type="submit"
             disabled={isLoading || (!input.trim() && !selectedImage)}
             className="bg-green-600 text-white p-3 rounded-full hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            title="Send message"
           >
             <SendIcon />
           </button>
