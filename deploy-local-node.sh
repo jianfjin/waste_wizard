@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# chmod +x deploy-local-node.sh
 # Firebase Deployment Script using local Node.js v20
 # This script uses a local Node.js installation to bypass system version conflicts
 
@@ -36,7 +36,7 @@ echo "  - Copying music files..."
 cp game-music-loop-3-144252.mp3 short-game-music-loop-38898.mp3 dist/
 
 echo "  - Copying images_selected folder..."
-cp -r images_selected dist/
+cp -r images_selected/ dist/
 
 echo "✅ Additional assets copied to dist folder"
 
