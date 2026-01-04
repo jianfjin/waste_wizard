@@ -57,10 +57,8 @@ const WasteGame: React.FC = () => {
     const [incorrectAnswerInfo, setIncorrectAnswerInfo] = useState<{ correctBin: WasteType } | null>(null);
     const [highScores, setHighScores] = useState<ScoreEntry[]>([]);
     const [nickname, setNickname] = useState('');
-    const [draggedItem, setDraggedItem] = useState<GameItem | null>(null);
     const [imageError, setImageError] = useState<boolean>(false);
     const [usedItemNames, setUsedItemNames] = useState<string[]>([]);
-    const [selectedItem, setSelectedItem] = useState<GameItem | null>(null);
 
     const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -122,10 +120,11 @@ const WasteGame: React.FC = () => {
         }
     };
 
-    const handleDrop = (binType: WasteType) => {
-        if (!draggedItem || feedback) return;
+    const handleBinClick = (binType: WasteType) => {
+        if (feedback) return;
 
-        if (draggedItem.type === binType) {
+        const currentItem = items[currentItemIndex];
+        if (currentItem.type === binType) {
             setScore(prev => prev + 1);
             setFeedback('correct');
             playSound('correct');
@@ -133,7 +132,7 @@ const WasteGame: React.FC = () => {
         } else {
             setFeedback('incorrect');
             playSound('incorrect');
-            setIncorrectAnswerInfo({ correctBin: draggedItem.type });
+            setIncorrectAnswerInfo({ correctBin: currentItem.type });
         }
 
         if (feedbackTimeoutRef.current) {
@@ -149,29 +148,6 @@ const WasteGame: React.FC = () => {
                 setGameState('finished');
             }
         }, 2000);
-        setDraggedItem(null);
-    };
-
-    const handleItemTap = (item: GameItem) => {
-        if (isTouchDevice && !feedback) {
-            setSelectedItem(item);
-            setDraggedItem(item);
-        }
-    };
-
-    const handleBinTap = (binType: WasteType) => {
-        if (isTouchDevice && selectedItem) {
-            handleDrop(binType);
-            setSelectedItem(null);
-        }
-    };
-
-    const handleDragStart = (item: GameItem) => {
-        if (feedback || isTouchDevice) return;
-        if (audioCtx && audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
-        setDraggedItem(item);
     };
 
     const handleRestart = () => {
@@ -179,11 +155,11 @@ const WasteGame: React.FC = () => {
             const wasteItem = SEARCHABLE_WASTE_LIST.find(w => w[language] === item.nameKey);
             return wasteItem ? wasteItem.nl : '';
         }).filter(name => name !== '');
-        
+
         const allUsedNames = [...usedItemNames, ...currentItemNames];
         const maxTrackedItems = Math.min(SEARCHABLE_WASTE_LIST.length - 20, 100);
         const updatedUsedNames = allUsedNames.slice(-maxTrackedItems);
-        
+
         setUsedItemNames(updatedUsedNames);
         setItems(selectRandomWasteItems(SEARCHABLE_WASTE_LIST, 20, language, updatedUsedNames));
         setCurrentItemIndex(0);
@@ -200,10 +176,10 @@ const WasteGame: React.FC = () => {
         if (nickname.trim()) {
             const newScore: ScoreEntry = { nickname: nickname.trim(), score };
             saveHighScores([...highScores, newScore]);
-            setNickname('SAVED'); 
+            setNickname('SAVED');
         }
     };
-    
+
     const currentItem = items[currentItemIndex];
     const currentItemName = currentItem.nameKey;
 
@@ -213,11 +189,11 @@ const WasteGame: React.FC = () => {
             <div className="text-center p-4">
                 <h2 className="text-3xl font-bold text-green-700 mb-4">{t('finalScore')}: {score}/{items.length}</h2>
                 <button onClick={handleRestart} className="bg-green-600 text-white font-bold py-2 px-6 rounded-full hover:bg-green-700 transition-colors mb-6">{t('playAgain')}</button>
-                
+
                 <div className="max-w-md mx-auto">
                     {canSaveScore && (
                         <form onSubmit={handleSaveScore} className="mb-6 flex flex-col sm:flex-row gap-2">
-                           <input
+                            <input
                                 type="text"
                                 value={nickname}
                                 onChange={(e) => setNickname(e.target.value)}
@@ -242,7 +218,7 @@ const WasteGame: React.FC = () => {
                                 <span className="font-semibold">{entry.score}</span>
                             </li>
                         ))}
-                         {highScores.length === 0 && <p className="text-center text-gray-500">No high scores yet!</p>}
+                        {highScores.length === 0 && <p className="text-center text-gray-500">No high scores yet!</p>}
                     </ul>
                 </div>
             </div>
@@ -251,13 +227,13 @@ const WasteGame: React.FC = () => {
 
     return (
         <div className="flex flex-col items-center p-4 relative min-h-[50vh]">
-             <div className="absolute top-0 right-0 bg-green-600 text-white font-bold py-2 px-4 rounded-full shadow-lg">
+            <div className="absolute top-0 right-0 bg-green-600 text-white font-bold py-2 px-4 rounded-full shadow-lg">
                 {t('score')}: {score}
             </div>
-             <h2 className="text-2xl font-bold text-green-700 mb-2">{t('gameTitle')}</h2>
-             <p className="text-gray-600 mb-4 text-center">{t('gameIntro')}</p>
-             
-             <div className="relative flex-grow flex flex-col justify-center items-center w-full">
+            <h2 className="text-2xl font-bold text-green-700 mb-2">{t('gameTitle')}</h2>
+            <p className="text-gray-600 mb-4 text-center">{t('gameIntro')}</p>
+
+            <div className="relative flex-grow flex flex-col justify-center items-center w-full">
                 {feedback && (
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center justify-center p-4 text-center">
                         {feedback === 'correct' ? <CorrectIcon /> : <IncorrectIcon />}
@@ -270,23 +246,20 @@ const WasteGame: React.FC = () => {
                 )}
 
                 <div className={`mb-8 p-4 border-2 border-dashed border-gray-400 rounded-lg transition-opacity duration-300 ${feedback ? 'opacity-30' : ''}`}>
-                    <div 
-                        draggable={!isTouchDevice && !feedback}
-                        onDragStart={() => handleDragStart(currentItem)}
-                        onClick={() => isTouchDevice ? handleItemTap(currentItem) : handleDragStart(currentItem)}
-                        className={`w-32 h-32 flex items-center justify-center ${!feedback && isTouchDevice ? 'cursor-pointer' : ''} ${!feedback && !isTouchDevice ? 'cursor-grab' : ''} ${selectedItem === currentItem ? 'ring-4 ring-blue-500' : ''}`}>
-                       {!imageError ? (
-                           <img 
-                               src={currentItem.image} 
-                               alt={currentItemName}
-                               className="w-full h-full object-contain"
-                               onError={() => setImageError(true)}
-                           />
-                       ) : (
-                           <div className="text-7xl">
-                               {currentItem.imageEmoji || '📦'}
-                           </div>
-                       )}
+                    <div
+                        className="w-64 h-64 flex items-center justify-center">
+                        {!imageError ? (
+                            <img
+                                src={currentItem.image}
+                                alt={currentItemName}
+                                className="w-full h-full object-contain"
+                                onError={() => setImageError(true)}
+                            />
+                        ) : (
+                            <div className="text-7xl">
+                                {currentItem.imageEmoji || '📦'}
+                            </div>
+                        )}
                     </div>
                     <p className="text-center mt-2 font-semibold text-gray-700">{currentItemName}</p>
                 </div>
@@ -296,11 +269,9 @@ const WasteGame: React.FC = () => {
                         const isIncorrectChoice = feedback === 'incorrect';
                         const isCorrectBin = incorrectAnswerInfo?.correctBin === key;
                         return (
-                            <div 
+                            <div
                                 key={key}
-                                onDrop={() => handleDrop(key as WasteType)}
-                                onDragOver={(e) => e.preventDefault()}
-                                onClick={() => handleBinTap(key as WasteType)}
+                                onClick={() => handleBinClick(key as WasteType)}
                                 className={`${bin.color} text-white p-2 rounded-lg text-center font-bold flex flex-col justify-center items-center h-24 sm:h-28 text-xs sm:text-base transition-all duration-300
                                 ${isIncorrectChoice ? (isCorrectBin ? 'ring-4 ring-offset-2 ring-green-500 animate-pulse' : 'opacity-30') : 'transform hover:scale-105'}
                                 `}
@@ -310,7 +281,7 @@ const WasteGame: React.FC = () => {
                         )
                     })}
                 </div>
-             </div>
+            </div>
         </div>
     );
 };
