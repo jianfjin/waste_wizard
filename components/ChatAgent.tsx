@@ -291,6 +291,7 @@ const ChatAgent: React.FC = () => {
             ref={fileInputRef}
             onChange={handleImageSelect}
             accept="image/*"
+            capture="environment"
             className="hidden"
             disabled={isLoading}
           />
