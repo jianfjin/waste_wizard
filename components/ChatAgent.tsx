@@ -13,6 +13,7 @@ const ChatAgent: React.FC = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string>('');
+  const [showCameraOptions, setShowCameraOptions] = useState(false);
   const [accessKeyInput, setAccessKeyInput] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authError, setAuthError] = useState('');
@@ -28,11 +29,18 @@ const ChatAgent: React.FC = () => {
     if (storedKey && storedKey === envKey) {
       setIsAuthenticated(true);
 
-      // Load history
+      // Load history (images are not stored in localStorage to avoid quota issues)
       const storedHistory = localStorage.getItem('chat_history');
       if (storedHistory) {
         try {
-          setMessages(JSON.parse(storedHistory));
+          const parsedMessages = JSON.parse(storedHistory);
+          // Ensure messages have the right structure (images won't be in storage)
+          const cleanMessages: Message[] = parsedMessages.map((msg: any) => ({
+            sender: msg.sender,
+            text: msg.text || '',
+            sources: msg.sources
+          }));
+          setMessages(cleanMessages);
         } catch (e) {
           console.error("Failed to parse chat history", e);
           setMessages([{ sender: 'bot', text: t('chatIntro') }]);
@@ -56,10 +64,31 @@ const ChatAgent: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isAuthenticated]);
 
-  // Save history whenever messages change
+  // Save history whenever messages change (exclude images to avoid localStorage quota issues)
   useEffect(() => {
     if (isAuthenticated && messages.length > 0) {
-      localStorage.setItem('chat_history', JSON.stringify(messages));
+      try {
+        // Only store text messages, not images (images are too large for localStorage)
+        const messagesToSave = messages.map(msg => ({
+          sender: msg.sender,
+          text: msg.text,
+          sources: msg.sources
+        }));
+        localStorage.setItem('chat_history', JSON.stringify(messagesToSave));
+      } catch (error) {
+        console.warn('Failed to save chat history (likely localStorage quota exceeded):', error);
+        // Clear old messages to make room
+        try {
+          const recentMessages = messages.slice(-10).map(msg => ({
+            sender: msg.sender,
+            text: msg.text,
+            sources: msg.sources
+          }));
+          localStorage.setItem('chat_history', JSON.stringify(recentMessages));
+        } catch {
+          console.warn('Could not save any chat history');
+        }
+      }
     }
   }, [messages, isAuthenticated]);
 
@@ -106,6 +135,37 @@ const ChatAgent: React.FC = () => {
       };
       reader.readAsDataURL(file);
     }
+    setShowCameraOptions(false);
+  };
+
+  const handleCameraClick = () => {
+    // On mobile, check if we should show options or go directly to camera
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      // For mobile, show a choice between camera and gallery
+      setShowCameraOptions(true);
+    } else {
+      // For desktop, trigger file input directly
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleDirectCamera = () => {
+    // Force camera mode
+    if (fileInputRef.current) {
+      fileInputRef.current.setAttribute('capture', 'camera');
+      fileInputRef.current.click();
+    }
+    setShowCameraOptions(false);
+  };
+
+  const handleGalleryClick = () => {
+    // Force gallery mode
+    if (fileInputRef.current) {
+      fileInputRef.current.removeAttribute('capture');
+      fileInputRef.current.click();
+    }
+    setShowCameraOptions(false);
   };
 
   const removeImage = () => {
@@ -117,30 +177,39 @@ const ChatAgent: React.FC = () => {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!input.trim() && !selectedImage) || !chat || isLoading) return;
+    
+    // Guard: prevent multiple sends
+    if (isLoading) return;
+    if (!chat) {
+      console.error('Chat session not initialized');
+      return;
+    }
+    if (!input.trim() && !selectedImage) return;
 
     const userMessage: Message = {
       sender: 'user',
-      text: input || 'What type of waste is this and how should I dispose of it?',
+      text: input.trim() || 'What type of waste is this and how should I dispose of it?',
       image: selectedImage || undefined
     };
 
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
+    // Add user message immediately
+    setMessages(prev => [...prev, userMessage]);
 
-    const messageText = input;
+    // Clear input states
     setInput('');
-    setIsLoading(true);
     setSelectedImage('');
+    setIsLoading(true);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
 
     try {
-      const stream = await sendMessageStreamWithImage(chat, messageText, userMessage.image);
+      const stream = await sendMessageStreamWithImage(chat, input.trim() || 'What type of waste is this and how should I dispose of it?', selectedImage || undefined);
 
       let botResponse = '';
       let currentBotMessage: Message = { sender: 'bot', text: '' };
+      
+      // Add empty bot message first
       setMessages(prev => [...prev, currentBotMessage]);
 
       for await (const chunk of stream) {
@@ -152,9 +221,11 @@ const ChatAgent: React.FC = () => {
           .filter((web: any) => web && web.uri && web.title) || [];
 
         setMessages(prev => {
+          // Check if we still have the bot message to update
+          if (prev.length === 0) return prev;
           const newMessages = [...prev];
           const lastMessage = newMessages[newMessages.length - 1];
-          if (lastMessage.sender === 'bot') {
+          if (lastMessage && lastMessage.sender === 'bot') {
             lastMessage.text = botResponse;
             if (sources.length > 0) {
               lastMessage.sources = sources;
@@ -165,7 +236,14 @@ const ChatAgent: React.FC = () => {
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      setMessages(prev => [...prev, { sender: 'bot', text: 'Oops! Something went wrong. Please try again.' }]);
+      
+      // Safely update messages - remove last message if it's empty bot message
+      setMessages(prev => {
+        // Remove any empty messages at the end
+        const validMessages = prev.filter(msg => msg.text || msg.image);
+        // Add error message
+        return [...validMessages, { sender: 'bot', text: 'Sorry, something went wrong. Please try again.' }];
+      });
     } finally {
       setIsLoading(false);
     }
@@ -285,7 +363,30 @@ const ChatAgent: React.FC = () => {
             </button>
           </div>
         )}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 relative">
+          {/* Camera options popup */}
+          {showCameraOptions && (
+            <div className="absolute bottom-full mb-2 left-0 bg-white rounded-lg shadow-lg border border-gray-200 p-2 z-50">
+              <button
+                onClick={handleDirectCamera}
+                className="flex items-center gap-2 w-full px-4 py-2 text-left hover:bg-gray-100 rounded"
+              >
+                <span>📷</span> Take Photo
+              </button>
+              <button
+                onClick={handleGalleryClick}
+                className="flex items-center gap-2 w-full px-4 py-2 text-left hover:bg-gray-100 rounded"
+              >
+                <span>🖼️</span> Choose from Gallery
+              </button>
+              <button
+                onClick={() => setShowCameraOptions(false)}
+                className="flex items-center gap-2 w-full px-4 py-2 text-left hover:bg-gray-100 rounded text-gray-500"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
           <input
             type="file"
             ref={fileInputRef}
@@ -297,7 +398,7 @@ const ChatAgent: React.FC = () => {
           />
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={handleCameraClick}
             disabled={isLoading}
             className="bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             title="Upload image"
