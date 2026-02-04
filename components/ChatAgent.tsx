@@ -6,6 +6,110 @@ import { createChatSession, sendMessageStreamWithImage } from '../services/gemin
 import { Message } from '../types';
 import { LoadingIcon, SendIcon, SourceIcon, PhotoIcon, XMarkIcon } from './Icons';
 
+// Security constants
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB limit
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+
+// Dangerous file signatures (magic bytes) for executables and scripts
+const DANGEROUS_SIGNATURES = [
+  { bytes: '4d5a', offset: 0, name: 'EXE/DLL' }, // Windows PE
+  { bytes: '7f454c46', offset: 0, name: 'ELF' }, // Linux executable
+  { bytes: 'cafebabe', offset: 0, name: 'Java class' }, // Java
+  { bytes: 'feedface', offset: 0, name: 'Mach-O' }, // macOS
+  { bytes: '7f454c46020101000000000000000000', offset: 0, name: 'ELF64' },
+  { bytes: '4d5a9000', offset: 0, name: 'EXE' },
+];
+
+// Prompt injection patterns to detect
+const INJECTION_PATTERNS = [
+  // System prompt override attempts
+  /ignore\s+(all\s+)?(previous\s+)?(instructions?|directives?|rules?)/yi,
+  /disregard\s+(all\s+)?(previous\s+)?(instructions?|directives?)/yi,
+  /forget\s+(all\s+)?(previous\s+)?(instructions?)/yi,
+  /override\s+(your\s+)?(system\s+)?(instructions?|prompt)/yi,
+  /system\s+prompt[:\s]/yi,
+  /you\s+are\s+(now\s+)?(a|an)\s+(different\s+)?(AI|assistant|model)/yi,
+
+  // Role-playing/admin escalation
+  /act\s+as\s+(a\s+)?(superuser|admin|root|sudo)/yi,
+  /pretend\s+to\s+be\s+(a\s+)?(superuser|admin|root)/yi,
+  /you\s+have\s+(root\s+)?(admin|administrator)\s+privileges/yi,
+
+  // Code injection
+  /(eval|exec|executes?|system|spawn|subprocess)\s*\(/yi,
+  /require\s*\(\s*['"]/yi,
+  /import\s+\w+\s+from\s+['"]/yi,
+  /__import__\s*\(/yi,
+  /process\.env/yi,
+  /child_process/yi,
+  /fs\.(readFile|writeFile|unlink|rmdir)/yi,
+
+  // SQL injection patterns
+  /(\%27)|(\')|(\-\-)|(\%23)|(#)/yi,
+  /(\%3D)|(=)[^\n]*((\%27)|(\')|(\-\-)|(\%3B)|(;))/yi,
+  /\w*\s*(\+|%2B)\s*(select|insert|update|delete|drop|create)/yi,
+
+  // HTML/JS injection
+  /<script[\s>]/yi,
+  /javascript:/yi,
+  /on\w+\s*=/yi,
+  /<iframe[\s>]/yi,
+  /<object[\s>]/yi,
+  /<embed[\s>]/yi,
+
+  // Markdown/formatting tricks
+  /\[system\s+prompt\]/yi,
+  /\[hidden\]/yi,
+  /\[private\]/yi,
+  /\\boxed\{/yi,
+];
+
+// Validate file is actually an image by checking magic bytes
+const validateFileSignature = (arrayBuffer: ArrayBuffer): boolean => {
+  const bytes = new Uint8Array(arrayBuffer);
+  const hexString = Array.from(bytes.slice(0, 16))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  // Check for dangerous signatures
+  for (const sig of DANGEROUS_SIGNATURES) {
+    const sigBytes = sig.bytes.replace(/\s/g, '');
+    if (hexString.startsWith(sigBytes)) {
+      console.warn(`Rejected file with ${sig.name} signature`);
+      return false;
+    }
+  }
+
+  // Check for JPEG/PNG magic bytes (already covered by MIME type, but extra safety)
+  const validImageSignatures = [
+    'ffd8ff', // JPEG
+    '89504e47', // PNG
+    '47494638', // GIF
+    '52494646', // WebP (RIFF)
+    '424d', // BMP
+  ];
+
+  return validImageSignatures.some(sig => hexString.startsWith(sig));
+};
+
+// Check text for injection patterns
+const detectInjection = (text: string): { detected: boolean; pattern?: RegExp } => {
+  for (const pattern of INJECTION_PATTERNS) {
+    if (pattern.test(text)) {
+      return { detected: true, pattern };
+    }
+  }
+  return { detected: false };
+};
+
+// Sanitize user input to remove dangerous characters
+const sanitizeInput = (input: string): string => {
+  return input
+    .replace(/[\x00-\x1f\x7f]/g, '') // Remove control characters
+    .replace(/(javascript:|data:)/gi, '') // Remove dangerous URI schemes
+    .trim();
+};
+
 const ChatAgent: React.FC = () => {
   const { language, t } = useContext(LanguageContext);
   const [chat, setChat] = useState<Chat | null>(null);
@@ -124,17 +228,53 @@ const ChatAgent: React.FC = () => {
     }
   };
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setSelectedImage(event.target.result as string);
-        }
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      alert('File is too large. Maximum size is 10MB.');
+      setShowCameraOptions(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
     }
+
+    // Strict MIME type validation
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      alert('Invalid file type. Only images (JPEG, PNG, GIF, WebP, BMP) are allowed.');
+      setShowCameraOptions(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    // Validate file signature (magic bytes) to detect disguised executables
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      if (!validateFileSignature(arrayBuffer)) {
+        alert('File appears to be invalid or dangerous. Only image files are allowed.');
+        setShowCameraOptions(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+    } catch (error) {
+      console.error('Error validating file:', error);
+      alert('Error processing file. Please try another image.');
+      setShowCameraOptions(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setSelectedImage(event.target.result as string);
+      }
+    };
+    reader.onerror = () => {
+      alert('Error reading file. Please try another image.');
+    };
+    reader.readAsDataURL(file);
     setShowCameraOptions(false);
   };
 
@@ -177,18 +317,33 @@ const ChatAgent: React.FC = () => {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Guard: prevent multiple sends
     if (isLoading) return;
     if (!chat) {
       console.error('Chat session not initialized');
       return;
     }
-    if (!input.trim() && !selectedImage) return;
+
+    const sanitizedInput = sanitizeInput(input);
+
+    if (!sanitizedInput.trim() && !selectedImage) return;
+
+    // Check for prompt injection in sanitized input
+    const injectionCheck = detectInjection(sanitizedInput);
+    if (injectionCheck.detected) {
+      setMessages(prev => [...prev, {
+        sender: 'bot',
+        text: 'I\'m sorry, but I can\'t process requests that appear to contain malicious code or injection attempts. Please ask a waste-related question instead.'
+      }]);
+      setInput('');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
 
     const userMessage: Message = {
       sender: 'user',
-      text: input.trim() || 'What type of waste is this and how should I dispose of it?',
+      text: sanitizedInput.trim() || 'What type of waste is this and how should I dispose of it?',
       image: selectedImage || undefined
     };
 
@@ -204,7 +359,7 @@ const ChatAgent: React.FC = () => {
     }
 
     try {
-      const stream = await sendMessageStreamWithImage(chat, input.trim() || 'What type of waste is this and how should I dispose of it?', selectedImage || undefined);
+      const stream = await sendMessageStreamWithImage(chat, sanitizedInput.trim() || 'What type of waste is this and how should I dispose of it?', selectedImage || undefined);
 
       let botResponse = '';
       let currentBotMessage: Message = { sender: 'bot', text: '' };
