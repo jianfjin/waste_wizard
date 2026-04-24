@@ -363,7 +363,7 @@ const ChatAgent: React.FC = () => {
 
       let botResponse = '';
       let currentBotMessage: Message = { sender: 'bot', text: '' };
-      
+
       // Add empty bot message first
       setMessages(prev => [...prev, currentBotMessage]);
 
@@ -391,7 +391,7 @@ const ChatAgent: React.FC = () => {
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      
+
       // Safely update messages - remove last message if it's empty bot message
       setMessages(prev => {
         // Remove any empty messages at the end
