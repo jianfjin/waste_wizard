@@ -1,0 +1,23 @@
+[Unit]
+Description=Waste Wizard Vite app
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/waste_separation
+Environment=NODE_ENV=production
+Environment=HOST=0.0.0.0
+Environment=PORT=3000
+ExecStartPre=/bin/bash -lc 'test -d dist || npm run build'
+ExecStart=/bin/bash -lc 'npm run preview -- --host ${HOST} --port ${PORT}'
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
