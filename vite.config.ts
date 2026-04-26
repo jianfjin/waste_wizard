@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       host: '0.0.0.0',
-      allowedHosts: ['app.xueba.us.kg'],
+      allowedHosts: ['app.xueba.us.kg', 'game.xueba.us.kg'],
     },
     plugins: [react()],
     define: {
